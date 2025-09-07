@@ -1,26 +1,125 @@
-# Welcome to your new ignited app!
+# PixAssist
 
-> The latest and greatest boilerplate for Infinite Red opinions
+> A React Native photo assistance app built with Ignite CLI, Gluestack UI, and Vision Camera
 
-This is the boilerplate that [Infinite Red](https://infinite.red) uses as a way to test bleeding-edge changes to our React Native stack.
+PixAssist is a modern React Native application that provides camera functionality and photo management features. Built using the latest Ignite CLI boilerplate with custom integrations for enhanced UI components and camera capabilities.
 
-- [Quick start documentation](https://github.com/infinitered/ignite/blob/master/docs/boilerplate/Boilerplate.md)
-- [Full documentation](https://github.com/infinitered/ignite/blob/master/docs/README.md)
+## Features
+
+- 📱 **Bottom Tab Navigation** - Easy access to Home, Camera, Gallery, and Settings
+- 🎨 **Gluestack UI Integration** - Modern, accessible UI components
+- 📷 **Vision Camera** - Full-screen camera with permission handling
+- 🌙 **Theme Support** - Light/dark mode theming
+- 🌍 **Internationalization** - Multi-language support
+- 📱 **Cross-Platform** - iOS and Android support
+
+## Tech Stack
+
+- **React Native 0.79.5** - Cross-platform mobile development
+- **Expo SDK 53** - Development tools and services
+- **Ignite CLI** - React Native boilerplate and tooling
+- **Gluestack UI** - Modern UI component library
+- **Vision Camera** - Advanced camera functionality
+- **React Navigation** - Navigation library
+- **TypeScript** - Type-safe development
 
 ## Getting Started
 
+### Prerequisites
+
+- Node.js (v18 or later)
+- iOS Simulator (for iOS development)
+- Android Studio (for Android development)
+- EAS CLI for builds
+
+### Installation
+
 ```bash
+# Clone the repository
+git clone <repository-url>
+cd PixAssist
+
+# Install dependencies
 npm install
+
+# Start the development server
 npm run start
 ```
 
-To make things work on your local simulator, or on your phone, you need first to [run `eas build`](https://github.com/infinitered/ignite/blob/master/docs/expo/EAS.md). We have many shortcuts on `package.json` to make it easier:
+### Building for Simulator/Device
 
 ```bash
-npm run build:ios:sim # build for ios simulator
-npm run build:ios:dev # build for ios device
-npm run build:ios:prod # build for ios device
+# Build for iOS simulator
+npm run build:ios:sim
+
+# Build for iOS device (development)
+npm run build:ios:dev
+
+# Build for iOS device (production)
+npm run build:ios:prod
 ```
+
+### Running the App
+
+```bash
+# Start Metro bundler
+npm run start
+
+# Run on iOS simulator
+npx expo run:ios
+
+# Run on Android
+npx expo run:android
+```
+
+## Project Structure
+
+```
+app/
+├── components/          # Reusable UI components
+├── navigators/          # Navigation configuration
+├── screens/            # App screens
+│   ├── HomeScreen.tsx  # Welcome/home screen
+│   ├── CameraScreen.tsx # Camera functionality
+│   ├── GalleryScreen.tsx # Photo gallery (coming soon)
+│   └── SettingsScreen.tsx # App settings (coming soon)
+├── theme/              # Theme configuration
+├── i18n/               # Internationalization
+└── utils/              # Utility functions
+```
+
+## Current Implementation Status
+
+### ✅ Completed
+- [x] Ignite CLI boilerplate setup
+- [x] Bottom tab navigation
+- [x] Gluestack UI integration
+- [x] Vision Camera integration
+- [x] Camera permission handling
+- [x] Basic camera interface
+
+### 🚧 In Progress
+- [ ] Photo capture functionality
+- [ ] Photo gallery implementation
+- [ ] Settings screen features
+
+### 📋 Planned
+- [ ] Photo editing features
+- [ ] Cloud storage integration
+- [ ] Advanced camera controls
+- [ ] User preferences
+
+## Development Notes
+
+### Key Integrations
+- **Gluestack UI**: Provides modern, accessible components with consistent theming
+- **Vision Camera**: Enables advanced camera functionality with proper permission handling
+- **Ignite CLI**: Provides robust boilerplate with best practices
+
+### Compatibility
+- React Native 0.79.5
+- Expo SDK 53
+- iOS 13+ and Android API 21+
 
 ### `./assets` directory
 
@@ -54,25 +153,31 @@ const MyComponent = () => {
 };
 ```
 
-## Running Maestro end-to-end tests
+## Testing
 
-Follow our [Maestro Setup](https://ignitecookbook.com/docs/recipes/MaestroSetup) recipe.
+```bash
+# Run tests
+npm test
 
-## Next Steps
+# Run tests in watch mode
+npm run test:watch
+```
 
-### Ignite Cookbook
+## Contributing
 
-[Ignite Cookbook](https://ignitecookbook.com/) is an easy way for developers to browse and share code snippets (or “recipes”) that actually work.
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-### Upgrade Ignite boilerplate
+## Resources
 
-Read our [Upgrade Guide](https://ignitecookbook.com/docs/recipes/UpdatingIgnite) to learn how to upgrade your Ignite project.
+- [Ignite CLI Documentation](https://github.com/infinitered/ignite/blob/master/docs/README.md)
+- [Gluestack UI Documentation](https://ui.gluestack.io/)
+- [Vision Camera Documentation](https://react-native-vision-camera.com/)
+- [React Navigation Documentation](https://reactnavigation.org/)
 
-## Community
+## License
 
-⭐️ Help us out by [starring on GitHub](https://github.com/infinitered/ignite), filing bug reports in [issues](https://github.com/infinitered/ignite/issues) or [ask questions](https://github.com/infinitered/ignite/discussions).
-
-💬 Join us on [Slack](https://join.slack.com/t/infiniteredcommunity/shared_invite/zt-1f137np4h-zPTq_CbaRFUOR_glUFs2UA) to discuss.
-
-📰 Make our Editor-in-chief happy by [reading the React Native Newsletter](https://reactnativenewsletter.com/).
-# pix-assist
+This project is licensed under the MIT License - see the LICENSE file for details.
