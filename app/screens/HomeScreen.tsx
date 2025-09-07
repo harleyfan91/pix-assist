@@ -3,12 +3,13 @@ import { Image, ImageStyle, TextStyle, View, ViewStyle } from "react-native"
 
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
+import { Button, ButtonText, Icon } from "@gluestack-ui/themed"
+import { Heart } from "lucide-react-native"
 import { isRTL } from "@/i18n"
 import { useAppTheme } from "@/theme/context"
 import { $styles } from "@/theme/styles"
 import type { ThemedStyle } from "@/theme/types"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
-import { Text as GluestackText } from "@gluestack-ui/themed"
 
 const welcomeLogo = require("@assets/images/logo.png")
 const welcomeFace = require("@assets/images/welcome-face.png")
@@ -29,9 +30,7 @@ export const HomeScreen: FC = function HomeScreen() {
           preset="heading"
         />
         <Text tx="welcomeScreen:exciting" preset="subheading" />
-        <GluestackText size="lg" color="$primary500" mt="$4">
-          🎉 Gluestack UI is working!
-        </GluestackText>
+        <Text preset="subheading" text="🎉 PixAssist is ready!" />
         <Image
           style={$welcomeFace}
           source={welcomeFace}
@@ -42,6 +41,10 @@ export const HomeScreen: FC = function HomeScreen() {
 
       <View style={themed([$bottomContainer, $bottomContainerInsets])}>
         <Text tx="welcomeScreen:postscript" size="md" />
+        <Button onPress={() => console.log("Gluestack Button pressed!")} variant="solid" size="lg">
+          <ButtonText>🎉 Gluestack UI Working!</ButtonText>
+        </Button>
+        <Icon as={Heart} size="xl" color="$red500" />
       </View>
     </Screen>
   )

@@ -23,6 +23,8 @@ import { useFonts } from "expo-font"
 import * as Linking from "expo-linking"
 import { KeyboardProvider } from "react-native-keyboard-controller"
 import { initialWindowMetrics, SafeAreaProvider } from "react-native-safe-area-context"
+import { GluestackUIProvider } from "@gluestack-ui/themed"
+import { config as gluestackConfig } from "@gluestack-ui/config"
 
 import { initI18n } from "./i18n"
 import { AppNavigator } from "./navigators/AppNavigator"
@@ -31,29 +33,17 @@ import { ThemeProvider } from "./theme/context"
 import { customFontsToLoad } from "./theme/typography"
 import { loadDateFnsLocale } from "./utils/formatDate"
 import * as storage from "./utils/storage"
-import { GluestackUIProvider } from "@gluestack-ui/themed"
-import { config as gluestackConfig } from "@gluestack-ui/config"
 
 export const NAVIGATION_PERSISTENCE_KEY = "NAVIGATION_STATE"
 
 // Web linking configuration
 const prefix = Linking.createURL("/")
-const config = {
+const linkingConfig = {
   screens: {
-    Login: {
-      path: "",
-    },
-    Welcome: "welcome",
-    Demo: {
-      screens: {
-        DemoShowroom: {
-          path: "showroom/:queryIndex?/:itemIndex?",
-        },
-        DemoDebug: "debug",
-        DemoPodcastList: "podcast",
-        DemoCommunity: "community",
-      },
-    },
+    Home: "home",
+    Camera: "camera",
+    Gallery: "gallery",
+    Settings: "settings",
   },
 }
 
@@ -90,7 +80,7 @@ export function App() {
 
   const linking = {
     prefixes: [prefix],
-    config,
+    config: linkingConfig,
   }
 
   // otherwise, we're ready to render the app

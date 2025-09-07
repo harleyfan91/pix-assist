@@ -22,12 +22,20 @@
       "backgroundImage": "./assets/images/app-icon-android-adaptive-background.png"
     },
     "allowBackup": false,
-    "edgeToEdgeEnabled": true
+    "edgeToEdgeEnabled": true,
+    "permissions": [
+      "android.permission.CAMERA",
+      "android.permission.RECORD_AUDIO"
+    ]
   },
   "ios": {
     "icon": "./assets/images/app-icon-ios.png",
     "supportsTablet": true,
-    "bundleIdentifier": "com.pixassist"
+    "bundleIdentifier": "com.pixassist",
+    "infoPlist": {
+      "NSCameraUsageDescription": "This app needs access to camera to take photos.",
+      "NSMicrophoneUsageDescription": "This app needs access to microphone for video recording."
+    }
   },
   "web": {
     "favicon": "./assets/images/app-icon-web-favicon.png",
@@ -52,6 +60,13 @@
           "parentTheme": "Light",
           "enforceNavigationBarContrast": false
         }
+      }
+    ],
+    [
+      "react-native-vision-camera",
+      {
+        "cameraPermissionText": "$(PRODUCT_NAME) needs access to your Camera.",
+        "enableCodeScanner": true
       }
     ]
   ],

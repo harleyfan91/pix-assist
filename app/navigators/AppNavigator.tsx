@@ -15,7 +15,6 @@ import { HomeScreen } from "@/screens/HomeScreen"
 import { CameraScreen } from "@/screens/CameraScreen"
 import { GalleryScreen } from "@/screens/GalleryScreen"
 import { SettingsScreen } from "@/screens/SettingsScreen"
-import { useAppTheme } from "@/theme/context"
 
 import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
 
@@ -50,20 +49,16 @@ export type AppTabScreenProps<T extends keyof AppTabParamList> = BottomTabScreen
 const Tab = createBottomTabNavigator<AppTabParamList>()
 
 const AppTabs = () => {
-  const {
-    theme: { colors },
-  } = useAppTheme()
-
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: colors.background,
-          borderTopColor: colors.border,
+          backgroundColor: '#ffffff',
+          borderTopColor: '#e0e0e0',
         },
-        tabBarActiveTintColor: colors.palette.primary500,
-        tabBarInactiveTintColor: colors.palette.neutral400,
+        tabBarActiveTintColor: '#007AFF',
+        tabBarInactiveTintColor: '#8E8E93',
       }}
     >
       <Tab.Screen 
@@ -114,12 +109,10 @@ export interface NavigationProps
   extends Partial<ComponentProps<typeof NavigationContainer<AppTabParamList>>> {}
 
 export const AppNavigator = (props: NavigationProps) => {
-  const { navigationTheme } = useAppTheme()
-
   useBackButtonHandler((routeName) => exitRoutes.includes(routeName))
 
   return (
-    <NavigationContainer ref={navigationRef} theme={navigationTheme} {...props}>
+    <NavigationContainer ref={navigationRef} {...props}>
       <ErrorBoundary catchErrors={Config.catchErrors}>
         <AppTabs />
       </ErrorBoundary>

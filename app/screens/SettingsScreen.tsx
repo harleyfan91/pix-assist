@@ -1,18 +1,14 @@
 import { FC } from "react"
 import { View, ViewStyle } from "react-native"
 import { Screen } from "@/components/Screen"
-import { Text } from "@gluestack-ui/themed"
+import { Text } from "@/components/Text"
 
 export const SettingsScreen: FC = function SettingsScreen() {
   return (
     <Screen preset="fixed" contentContainerStyle={$container}>
       <View style={$content}>
-        <Text size="2xl" color="$primary500" textAlign="center">
-          ⚙️ Settings
-        </Text>
-        <Text size="lg" color="$textLight600" textAlign="center" mt="$4">
-          App settings coming soon!
-        </Text>
+        <Text preset="heading" text="⚙️ Settings" />
+        <Text preset="subheading" text="App settings coming soon!" />
       </View>
     </Screen>
   )
