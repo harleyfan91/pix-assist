@@ -2,13 +2,14 @@
 
 > A React Native photo assistance app built with Ignite CLI, Gluestack UI, and Vision Camera
 
-PixAssist is a modern React Native application that provides camera functionality and photo management features. Built using the latest Ignite CLI boilerplate with custom integrations for enhanced UI components and camera capabilities.
+PixAssist is a modern React Native application that provides camera functionality and local photo management features. Built using the latest Ignite CLI boilerplate with custom integrations for enhanced UI components and camera capabilities.
 
 ## Features
 
 - 📱 **Bottom Tab Navigation** - Easy access to Home, Camera, Gallery, and Settings
 - 🎨 **Gluestack UI Integration** - Modern, accessible UI components
 - 📷 **Vision Camera** - Full-screen camera with permission handling
+- 💾 **Local Storage** - Photos saved locally on device
 - 🌙 **Theme Support** - Light/dark mode theming
 - 🌍 **Internationalization** - Multi-language support
 - 📱 **Cross-Platform** - iOS and Android support
@@ -28,8 +29,8 @@ PixAssist is a modern React Native application that provides camera functionalit
 ### Prerequisites
 
 - Node.js (v18 or later)
-- iOS Simulator (for iOS development)
-- Android Studio (for Android development)
+- Physical iOS device (for iOS development)
+- Android device or Android Studio (for Android development)
 - EAS CLI for builds
 
 ### Installation
@@ -46,14 +47,14 @@ npm install
 npm run start
 ```
 
-### Building for Simulator/Device
+### Building for Device
 
 ```bash
-# Build for iOS simulator
-npm run build:ios:sim
-
 # Build for iOS device (development)
 npm run build:ios:dev
+
+# Build for iOS device (preview)
+npm run build:ios:preview
 
 # Build for iOS device (production)
 npm run build:ios:prod
@@ -62,14 +63,17 @@ npm run build:ios:prod
 ### Running the App
 
 ```bash
-# Start Metro bundler
+# Start Metro bundler (connects to your device via LAN)
 npm run start
 
-# Run on iOS simulator
-npx expo run:ios
+# Build and run on iOS device
+npm run ios
 
-# Run on Android
-npx expo run:android
+# Build and run on Android device
+npm run android
+
+# Alternative: Use tunnel if LAN doesn't work
+npm run start:tunnel
 ```
 
 ## Project Structure
@@ -100,14 +104,15 @@ app/
 
 ### 🚧 In Progress
 - [ ] Photo capture functionality
+- [ ] Local photo storage
 - [ ] Photo gallery implementation
 - [ ] Settings screen features
 
 ### 📋 Planned
 - [ ] Photo editing features
-- [ ] Cloud storage integration
 - [ ] Advanced camera controls
 - [ ] User preferences
+- [ ] Photo export options
 
 ## Development Notes
 

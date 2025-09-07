@@ -1,18 +1,29 @@
-import { FC, useCallback, useEffect, useState } from "react"
-import { Alert, Linking, TouchableOpacity, View, ViewStyle, StyleSheet } from "react-native"
+import { FC, useCallback, useEffect, useState, useRef } from "react"
+import {
+  Alert,
+  Linking,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+  TextStyle,
+  StyleSheet,
+} from "react-native"
+import { Button, ButtonText } from "@gluestack-ui/themed"
+import { PinchGestureHandler, State, GestureHandlerRootView } from "react-native-gesture-handler"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Camera, useCameraDevice, useCameraPermission } from "react-native-vision-camera"
+
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
-import { Button, ButtonText, Text as GluestackText } from "@gluestack-ui/themed"
-import { useSafeAreaInsets } from "react-native-safe-area-context"
-import { spacing } from "@/theme/spacing"
 
 export const CameraScreen: FC = function CameraScreen() {
   const [cameraPermission, setCameraPermission] = useState<boolean | null>(null)
-  const [isActive, setIsActive] = useState(false)
+  const [isActive] = useState(true) // Always on by default
+  const [zoom, setZoom] = useState(1)
 
   const { hasPermission, requestPermission } = useCameraPermission()
   const device = useCameraDevice("back")
+  const cameraRef = useRef<Camera>(null)
 
   useEffect(() => {
     setCameraPermission(hasPermission)
@@ -29,20 +40,44 @@ export const CameraScreen: FC = function CameraScreen() {
         "This app needs camera access to take photos. Please enable it in settings.",
         [
           { text: "Cancel", style: "cancel" },
-          { text: "Open Settings", onPress: () => Linking.openSettings() }
-        ]
+          { text: "Open Settings", onPress: () => Linking.openSettings() },
+        ],
       )
     }
   }, [hasPermission, requestPermission])
 
-  const { right, top } = useSafeAreaInsets()
+  const takePhoto = useCallback(() => {
+    console.log("Taking photo...")
+    // TODO: Implement photo capture
+  }, [])
+
+  const handlePinchZoom = useCallback(
+    (event: any) => {
+      if (!device) return
+
+      const { scale, state } = event.nativeEvent
+
+      if (state === State.ACTIVE) {
+        // Use device-specific zoom limits
+        const minZoom = device.minZoom ?? 0.5
+        const maxZoom = device.maxZoom ?? 10
+
+        // Apply logarithmic scaling for natural feel
+        const newZoom = Math.max(minZoom, Math.min(maxZoom, zoom * Math.pow(scale, 0.8)))
+        setZoom(newZoom)
+      }
+    },
+    [device, zoom],
+  )
+
+  const { right: _right, top: _top } = useSafeAreaInsets()
 
   if (cameraPermission == null) {
     // still loading
     return (
       <Screen preset="fixed" contentContainerStyle={$container}>
         <View style={$content}>
-          <Text preset="heading" text="📷 Loading Camera..." />
+          <Text preset="heading" text="📷 TESTING RELOAD..." />
         </View>
       </Screen>
     )
@@ -74,36 +109,35 @@ export const CameraScreen: FC = function CameraScreen() {
   }
 
   return (
-    <View style={$cameraContainer}>
-      <Camera
-        isActive={isActive}
-        device={device}
-        style={StyleSheet.absoluteFill}
-        photo
-        video
-      />
-      <View style={[$cameraButtons, { right: right + spacing.md, top: top + spacing.md }]}>
-        <TouchableOpacity
-          style={$closeCamera}
-          onPress={() => setIsActive(!isActive)}
-        >
-          <GluestackText color="$white" size="2xl">
-            {isActive ? "⏸️" : "▶️"}
-          </GluestackText>
+    <GestureHandlerRootView style={$cameraContainer}>
+      <PinchGestureHandler onHandlerStateChange={handlePinchZoom} onGestureEvent={handlePinchZoom}>
+        <View style={StyleSheet.absoluteFill}>
+          <Camera
+            ref={cameraRef}
+            isActive={isActive}
+            device={device}
+            style={StyleSheet.absoluteFill}
+            photo
+            video
+            zoom={zoom}
+          />
+
+          {/* Zoom Indicator */}
+          {zoom !== 1 && (
+            <View style={$zoomIndicator}>
+              <Text style={$zoomText}>{zoom.toFixed(1)}x</Text>
+            </View>
+          )}
+        </View>
+      </PinchGestureHandler>
+
+      {/* Shutter Button */}
+      <View style={$bottomControls}>
+        <TouchableOpacity style={$shutterButton} onPress={takePhoto}>
+          <View style={$shutterButtonInner} />
         </TouchableOpacity>
       </View>
-      <View style={$bottomControls}>
-        <Button
-          onPress={() => setIsActive(!isActive)}
-          variant="solid"
-          size="lg"
-        >
-          <ButtonText>
-            {isActive ? "Pause Camera" : "Start Camera"}
-          </ButtonText>
-        </Button>
-      </View>
-    </View>
+    </GestureHandlerRootView>
   )
 }
 
@@ -122,24 +156,44 @@ const $cameraContainer: ViewStyle = {
   flex: 1,
 }
 
-const $cameraButtons: ViewStyle = {
-  position: "absolute",
-}
-
-const $closeCamera: ViewStyle = {
-  marginBottom: spacing.md,
-  width: 60,
-  height: 60,
-  borderRadius: 30,
-  backgroundColor: "rgba(140, 140, 140, 0.3)",
-  justifyContent: "center",
-  alignItems: "center",
-}
-
 const $bottomControls: ViewStyle = {
   position: "absolute",
   bottom: 50,
   left: 0,
   right: 0,
   alignItems: "center",
+}
+
+const $shutterButton: ViewStyle = {
+  width: 80,
+  height: 80,
+  borderRadius: 40,
+  backgroundColor: "rgba(255, 255, 255, 0.3)",
+  borderWidth: 4,
+  borderColor: "#fff",
+  justifyContent: "center",
+  alignItems: "center",
+}
+
+const $shutterButtonInner: ViewStyle = {
+  width: 60,
+  height: 60,
+  borderRadius: 30,
+  backgroundColor: "#fff",
+}
+
+const $zoomIndicator: ViewStyle = {
+  position: "absolute",
+  top: 60,
+  left: 20,
+  backgroundColor: "rgba(0, 0, 0, 0.6)",
+  paddingHorizontal: 12,
+  paddingVertical: 6,
+  borderRadius: 16,
+}
+
+const $zoomText: TextStyle = {
+  color: "#fff",
+  fontSize: 14,
+  fontWeight: "bold",
 }

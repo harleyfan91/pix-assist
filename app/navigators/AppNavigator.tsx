@@ -5,15 +5,15 @@
  * and a "main" flow which the user will use once logged in.
  */
 import { ComponentProps } from "react"
-import { NavigationContainer } from "@react-navigation/native"
-import { createBottomTabNavigator, BottomTabScreenProps } from "@react-navigation/bottom-tabs"
 import { Ionicons } from "@expo/vector-icons"
+import { createBottomTabNavigator, BottomTabScreenProps } from "@react-navigation/bottom-tabs"
+import { NavigationContainer } from "@react-navigation/native"
 
 import Config from "@/config"
-import { ErrorBoundary } from "@/screens/ErrorScreen/ErrorBoundary"
-import { HomeScreen } from "@/screens/HomeScreen"
 import { CameraScreen } from "@/screens/CameraScreen"
+import { ErrorBoundary } from "@/screens/ErrorScreen/ErrorBoundary"
 import { GalleryScreen } from "@/screens/GalleryScreen"
+import { HomeScreen } from "@/screens/HomeScreen"
 import { SettingsScreen } from "@/screens/SettingsScreen"
 
 import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
@@ -54,51 +54,43 @@ const AppTabs = () => {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#ffffff',
-          borderTopColor: '#e0e0e0',
+          backgroundColor: "#ffffff",
+          borderTopColor: "#e0e0e0",
         },
-        tabBarActiveTintColor: '#007AFF',
-        tabBarInactiveTintColor: '#8E8E93',
+        tabBarActiveTintColor: "#007AFF",
+        tabBarInactiveTintColor: "#8E8E93",
       }}
     >
-      <Tab.Screen 
-        name="Home" 
+      <Tab.Screen
+        name="Home"
         component={HomeScreen}
         options={{
           tabBarLabel: "Home",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />,
         }}
       />
-      <Tab.Screen 
-        name="Camera" 
+      <Tab.Screen
+        name="Camera"
         component={CameraScreen}
         options={{
           tabBarLabel: "Camera",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="camera" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <Ionicons name="camera" size={size} color={color} />,
         }}
       />
-      <Tab.Screen 
-        name="Gallery" 
+      <Tab.Screen
+        name="Gallery"
         component={GalleryScreen}
         options={{
           tabBarLabel: "Gallery",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="images" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <Ionicons name="images" size={size} color={color} />,
         }}
       />
-      <Tab.Screen 
-        name="Settings" 
+      <Tab.Screen
+        name="Settings"
         component={SettingsScreen}
         options={{
           tabBarLabel: "Settings",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="settings" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <Ionicons name="settings" size={size} color={color} />,
         }}
       />
     </Tab.Navigator>

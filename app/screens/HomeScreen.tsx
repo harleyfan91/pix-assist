@@ -1,10 +1,10 @@
 import { FC } from "react"
 import { Image, ImageStyle, TextStyle, View, ViewStyle } from "react-native"
+import { Button, ButtonText, Icon } from "@gluestack-ui/themed"
+import { Heart } from "lucide-react-native"
 
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
-import { Button, ButtonText, Icon } from "@gluestack-ui/themed"
-import { Heart } from "lucide-react-native"
 import { isRTL } from "@/i18n"
 import { useAppTheme } from "@/theme/context"
 import { $styles } from "@/theme/styles"
