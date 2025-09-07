@@ -31,6 +31,8 @@ import { ThemeProvider } from "./theme/context"
 import { customFontsToLoad } from "./theme/typography"
 import { loadDateFnsLocale } from "./utils/formatDate"
 import * as storage from "./utils/storage"
+import { GluestackUIProvider } from "@gluestack-ui/themed"
+import { config as gluestackConfig } from "@gluestack-ui/config"
 
 export const NAVIGATION_PERSISTENCE_KEY = "NAVIGATION_STATE"
 
@@ -93,16 +95,18 @@ export function App() {
 
   // otherwise, we're ready to render the app
   return (
-    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-      <KeyboardProvider>
-        <ThemeProvider>
-          <AppNavigator
-            linking={linking}
-            initialState={initialNavigationState}
-            onStateChange={onNavigationStateChange}
-          />
-        </ThemeProvider>
-      </KeyboardProvider>
-    </SafeAreaProvider>
+    <GluestackUIProvider config={gluestackConfig}>
+      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+        <KeyboardProvider>
+          <ThemeProvider>
+            <AppNavigator
+              linking={linking}
+              initialState={initialNavigationState}
+              onStateChange={onNavigationStateChange}
+            />
+          </ThemeProvider>
+        </KeyboardProvider>
+      </SafeAreaProvider>
+    </GluestackUIProvider>
   )
 }

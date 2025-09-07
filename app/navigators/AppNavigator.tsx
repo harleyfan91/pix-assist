@@ -6,11 +6,15 @@
  */
 import { ComponentProps } from "react"
 import { NavigationContainer } from "@react-navigation/native"
-import { createNativeStackNavigator, NativeStackScreenProps } from "@react-navigation/native-stack"
+import { createBottomTabNavigator, BottomTabScreenProps } from "@react-navigation/bottom-tabs"
+import { Ionicons } from "@expo/vector-icons"
 
 import Config from "@/config"
 import { ErrorBoundary } from "@/screens/ErrorScreen/ErrorBoundary"
-import { WelcomeScreen } from "@/screens/WelcomeScreen"
+import { HomeScreen } from "@/screens/HomeScreen"
+import { CameraScreen } from "@/screens/CameraScreen"
+import { GalleryScreen } from "@/screens/GalleryScreen"
+import { SettingsScreen } from "@/screens/SettingsScreen"
 import { useAppTheme } from "@/theme/context"
 
 import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
@@ -24,10 +28,11 @@ import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
  *   https://reactnavigation.org/docs/typescript#type-checking-the-navigator
  *   https://reactnavigation.org/docs/typescript/#organizing-types
  */
-export type AppStackParamList = {
-  Welcome: undefined
-  // 🔥 Your screens go here
-  // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
+export type AppTabParamList = {
+  Home: undefined
+  Camera: undefined
+  Gallery: undefined
+  Settings: undefined
 }
 
 /**
@@ -36,38 +41,77 @@ export type AppStackParamList = {
  */
 const exitRoutes = Config.exitRoutes
 
-export type AppStackScreenProps<T extends keyof AppStackParamList> = NativeStackScreenProps<
-  AppStackParamList,
+export type AppTabScreenProps<T extends keyof AppTabParamList> = BottomTabScreenProps<
+  AppTabParamList,
   T
 >
 
-// Documentation: https://reactnavigation.org/docs/stack-navigator/
-const Stack = createNativeStackNavigator<AppStackParamList>()
+// Documentation: https://reactnavigation.org/docs/bottom-tab-navigator/
+const Tab = createBottomTabNavigator<AppTabParamList>()
 
-const AppStack = () => {
+const AppTabs = () => {
   const {
     theme: { colors },
   } = useAppTheme()
 
   return (
-    <Stack.Navigator
+    <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        navigationBarColor: colors.background,
-        contentStyle: {
+        tabBarStyle: {
           backgroundColor: colors.background,
+          borderTopColor: colors.border,
         },
+        tabBarActiveTintColor: colors.palette.primary500,
+        tabBarInactiveTintColor: colors.palette.neutral400,
       }}
     >
-      <Stack.Screen name="Welcome" component={WelcomeScreen} />
-      {/** 🔥 Your screens go here */}
-      {/* IGNITE_GENERATOR_ANCHOR_APP_STACK_SCREENS */}
-    </Stack.Navigator>
+      <Tab.Screen 
+        name="Home" 
+        component={HomeScreen}
+        options={{
+          tabBarLabel: "Home",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen 
+        name="Camera" 
+        component={CameraScreen}
+        options={{
+          tabBarLabel: "Camera",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="camera" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen 
+        name="Gallery" 
+        component={GalleryScreen}
+        options={{
+          tabBarLabel: "Gallery",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="images" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen 
+        name="Settings" 
+        component={SettingsScreen}
+        options={{
+          tabBarLabel: "Settings",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="settings" size={size} color={color} />
+          ),
+        }}
+      />
+    </Tab.Navigator>
   )
 }
 
 export interface NavigationProps
-  extends Partial<ComponentProps<typeof NavigationContainer<AppStackParamList>>> {}
+  extends Partial<ComponentProps<typeof NavigationContainer<AppTabParamList>>> {}
 
 export const AppNavigator = (props: NavigationProps) => {
   const { navigationTheme } = useAppTheme()
@@ -77,7 +121,7 @@ export const AppNavigator = (props: NavigationProps) => {
   return (
     <NavigationContainer ref={navigationRef} theme={navigationTheme} {...props}>
       <ErrorBoundary catchErrors={Config.catchErrors}>
-        <AppStack />
+        <AppTabs />
       </ErrorBoundary>
     </NavigationContainer>
   )

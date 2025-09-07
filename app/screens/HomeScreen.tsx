@@ -8,11 +8,12 @@ import { useAppTheme } from "@/theme/context"
 import { $styles } from "@/theme/styles"
 import type { ThemedStyle } from "@/theme/types"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
+import { Text as GluestackText } from "@gluestack-ui/themed"
 
 const welcomeLogo = require("@assets/images/logo.png")
 const welcomeFace = require("@assets/images/welcome-face.png")
 
-export const WelcomeScreen: FC = function WelcomeScreen() {
+export const HomeScreen: FC = function HomeScreen() {
   const { themed, theme } = useAppTheme()
 
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
@@ -28,6 +29,9 @@ export const WelcomeScreen: FC = function WelcomeScreen() {
           preset="heading"
         />
         <Text tx="welcomeScreen:exciting" preset="subheading" />
+        <GluestackText size="lg" color="$primary500" mt="$4">
+          🎉 Gluestack UI is working!
+        </GluestackText>
         <Image
           style={$welcomeFace}
           source={welcomeFace}
