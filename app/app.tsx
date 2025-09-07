@@ -23,8 +23,8 @@ import { useFonts } from "expo-font"
 import * as Linking from "expo-linking"
 import { config as gluestackConfig } from "@gluestack-ui/config"
 import { GluestackUIProvider } from "@gluestack-ui/themed"
-import { KeyboardProvider } from "react-native-keyboard-controller"
 import { initialWindowMetrics, SafeAreaProvider } from "react-native-safe-area-context"
+import { GestureHandlerRootView } from "react-native-gesture-handler"
 
 import { initI18n } from "./i18n"
 import { AppNavigator } from "./navigators/AppNavigator"
@@ -85,9 +85,9 @@ export function App() {
 
   // otherwise, we're ready to render the app
   return (
-    <GluestackUIProvider config={gluestackConfig}>
-      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-        <KeyboardProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <GluestackUIProvider config={gluestackConfig}>
+        <SafeAreaProvider initialMetrics={initialWindowMetrics}>
           <ThemeProvider>
             <AppNavigator
               linking={linking}
@@ -95,8 +95,8 @@ export function App() {
               onStateChange={onNavigationStateChange}
             />
           </ThemeProvider>
-        </KeyboardProvider>
-      </SafeAreaProvider>
-    </GluestackUIProvider>
+        </SafeAreaProvider>
+      </GluestackUIProvider>
+    </GestureHandlerRootView>
   )
 }

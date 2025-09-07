@@ -9,25 +9,86 @@ import {
   StyleSheet,
 } from "react-native"
 import { Button, ButtonText } from "@gluestack-ui/themed"
-import { PinchGestureHandler, State, GestureHandlerRootView } from "react-native-gesture-handler"
+import { Gesture, GestureDetector } from "react-native-gesture-handler"
+import Reanimated, { useSharedValue, interpolate, Extrapolation, useAnimatedStyle, useAnimatedProps, useDerivedValue } from "react-native-reanimated"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Camera, useCameraDevice, useCameraPermission } from "react-native-vision-camera"
 
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 
+// Enable zoom animation for Reanimated (as per Vision Camera docs)
+Reanimated.addWhitelistedNativeProps({
+  zoom: true,
+})
+
+const ReanimatedCamera = Reanimated.createAnimatedComponent(Camera)
+
 export const CameraScreen: FC = function CameraScreen() {
   const [cameraPermission, setCameraPermission] = useState<boolean | null>(null)
   const [isActive] = useState(true) // Always on by default
-  const [zoom, setZoom] = useState(1)
 
   const { hasPermission, requestPermission } = useCameraPermission()
-  const device = useCameraDevice("back")
-  const cameraRef = useRef<Camera>(null)
+  // Use camera device with ultra-wide support for zoom out below 1x
+  const device = useCameraDevice("back", {
+    physicalDevices: ["ultra-wide-angle-camera", "wide-angle-camera", "telephoto-camera"],
+  })
+  const _cameraRef = useRef<Camera>(null)
+
+  // Initialize zoom with device's neutral zoom (as per Vision Camera docs)
+  const zoom = useSharedValue(device?.neutralZoom ?? 1)
+  const zoomOffset = useSharedValue(0)
+  const [currentZoom, setCurrentZoom] = useState(device?.neutralZoom ?? 1)
 
   useEffect(() => {
     setCameraPermission(hasPermission)
   }, [hasPermission])
+
+  // Initialize zoom with device's neutral zoom when device changes
+  useEffect(() => {
+    if (device) {
+      console.log("Camera device info:", {
+        minZoom: device.minZoom,
+        maxZoom: device.maxZoom,
+        neutralZoom: device.neutralZoom,
+        physicalDevices: device.physicalDevices,
+        hasUltraWide: device.physicalDevices?.includes("ultra-wide-angle-camera"),
+      })
+      zoom.value = device.neutralZoom ?? 1
+      setCurrentZoom(device.neutralZoom ?? 1)
+    }
+  }, [device, zoom])
+
+  // Update zoom text periodically (following best practices)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Convert actual zoom to logical zoom scale for display
+      const actualZoom = zoom.value
+      let logicalZoom: number
+      
+      if (device) {
+        // Map actual zoom to logical zoom scale
+        // neutralZoom (2.0) = 1x, minZoom (1.0) = 0.5x, max = 16x
+        if (actualZoom <= device.minZoom) {
+          logicalZoom = 0.5 // Ultra-wide
+        } else if (actualZoom >= device.neutralZoom) {
+          // Scale from neutralZoom to max: 2.0 -> 16.0 maps to 1.0 -> 16.0
+          const scale = (actualZoom - device.neutralZoom) / (16 - device.neutralZoom)
+          logicalZoom = 1 + (scale * 15) // 1x to 16x
+        } else {
+          // Scale from minZoom to neutralZoom: 1.0 -> 2.0 maps to 0.5 -> 1.0
+          const scale = (actualZoom - device.minZoom) / (device.neutralZoom - device.minZoom)
+          logicalZoom = 0.5 + (scale * 0.5) // 0.5x to 1x
+        }
+      } else {
+        logicalZoom = actualZoom
+      }
+      
+      setCurrentZoom(logicalZoom)
+    }, 100) // Update every 100ms for smooth display
+
+    return () => clearInterval(interval)
+  }, [zoom, device])
 
   const promptForCameraPermissions = useCallback(async () => {
     if (hasPermission) return
@@ -51,24 +112,39 @@ export const CameraScreen: FC = function CameraScreen() {
     // TODO: Implement photo capture
   }, [])
 
-  const handlePinchZoom = useCallback(
-    (event: any) => {
+  // Create pinch gesture following Vision Camera example
+  const gesture = Gesture.Pinch()
+    .onBegin(() => {
+      zoomOffset.value = zoom.value
+    })
+    .onUpdate((event) => {
       if (!device) return
 
-      const { scale, state } = event.nativeEvent
+      // Use a more direct approach for zoom calculation
+      const baseZoom = zoomOffset.value
+      const scaleFactor = event.scale
+      const newZoom = baseZoom * scaleFactor
+      
+      // Clamp to reasonable limits (following best practices)
+      const maxReasonableZoom = Math.min(device.maxZoom, 16) // Cap at 16x for usability
+      const clampedZoom = Math.max(device.minZoom, Math.min(newZoom, maxReasonableZoom))
+      zoom.value = clampedZoom
+    })
 
-      if (state === State.ACTIVE) {
-        // Use device-specific zoom limits
-        const minZoom = device.minZoom ?? 0.5
-        const maxZoom = device.maxZoom ?? 10
+  // Create animated props for smooth zoom
+  const animatedProps = useAnimatedProps(() => ({
+    zoom: zoom.value,
+  }), [zoom])
 
-        // Apply logarithmic scaling for natural feel
-        const newZoom = Math.max(minZoom, Math.min(maxZoom, zoom * Math.pow(scale, 0.8)))
-        setZoom(newZoom)
-      }
-    },
-    [device, zoom],
-  )
+  // Create animated style for zoom indicator visibility
+  const animatedZoomStyle = useAnimatedStyle(() => {
+    const neutralZoom = device?.neutralZoom ?? 1
+    const isZoomed = Math.abs(zoom.value - neutralZoom) > 0.1
+    return {
+      opacity: isZoomed ? 1 : 0,
+    }
+  })
+
 
   const { right: _right, top: _top } = useSafeAreaInsets()
 
@@ -109,35 +185,33 @@ export const CameraScreen: FC = function CameraScreen() {
   }
 
   return (
-    <GestureHandlerRootView style={$cameraContainer}>
-      <PinchGestureHandler onHandlerStateChange={handlePinchZoom} onGestureEvent={handlePinchZoom}>
+    <GestureDetector gesture={gesture}>
+      <View style={$cameraContainer}>
         <View style={StyleSheet.absoluteFill}>
-          <Camera
-            ref={cameraRef}
+          <ReanimatedCamera
             isActive={isActive}
             device={device}
             style={StyleSheet.absoluteFill}
             photo
             video
-            zoom={zoom}
+            animatedProps={animatedProps}
+            enableZoomGesture={false} // We're using custom gesture
           />
 
-          {/* Zoom Indicator */}
-          {zoom !== 1 && (
-            <View style={$zoomIndicator}>
-              <Text style={$zoomText}>{zoom.toFixed(1)}x</Text>
-            </View>
-          )}
+          {/* Zoom Indicator - Only show when zoomed */}
+          <Reanimated.View style={[$zoomIndicator, animatedZoomStyle]}>
+            <Text style={$zoomText}>{currentZoom.toFixed(1)}x</Text>
+          </Reanimated.View>
         </View>
-      </PinchGestureHandler>
 
-      {/* Shutter Button */}
-      <View style={$bottomControls}>
-        <TouchableOpacity style={$shutterButton} onPress={takePhoto}>
-          <View style={$shutterButtonInner} />
-        </TouchableOpacity>
+        {/* Shutter Button */}
+        <View style={$bottomControls}>
+          <TouchableOpacity style={$shutterButton} onPress={takePhoto}>
+            <View style={$shutterButtonInner} />
+          </TouchableOpacity>
+        </View>
       </View>
-    </GestureHandlerRootView>
+    </GestureDetector>
   )
 }
 
