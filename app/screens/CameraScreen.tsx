@@ -14,6 +14,7 @@ import Reanimated, {
   useSharedValue,
   useAnimatedStyle,
   useAnimatedProps,
+  useDerivedValue,
   runOnJS,
 } from "react-native-reanimated"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
@@ -71,7 +72,7 @@ export const CameraScreen: FC = function CameraScreen() {
         hasUltraWide: device.physicalDevices?.includes("ultra-wide-angle-camera"),
       })
       zoom.value = device.neutralZoom ?? 1
-      setCurrentZoom(device.neutralZoom ?? 1)
+      runOnJS(setCurrentZoom)(device.neutralZoom ?? 1)
     }
   }, [device, zoom])
 
@@ -100,7 +101,7 @@ export const CameraScreen: FC = function CameraScreen() {
         logicalZoom = actualZoom
       }
 
-      setCurrentZoom(logicalZoom)
+      runOnJS(setCurrentZoom)(logicalZoom)
     }, 100) // Update every 100ms for smooth display
 
     return () => clearInterval(interval)
@@ -131,18 +132,14 @@ export const CameraScreen: FC = function CameraScreen() {
   // Handle tap-to-focus
   const handleFocusTap = useCallback(
     async (x: number, y: number) => {
-      if (!device || !_cameraRef.current) return
+      if (!device || !_cameraRef.current || !device.supportsFocus) return
 
       try {
-        // Convert screen coordinates to camera coordinates (0-1 range)
-        // TODO: This should be improved with actual screen dimensions
-        const focusX = Math.max(0, Math.min(1, x / 400)) // Assuming ~400px width
-        const focusY = Math.max(0, Math.min(1, y / 800)) // Assuming ~800px height
+        console.log("Setting focus at screen:", { x, y })
 
-        console.log("Setting focus at screen:", { x, y }, "camera:", { x: focusX, y: focusY })
-
-        // Use Vision Camera's focus method
-        await _cameraRef.current.focus({ x: focusX, y: focusY })
+        // Use Vision Camera's focus method with screen coordinates directly
+        // The focus function expects coordinates relative to the Camera view (in points)
+        await _cameraRef.current.focus({ x, y })
 
         // Show focus ring animation
         focusRingPosition.value = { x, y }
@@ -176,6 +173,7 @@ export const CameraScreen: FC = function CameraScreen() {
 
   // Create tap gesture for focus
   const tapGesture = Gesture.Tap().onEnd(({ x, y }) => {
+    'worklet'
     runOnJS(handleFocusTap)(x, y)
   })
 
@@ -183,15 +181,18 @@ export const CameraScreen: FC = function CameraScreen() {
   const longPressGesture = Gesture.LongPress()
     .minDuration(500) // 500ms for long press
     .onStart(({ x, y }) => {
+      'worklet'
       runOnJS(handleFocusLock)(x, y)
     })
 
   // Create pinch gesture following Vision Camera example
   const pinchGesture = Gesture.Pinch()
     .onBegin(() => {
+      'worklet'
       zoomOffset.value = zoom.value
     })
     .onUpdate((event) => {
+      'worklet'
       if (!device) return
 
       // Use a more direct approach for zoom calculation
@@ -211,9 +212,10 @@ export const CameraScreen: FC = function CameraScreen() {
   // Update camera zoom when zoom value changes
   const [cameraZoom, setCameraZoom] = useState(device?.neutralZoom ?? 1)
   
-  useEffect(() => {
-    setCameraZoom(zoom.value)
-  }, [zoom.value])
+  // Update camera zoom when zoom value changes using derived value
+  useDerivedValue(() => {
+    runOnJS(setCameraZoom)(zoom.value)
+  })
 
   // Create animated style for zoom indicator visibility
   const animatedZoomStyle = useAnimatedStyle(() => {

@@ -24,6 +24,8 @@ PixAssist is a modern React Native application that provides camera functionalit
 - **React Navigation** - Navigation library
 - **TypeScript** - Type-safe development
 
+> 📋 **For detailed architecture information and dependency management policies, see [ARCHITECTURE.md](./ARCHITECTURE.md)**
+
 ## Getting Started
 
 ### Prerequisites
