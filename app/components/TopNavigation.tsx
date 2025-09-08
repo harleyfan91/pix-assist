@@ -9,9 +9,7 @@ import Reanimated, {
   useSharedValue, 
   useAnimatedStyle, 
   useDerivedValue,
-  withSpring,
-  interpolate,
-  Extrapolate
+  withSpring
 } from "react-native-reanimated"
 import { AppStackScreenProps } from "@/navigators/AppNavigator"
 
@@ -25,255 +23,145 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({ onNavigationStateC
   const insets = useSafeAreaInsets()
   const [isOpen, setIsOpen] = useState(false)
 
-  // Shared values for fluid animation
-  const translateY = useSharedValue(0)
-  const gestureProgress = useSharedValue(0) // 0 = closed, 1 = open
-  const drawerHeight = useSharedValue(80) // Direct height control
+  // Single source of truth - just the height
+  const height = useSharedValue(80)
 
-  // Notify parent component when navigation state changes
+  // Sync height with isOpen state
   useEffect(() => {
+    height.value = withSpring(isOpen ? 160 : 80, { damping: 20, stiffness: 300 })
     onNavigationStateChange?.(isOpen)
-  }, [isOpen, onNavigationStateChange])
+  }, [isOpen])
 
-  // Track progress changes and notify parent
+  // Notify parent of progress using useDerivedValue
   useDerivedValue(() => {
-    runOnJS(onProgressChange || (() => {}))(gestureProgress.value)
-  }, [gestureProgress, onProgressChange])
+    const progress = (height.value - 80) / 80
+    if (onProgressChange) {
+      runOnJS(onProgressChange)(progress)
+    }
+  })
 
-  const handleNavigation = (screenName: keyof AppStackScreenProps<"Camera">["navigation"]["navigate"]) => {
+  const handleNavigation = (screenName: "Home" | "Gallery" | "Settings") => {
     navigation.navigate(screenName as any)
-    setIsOpen(false) // Close navigation after selection
+    setIsOpen(false)
   }
 
-  const handleToggle = (newState: boolean) => {
-    setIsOpen(newState)
-    
-    // Animate to the new state with spring
-    const targetProgress = newState ? 1 : 0
-    gestureProgress.value = withSpring(targetProgress, {
-      damping: 20,
-      stiffness: 300,
-    })
+  const toggleDrawer = () => {
+    setIsOpen(!isOpen)
   }
 
-  // Pan gesture for fluid swipe tracking
+  // Simple gesture - just toggle on swipe
   const panGesture = Gesture.Pan()
-    .onUpdate((event) => {
-      'worklet'
-      const { translationY } = event
-      
-      // Direct mapping: finger position directly controls drawer height
-      // Positive translationY = swiping down (opening)
-      // Negative translationY = swiping up (closing)
-      const minHeight = 80  // Collapsed height
-      const maxHeight = 160 // Expanded height
-      const heightRange = maxHeight - minHeight
-      
-      // Calculate new height based on gesture start position and current translation
-      const startHeight = isOpen ? maxHeight : minHeight
-      const newHeight = Math.max(minHeight, Math.min(maxHeight, startHeight + translationY))
-      
-      // Update height directly
-      drawerHeight.value = newHeight
-      
-      // Update progress for other animations (opacity, rotation)
-      gestureProgress.value = (newHeight - minHeight) / heightRange
-      translateY.value = translationY
-    })
     .onEnd((event) => {
       'worklet'
       const { translationY, velocityY } = event
-      const currentProgress = gestureProgress.value
       
-      // Determine final state based on progress and velocity
-      let targetProgress = 0
-      let shouldOpen = false
-      
-      if (currentProgress > 0.5) {
-        // More than halfway open
-        targetProgress = 1
-        shouldOpen = true
-      } else if (currentProgress < 0.5) {
-        // Less than halfway open
-        targetProgress = 0
-        shouldOpen = false
-      } else {
-        // Exactly halfway - use velocity to decide
-        if (velocityY > 0) {
-          // Positive velocity (swiping down)
-          targetProgress = 1
-          shouldOpen = true
-        } else {
-          // Negative velocity (swiping up)
-          targetProgress = 0
-          shouldOpen = false
-        }
-      }
-      
-      // Animate to final state
-      const minHeight = 80
-      const maxHeight = 160
-      const targetHeight = shouldOpen ? maxHeight : minHeight
-      
-      drawerHeight.value = withSpring(targetHeight, {
-        damping: 20,
-        stiffness: 300,
-      })
-      
-      gestureProgress.value = withSpring(targetProgress, {
-        damping: 20,
-        stiffness: 300,
-      })
-      translateY.value = withSpring(0, {
-        damping: 20,
-        stiffness: 300,
-      })
-      
-      // Update state if changed
-      if (shouldOpen !== isOpen) {
-        runOnJS(handleToggle)(shouldOpen)
+      // Simple logic: swipe down to open, swipe up to close
+      if (translationY > 20 || velocityY > 500) {
+        runOnJS(setIsOpen)(true)
+      } else if (translationY < -20 || velocityY < -500) {
+        runOnJS(setIsOpen)(false)
       }
     })
 
-  // Animated styles for fluid transitions
-  const animatedNavigationStyle = useAnimatedStyle(() => {
-    const opacity = interpolate(
-      gestureProgress.value,
-      [0, 0.2, 1],
-      [0, 0.5, 1],
-      Extrapolate.CLAMP
-    )
-    
-    return {
-      opacity,
-      // Remove translateY - icons stay within drawer boundaries
-    }
-  })
+  // Simple animated styles
+  const animatedStyle = useAnimatedStyle(() => ({
+    height: height.value,
+  }))
 
-  // Animated container style for dynamic height - direct mapping
-  const animatedContainerStyle = useAnimatedStyle(() => {
-    return {
-      height: drawerHeight.value,
-    }
-  })
-
-  const animatedHandleStyle = useAnimatedStyle(() => {
-    return {
-      // No animations - handle stays static
-    }
-  })
+  const iconsOpacity = useAnimatedStyle(() => ({
+    opacity: isOpen ? 1 : 0,
+  }))
 
   return (
-    <GestureDetector gesture={panGesture}>
-      <Reanimated.View style={[$topNavigation, { paddingTop: insets.top + 4 }, animatedContainerStyle]}>
-        {/* Navigation Icons - Animated */}
-        <Reanimated.View style={[animatedNavigationStyle]}>
-          <View style={$navigationIcons}>
-            <TouchableOpacity 
-              style={$navButton} 
-              onPress={() => handleNavigation("Home")}
-            >
-              <Ionicons name="home" size={24} color="#fff" />
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={$navButton} 
-              onPress={() => handleNavigation("Gallery")}
-            >
-              <Ionicons name="images" size={24} color="#fff" />
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={$navButton} 
-              onPress={() => handleNavigation("Settings")}
-            >
-              <Ionicons name="settings" size={24} color="#fff" />
-            </TouchableOpacity>
-          </View>
-        </Reanimated.View>
-
-        {/* Handle - Always visible with animation */}
+    <>
+      {/* Overlay */}
+      {isOpen && (
         <TouchableOpacity 
-          style={$handleButton} 
-          onPress={() => handleToggle(!isOpen)}
-        >
-          <Reanimated.View style={animatedHandleStyle}>
-            <View style={$handleBar} />
+          style={$overlay}
+          onPress={() => setIsOpen(false)}
+          activeOpacity={1}
+        />
+      )}
+      
+      {/* Drawer */}
+      <GestureDetector gesture={panGesture}>
+        <Reanimated.View style={[$drawer, { paddingTop: insets.top + 4 }, animatedStyle]}>
+          {/* Icons */}
+          <Reanimated.View style={[iconsOpacity]}>
+            <View style={$iconsContainer}>
+              <TouchableOpacity style={$iconButton} onPress={() => handleNavigation("Home")}>
+                <Ionicons name="home" size={24} color="#fff" />
+              </TouchableOpacity>
+              <TouchableOpacity style={$iconButton} onPress={() => handleNavigation("Gallery")}>
+                <Ionicons name="images" size={24} color="#fff" />
+              </TouchableOpacity>
+              <TouchableOpacity style={$iconButton} onPress={() => handleNavigation("Settings")}>
+                <Ionicons name="settings" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
           </Reanimated.View>
-        </TouchableOpacity>
-      </Reanimated.View>
-    </GestureDetector>
+
+          {/* Handle */}
+          <TouchableOpacity style={$handle} onPress={toggleDrawer}>
+            <View style={$handleBar} />
+          </TouchableOpacity>
+        </Reanimated.View>
+      </GestureDetector>
+    </>
   )
 }
 
-// Styles
-const $topNavigation: ViewStyle = {
+// Simple styles
+const $overlay: ViewStyle = {
   position: "absolute",
-  top: 0,
-  left: 0,
-  right: 0,
-  backgroundColor: "rgba(0, 0, 0, 0.95)", // Slightly more opaque
+  top: 0, left: 0, right: 0, bottom: 0,
+  backgroundColor: "transparent",
+  zIndex: 999,
+}
+
+const $drawer: ViewStyle = {
+  position: "absolute",
+  top: 0, left: 0, right: 0,
+  backgroundColor: "rgba(0, 0, 0, 0.95)",
   borderBottomLeftRadius: 20,
   borderBottomRightRadius: 20,
   paddingHorizontal: 20,
-  paddingBottom: 4, // Reduced padding to give more space for content
+  paddingBottom: 4,
   zIndex: 1000,
-  // Add subtle shadow for depth
   shadowColor: "#000",
   shadowOffset: { width: 0, height: 4 },
   shadowOpacity: 0.3,
   shadowRadius: 8,
-  elevation: 8, // Android shadow
-  // Height will be controlled by animatedContainerStyle
+  elevation: 8,
 }
 
-const $navigationIcons: ViewStyle = {
+const $iconsContainer: ViewStyle = {
   flexDirection: "row",
   justifyContent: "space-around",
   alignItems: "center",
-  paddingTop: 12, // Reduced padding
-  paddingBottom: 12, // Increased space between icons and handle
+  paddingTop: 12,
+  paddingBottom: 12,
 }
 
+const $iconButton: ViewStyle = {
+  padding: 12,
+  alignItems: "center",
+  justifyContent: "center",
+  minWidth: 60,
+}
 
-const $handleButton: ViewStyle = {
+const $handle: ViewStyle = {
+  position: "absolute",
+  bottom: 0, left: 0, right: 0,
   paddingVertical: 12,
   paddingHorizontal: 20,
   alignItems: "center",
   justifyContent: "center",
-  position: "absolute",
-  bottom: 0,
-  left: 0,
-  right: 0,
 }
 
 const $handleBar: ViewStyle = {
-  width: 36, // Slightly wider
-  height: 4, // Slightly taller
+  width: 36,
+  height: 4,
   backgroundColor: "#fff",
   borderRadius: 2,
-  // Add subtle shadow for depth
-  shadowColor: "#000",
-  shadowOffset: { width: 0, height: 1 },
-  shadowOpacity: 0.2,
-  shadowRadius: 2,
-  elevation: 1,
-}
-
-const $navButton: ViewStyle = {
-  padding: 12,
-  borderRadius: 20,
-  backgroundColor: "rgba(255, 255, 255, 0.15)", // Slightly more visible
-  alignItems: "center",
-  justifyContent: "center",
-  minWidth: 60,
-  // Add subtle border for better definition
-  borderWidth: 1,
-  borderColor: "rgba(255, 255, 255, 0.2)",
-  // Add subtle shadow
-  shadowColor: "#000",
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.1,
-  shadowRadius: 4,
-  elevation: 2,
 }
