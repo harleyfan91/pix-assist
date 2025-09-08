@@ -152,6 +152,45 @@ export const CameraScreen: FC = function CameraScreen() {
     // TODO: Implement photo capture
   }, [])
 
+  const toggleExposureControls = useCallback(() => {
+    setShowExposureControls(prev => !prev)
+  }, [])
+
+  // Button press states for visual feedback
+  const [shutterPressed, setShutterPressed] = useState(false)
+  const [evPressed, setEvPressed] = useState(false)
+
+  // Create high-priority button gestures that will compete with camera gestures
+  const shutterButtonGesture = Gesture.Tap()
+    .onBegin(() => {
+      'worklet'
+      runOnJS(setShutterPressed)(true)
+    })
+    .onEnd(() => {
+      'worklet'
+      runOnJS(takePhoto)()
+      runOnJS(setShutterPressed)(false)
+    })
+    .onFinalize(() => {
+      'worklet'
+      runOnJS(setShutterPressed)(false)
+    })
+
+  const evButtonGesture = Gesture.Tap()
+    .onBegin(() => {
+      'worklet'
+      runOnJS(setEvPressed)(true)
+    })
+    .onEnd(() => {
+      'worklet'
+      runOnJS(toggleExposureControls)()
+      runOnJS(setEvPressed)(false)
+    })
+    .onFinalize(() => {
+      'worklet'
+      runOnJS(setEvPressed)(false)
+    })
+
   // Handle tap-to-focus
   const handleFocusTap = useCallback(
     async (x: number, y: number) => {
@@ -194,11 +233,13 @@ export const CameraScreen: FC = function CameraScreen() {
     [handleFocusTap],
   )
 
-  // Create tap gesture for focus
-  const tapGesture = Gesture.Tap().onEnd(({ x, y }) => {
-    'worklet'
-    runOnJS(handleFocusTap)(x, y)
-  })
+  // Create tap gesture for focus with lower priority than buttons
+  const tapGesture = Gesture.Tap()
+    .onEnd(({ x, y }) => {
+      'worklet'
+      runOnJS(handleFocusTap)(x, y)
+    })
+    .shouldCancelWhenOutside(true)
 
   // Create long press gesture for AE/AF lock
   const longPressGesture = Gesture.LongPress()
@@ -247,8 +288,8 @@ export const CameraScreen: FC = function CameraScreen() {
       // Optional: Add haptic feedback or snap to center
     })
 
-  // Combine all gestures
-  const composedGesture = Gesture.Simultaneous(tapGesture, longPressGesture, pinchGesture)
+  // Combine camera gestures (focus and zoom) - these compete with button gestures
+  const cameraGestures = Gesture.Simultaneous(tapGesture, longPressGesture, pinchGesture)
 
   // Update camera zoom when zoom value changes
   const [cameraZoom, setCameraZoom] = useState(device?.neutralZoom ?? 1)
@@ -349,7 +390,7 @@ export const CameraScreen: FC = function CameraScreen() {
       />
       
       {/* Camera Content - Moves down when navigation opens */}
-      <GestureDetector gesture={composedGesture}>
+      <GestureDetector gesture={cameraGestures}>
         <Reanimated.View style={[$cameraContainer, animatedCameraContainerStyle]}>
           <View style={StyleSheet.absoluteFill}>
             <ReanimatedCamera
@@ -380,12 +421,14 @@ export const CameraScreen: FC = function CameraScreen() {
             )}
 
             {/* Exposure Controls Toggle Button */}
-            <TouchableOpacity
-              style={$exposureToggleButton}
-              onPress={() => setShowExposureControls(!showExposureControls)}
-            >
-              <Text style={$exposureToggleText}>EV</Text>
-            </TouchableOpacity>
+            <GestureDetector gesture={evButtonGesture}>
+              <View style={[
+                $exposureToggleButton,
+                evPressed && { opacity: 0.6 }
+              ]}>
+                <Text style={$exposureToggleText}>EV</Text>
+              </View>
+            </GestureDetector>
 
             {/* Exposure Controls - Only show when toggled */}
             {showExposureControls && (
@@ -414,9 +457,14 @@ export const CameraScreen: FC = function CameraScreen() {
 
           {/* Shutter Button */}
           <View style={$bottomControls}>
-            <TouchableOpacity style={$shutterButton} onPress={takePhoto}>
-              <View style={$shutterButtonInner} />
-            </TouchableOpacity>
+            <GestureDetector gesture={shutterButtonGesture}>
+              <View style={[
+                $shutterButton,
+                shutterPressed && { opacity: 0.6 }
+              ]}>
+                <View style={$shutterButtonInner} />
+              </View>
+            </GestureDetector>
           </View>
         </Reanimated.View>
       </GestureDetector>
