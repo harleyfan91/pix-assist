@@ -36,6 +36,9 @@ import { TopNavigation } from "@/components/TopNavigation"
 import { useNavigation } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { photoLibraryService } from "@/services/photoLibrary"
+import { useOrientation } from "@/hooks/useOrientation"
+import { useDeviceOrientation } from "@/hooks/useDeviceOrientation"
+import * as ScreenOrientation from 'expo-screen-orientation'
 
 // Enable zoom animation for Reanimated (as per Vision Camera docs)
 Reanimated.addWhitelistedNativeProps({
@@ -47,6 +50,32 @@ export const CameraScreen: FC = function CameraScreen() {
   const [cameraPermission, setCameraPermission] = useState<boolean | null>(null)
   const [isActive] = useState(true) // Always on by default
   const navigation = useNavigation<AppStackScreenProps<"Camera">["navigation"]>()
+  
+  // Orientation detection - use device orientation for UI, screen orientation for camera
+  const { orientation, isLandscape, isPortrait, isLoading } = useOrientation()
+  const deviceOrientation = useDeviceOrientation()
+  
+  // Debug orientation changes
+  useEffect(() => {
+    if (!isLoading) {
+      console.log('CameraScreen orientation:', { orientation, isLandscape, isPortrait })
+    }
+  }, [orientation, isLandscape, isPortrait, isLoading])
+
+  // Lock screen orientation to prevent jarring rotation animation
+  useEffect(() => {
+    const lockOrientation = async () => {
+      try {
+        // Lock to portrait to prevent screen rotation animation
+        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP)
+        console.log("Screen orientation locked to portrait")
+      } catch (error) {
+        console.error("Failed to lock screen orientation:", error)
+      }
+    }
+
+    lockOrientation()
+  }, [])
 
   const { hasPermission, requestPermission } = useCameraPermission()
   // Use camera device with ultra-wide support for zoom out below 1x
@@ -625,6 +654,7 @@ export const CameraScreen: FC = function CameraScreen() {
       <TopNavigation 
         onNavigationStateChange={setIsNavigationOpen}
         onProgressChange={setNavigationProgress}
+        isLandscape={deviceOrientation.isLandscape}
       />
       
       {/* Camera Content - Moves down when navigation opens */}
@@ -670,6 +700,15 @@ export const CameraScreen: FC = function CameraScreen() {
             <Reanimated.View style={[$zoomIndicator, animatedZoomStyle]}>
               <Text style={$zoomText}>{currentZoom.toFixed(1)}x</Text>
             </Reanimated.View>
+
+            {/* Orientation Debug Indicator */}
+            {!isLoading && (
+              <View style={$orientationIndicator}>
+                <Text style={$orientationText}>
+                  {deviceOrientation.isLandscape ? '📱 Device: Landscape' : deviceOrientation.isPortrait ? '📱 Device: Portrait' : '📱 Device: Unknown'}
+                </Text>
+              </View>
+            )}
 
             {/* Focus Ring - Only show when focusing */}
             {showFocusRing && <Reanimated.View style={[$focusRing, animatedFocusRingStyle]} />}
@@ -824,6 +863,19 @@ const $bottomControls: ViewStyle = {
   paddingHorizontal: 40,
 }
 
+// Landscape-specific bottom controls (moved to right side)
+const $bottomControlsLandscape: ViewStyle = {
+  position: "absolute",
+  right: 40,
+  top: "50%",
+  transform: [{ translateY: -120 }], // Center vertically
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "space-between",
+  height: 240, // Space for all controls
+  paddingVertical: 0,
+}
+
 const $leftControlsContainer: ViewStyle = {
   alignItems: "center",
   justifyContent: "center",
@@ -967,6 +1019,22 @@ const $exposureControlsVertical: ViewStyle = {
   zIndex: 2, // Higher than overlay to remain clickable
 }
 
+// Landscape-specific exposure controls (positioned above camera mode button)
+const $exposureControlsVerticalLandscape: ViewStyle = {
+  position: "absolute",
+  right: 40,
+  top: "50%",
+  transform: [{ translateY: -200 }], // Position above camera mode button
+  width: 60,
+  height: 200,
+  backgroundColor: "rgba(255, 255, 255, 0.2)",
+  borderRadius: 30,
+  justifyContent: "center",
+  alignItems: "center",
+  overflow: "hidden",
+  zIndex: 2,
+}
+
 const $exposureSliderContainer: ViewStyle = {
   flexDirection: "column",
   alignItems: "center",
@@ -1025,10 +1093,48 @@ const $zoomIndicator: ViewStyle = {
   borderRadius: 16,
 }
 
+// Landscape-specific zoom indicator (moved to top-right)
+const $zoomIndicatorLandscape: ViewStyle = {
+  position: "absolute",
+  top: 60,
+  right: 20,
+  backgroundColor: "rgba(0, 0, 0, 0.6)",
+  paddingHorizontal: 12,
+  paddingVertical: 6,
+  borderRadius: 16,
+}
+
 const $zoomText: TextStyle = {
   color: "#fff",
   fontSize: 14,
   fontWeight: "bold",
+}
+
+const $orientationIndicator: ViewStyle = {
+  position: "absolute",
+  top: 100,
+  left: 20,
+  backgroundColor: "rgba(0, 0, 0, 0.7)",
+  paddingHorizontal: 12,
+  paddingVertical: 6,
+  borderRadius: 8,
+}
+
+// Landscape-specific orientation indicator (moved to top-left, below zoom)
+const $orientationIndicatorLandscape: ViewStyle = {
+  position: "absolute",
+  top: 100,
+  left: 20,
+  backgroundColor: "rgba(0, 0, 0, 0.7)",
+  paddingHorizontal: 12,
+  paddingVertical: 6,
+  borderRadius: 8,
+}
+
+const $orientationText: TextStyle = {
+  color: "#fff",
+  fontSize: 12,
+  fontWeight: "600",
 }
 
 const $focusRing: ViewStyle = {

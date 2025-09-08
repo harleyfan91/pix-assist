@@ -16,9 +16,10 @@ import { AppStackScreenProps } from "@/navigators/AppNavigator"
 interface TopNavigationProps {
   onNavigationStateChange?: (isOpen: boolean) => void
   onProgressChange?: (progress: number) => void
+  isLandscape?: boolean
 }
 
-export const TopNavigation: React.FC<TopNavigationProps> = ({ onNavigationStateChange, onProgressChange }) => {
+export const TopNavigation: React.FC<TopNavigationProps> = ({ onNavigationStateChange, onProgressChange, isLandscape = false }) => {
   const navigation = useNavigation<AppStackScreenProps<"Camera">["navigation"]>()
   const insets = useSafeAreaInsets()
   const [isOpen, setIsOpen] = useState(false)
@@ -90,13 +91,28 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({ onNavigationStateC
           <Reanimated.View style={[iconsOpacity]}>
             <View style={$iconsContainer}>
               <TouchableOpacity style={$iconButton} onPress={() => handleNavigation("Home")}>
-                <Ionicons name="home-outline" size={24} color="#fff" />
+                <Ionicons 
+                  name="home-outline" 
+                  size={24} 
+                  color="#fff" 
+                  style={{ transform: [{ rotate: isLandscape ? '90deg' : '0deg' }] }}
+                />
               </TouchableOpacity>
               <TouchableOpacity style={$iconButton} onPress={() => handleNavigation("Templates")}>
-                <Ionicons name="grid-outline" size={24} color="#fff" />
+                <Ionicons 
+                  name="grid-outline" 
+                  size={24} 
+                  color="#fff" 
+                  style={{ transform: [{ rotate: isLandscape ? '90deg' : '0deg' }] }}
+                />
               </TouchableOpacity>
               <TouchableOpacity style={$iconButton} onPress={() => handleNavigation("Settings")}>
-                <Ionicons name="settings-outline" size={24} color="#fff" />
+                <Ionicons 
+                  name="settings-outline" 
+                  size={24} 
+                  color="#fff" 
+                  style={{ transform: [{ rotate: isLandscape ? '90deg' : '0deg' }] }}
+                />
               </TouchableOpacity>
             </View>
           </Reanimated.View>

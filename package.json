@@ -82,7 +82,9 @@
     "react-native-vision-camera": "^4.7.2",
     "react-native-web": "^0.20.0",
     "zustand": "^5.0.8",
-    "expo-media-library": "~17.1.7"
+    "expo-media-library": "~17.1.7",
+    "expo-screen-orientation": "~8.1.7",
+    "expo-sensors": "~14.1.4"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
