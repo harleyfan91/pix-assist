@@ -106,7 +106,6 @@ const $presets: Record<Presets, ThemedStyleArray<TextStyle>> = {
     $baseStyle,
     {
       ...$sizeStyles.xxl,
-      ...$fontWeightStyles.bold,
     },
   ],
   subheading: [$baseStyle, { ...$sizeStyles.lg, ...$fontWeightStyles.medium }],

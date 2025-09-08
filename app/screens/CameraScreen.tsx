@@ -524,7 +524,14 @@ export const CameraScreen: FC = function CameraScreen() {
   const tapGesture = Gesture.Tap()
     .onEnd(({ x, y }) => {
       'worklet'
-      runOnJS(handleFocusTap)(x, y)
+      // Only handle focus tap if not in bottom controls area
+      // Bottom controls are typically in the bottom 120px of the screen
+      const bottomControlsHeight = 120
+      const isInBottomControls = y > (800 - bottomControlsHeight) // Approximate screen height
+      
+      if (!isInBottomControls) {
+        runOnJS(handleFocusTap)(x, y)
+      }
     })
     .shouldCancelWhenOutside(true)
 
@@ -627,7 +634,17 @@ export const CameraScreen: FC = function CameraScreen() {
     // Map slider value (-1 to 1) to a conservative portion of device exposure range
     const range = device.maxExposure - device.minExposure
     const conservativeRange = range * 0.3 // Use only 30% of the full range
-    return interpolate(exposureSlider.value, [-1, 0, 1], [-conservativeRange/2, 0, conservativeRange/2])
+    const mappedValue = interpolate(exposureSlider.value, [-1, 0, 1], [-conservativeRange/2, 0, conservativeRange/2])
+    
+    // Debug logging
+    console.log('Exposure mapping:', {
+      sliderValue: exposureSlider.value.toFixed(2),
+      mappedValue: mappedValue.toFixed(2),
+      deviceRange: range.toFixed(2),
+      conservativeRange: conservativeRange.toFixed(2)
+    })
+    
+    return mappedValue
   }, [exposureSlider, device])
 
   // Create animated style for zoom indicator visibility
@@ -799,6 +816,7 @@ export const CameraScreen: FC = function CameraScreen() {
               video
               zoom={cameraZoom}
               enableZoomGesture={false} // We're using custom gesture
+              enableExposure={true} // Enable exposure control
               animatedProps={animatedCameraProps}
               onError={(error) => {
                 console.error('Camera error:', error)
@@ -1015,6 +1033,7 @@ const $bottomControls: ViewStyle = {
   alignItems: "center",
   justifyContent: "space-between",
   paddingHorizontal: 40,
+  zIndex: 100, // Ensure controls are above camera gestures
 }
 
 // Landscape-specific bottom controls (moved to right side)

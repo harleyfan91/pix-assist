@@ -82,7 +82,7 @@ export const GalleryScreen: FC = function GalleryScreen() {
   return (
     <Screen preset="fixed" contentContainerStyle={$container}>
       <View style={$header}>
-        <Text preset="heading" text="🖼️ Gallery" />
+        <Text preset="heading" text="Gallery" />
         <TouchableOpacity onPress={loadPhotos} style={$refreshButton}>
           <Ionicons name="refresh-outline" size={24} color="#007AFF" />
         </TouchableOpacity>
@@ -113,6 +113,7 @@ export const GalleryScreen: FC = function GalleryScreen() {
 
 const $container: ViewStyle = {
   flex: 1,
+  backgroundColor: 'rgba(255, 255, 255, 0.2)',
 }
 
 const $header: ViewStyle = {
@@ -139,15 +140,16 @@ const $photoGrid: ViewStyle = {
 
 const $row: ViewStyle = {
   justifyContent: 'space-between',
-  marginBottom: 2,
+  marginBottom: 4,
 }
 
 const $photoContainer: ViewStyle = {
-  width: '32%',
-  aspectRatio: 1,
-  borderRadius: 8,
+  width: '31.5%',
+  aspectRatio: 0.8,
+  borderRadius: 4,
   overflow: 'hidden',
   backgroundColor: '#f0f0f0',
+  marginBottom: 4,
 }
 
 const $photoImage: ImageStyle = {
