@@ -1,83 +1,226 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { View, ViewStyle, TouchableOpacity } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useNavigation } from "@react-navigation/native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Gesture, GestureDetector } from "react-native-gesture-handler"
-import { runOnJS } from "react-native-reanimated"
+import Reanimated, { 
+  runOnJS, 
+  useSharedValue, 
+  useAnimatedStyle, 
+  useDerivedValue,
+  withSpring,
+  interpolate,
+  Extrapolate
+} from "react-native-reanimated"
 import { AppStackScreenProps } from "@/navigators/AppNavigator"
 
-export const TopNavigation: React.FC = () => {
+interface TopNavigationProps {
+  onNavigationStateChange?: (isOpen: boolean) => void
+  onProgressChange?: (progress: number) => void
+}
+
+export const TopNavigation: React.FC<TopNavigationProps> = ({ onNavigationStateChange, onProgressChange }) => {
   const navigation = useNavigation<AppStackScreenProps<"Camera">["navigation"]>()
   const insets = useSafeAreaInsets()
   const [isOpen, setIsOpen] = useState(false)
+
+  // Shared values for fluid animation
+  const translateY = useSharedValue(0)
+  const gestureProgress = useSharedValue(0) // 0 = closed, 1 = open
+
+  // Notify parent component when navigation state changes
+  useEffect(() => {
+    onNavigationStateChange?.(isOpen)
+  }, [isOpen, onNavigationStateChange])
+
+  // Track progress changes and notify parent
+  useDerivedValue(() => {
+    runOnJS(onProgressChange || (() => {}))(gestureProgress.value)
+  }, [gestureProgress, onProgressChange])
 
   const handleNavigation = (screenName: keyof AppStackScreenProps<"Camera">["navigation"]["navigate"]) => {
     navigation.navigate(screenName as any)
     setIsOpen(false) // Close navigation after selection
   }
 
-  // Pan gesture for swipe up/down
+  const handleToggle = (newState: boolean) => {
+    setIsOpen(newState)
+    
+    // Animate to the new state with spring
+    const targetProgress = newState ? 1 : 0
+    gestureProgress.value = withSpring(targetProgress, {
+      damping: 20,
+      stiffness: 300,
+    })
+  }
+
+  // Pan gesture for fluid swipe tracking
   const panGesture = Gesture.Pan()
+    .onUpdate((event) => {
+      'worklet'
+      const { translationY } = event
+      
+      // Calculate progress based on translation
+      // Positive translationY = swiping down (opening)
+      // Negative translationY = swiping up (closing)
+      const maxTranslation = 100 // Maximum translation distance
+      const currentProgress = gestureProgress.value
+      
+      // Calculate new progress based on gesture
+      let newProgress = currentProgress
+      if (translationY > 0) {
+        // Swiping down - opening
+        newProgress = Math.min(1, currentProgress + (translationY / maxTranslation))
+      } else {
+        // Swiping up - closing
+        newProgress = Math.max(0, currentProgress + (translationY / maxTranslation))
+      }
+      
+      // Update progress and translateY
+      gestureProgress.value = newProgress
+      translateY.value = translationY
+    })
     .onEnd((event) => {
       'worklet'
       const { translationY, velocityY } = event
+      const currentProgress = gestureProgress.value
       
-      // Swipe down to open (when closed)
-      if (!isOpen && translationY > 20 && velocityY > 500) {
-        runOnJS(setIsOpen)(true)
+      // Determine final state based on progress and velocity
+      let targetProgress = 0
+      let shouldOpen = false
+      
+      if (currentProgress > 0.5) {
+        // More than halfway open
+        targetProgress = 1
+        shouldOpen = true
+      } else if (currentProgress < 0.5) {
+        // Less than halfway open
+        targetProgress = 0
+        shouldOpen = false
+      } else {
+        // Exactly halfway - use velocity to decide
+        if (velocityY > 0) {
+          // Positive velocity (swiping down)
+          targetProgress = 1
+          shouldOpen = true
+        } else {
+          // Negative velocity (swiping up)
+          targetProgress = 0
+          shouldOpen = false
+        }
       }
-      // Swipe up to close (when open)
-      else if (isOpen && translationY < -20 && velocityY < -500) {
-        runOnJS(setIsOpen)(false)
+      
+      // Animate to final state
+      gestureProgress.value = withSpring(targetProgress, {
+        damping: 20,
+        stiffness: 300,
+      })
+      translateY.value = withSpring(0, {
+        damping: 20,
+        stiffness: 300,
+      })
+      
+      // Update state if changed
+      if (shouldOpen !== isOpen) {
+        runOnJS(handleToggle)(shouldOpen)
       }
     })
 
-  if (!isOpen) {
-    // Show just the handle when closed
-    return (
-      <GestureDetector gesture={panGesture}>
-        <View style={[$topHandle, { paddingTop: insets.top + 6 }]}>
-          <TouchableOpacity style={$handleButton} onPress={() => setIsOpen(true)}>
-            <View style={$handleBar} />
-          </TouchableOpacity>
-        </View>
-      </GestureDetector>
+  // Animated styles for fluid transitions
+  const animatedNavigationStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      gestureProgress.value,
+      [0, 0.2, 1],
+      [0, 0.5, 1],
+      Extrapolate.CLAMP
     )
-  }
+    
+    const scale = interpolate(
+      gestureProgress.value,
+      [0, 0.5, 1],
+      [0.8, 0.9, 1],
+      Extrapolate.CLAMP
+    )
+    
+    return {
+      opacity,
+      transform: [
+        { scale },
+        { translateY: translateY.value * 0.3 } // Subtle follow effect
+      ],
+    }
+  })
+
+  // Animated container style for dynamic height
+  const animatedContainerStyle = useAnimatedStyle(() => {
+    const height = interpolate(
+      gestureProgress.value,
+      [0, 1],
+      [80, 160], // Collapsed: 80px (increased for better accessibility), Expanded: 160px
+      Extrapolate.CLAMP
+    )
+    
+    return {
+      height,
+    }
+  })
+
+  const animatedHandleStyle = useAnimatedStyle(() => {
+    const rotation = interpolate(
+      gestureProgress.value,
+      [0, 1],
+      [0, 180],
+      Extrapolate.CLAMP
+    )
+    
+    return {
+      transform: [
+        { rotate: `${rotation}deg` },
+        { translateY: translateY.value * 0.1 }
+      ],
+    }
+  })
 
   return (
     <GestureDetector gesture={panGesture}>
-      <View style={[$topNavigation, { paddingTop: insets.top + 10 }]}>
-        {/* Handle */}
-        <TouchableOpacity style={$handleButton} onPress={() => setIsOpen(false)}>
-          <View style={$handleBar} />
+      <Reanimated.View style={[$topNavigation, { paddingTop: insets.top + 4 }, animatedContainerStyle]}>
+        {/* Navigation Icons - Animated */}
+        <Reanimated.View style={[animatedNavigationStyle]}>
+          <View style={$navigationIcons}>
+            <TouchableOpacity 
+              style={$navButton} 
+              onPress={() => handleNavigation("Home")}
+            >
+              <Ionicons name="home" size={24} color="#fff" />
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={$navButton} 
+              onPress={() => handleNavigation("Gallery")}
+            >
+              <Ionicons name="images" size={24} color="#fff" />
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={$navButton} 
+              onPress={() => handleNavigation("Settings")}
+            >
+              <Ionicons name="settings" size={24} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        </Reanimated.View>
+
+        {/* Handle - Always visible with animation */}
+        <TouchableOpacity 
+          style={$handleButton} 
+          onPress={() => handleToggle(!isOpen)}
+        >
+          <Reanimated.View style={animatedHandleStyle}>
+            <View style={$handleBar} />
+          </Reanimated.View>
         </TouchableOpacity>
-
-        {/* Navigation Icons */}
-        <View style={$navigationIcons}>
-          <TouchableOpacity 
-            style={$navButton} 
-            onPress={() => handleNavigation("Home")}
-          >
-            <Ionicons name="home" size={24} color="#fff" />
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={$navButton} 
-            onPress={() => handleNavigation("Gallery")}
-          >
-            <Ionicons name="images" size={24} color="#fff" />
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={$navButton} 
-            onPress={() => handleNavigation("Settings")}
-          >
-            <Ionicons name="settings" size={24} color="#fff" />
-          </TouchableOpacity>
-        </View>
-      </View>
+      </Reanimated.View>
     </GestureDetector>
   )
 }
@@ -88,52 +231,68 @@ const $topNavigation: ViewStyle = {
   top: 0,
   left: 0,
   right: 0,
-  backgroundColor: "rgba(0, 0, 0, 0.9)",
+  backgroundColor: "rgba(0, 0, 0, 0.95)", // Slightly more opaque
   borderBottomLeftRadius: 20,
   borderBottomRightRadius: 20,
   paddingHorizontal: 20,
-  paddingBottom: 15,
+  paddingBottom: 4, // Reduced padding to give more space for content
   zIndex: 1000,
-}
-
-const $topHandle: ViewStyle = {
-  position: "absolute",
-  top: 0,
-  left: 0,
-  right: 0,
-  backgroundColor: "rgba(0, 0, 0, 0.7)",
-  borderBottomLeftRadius: 20,
-  borderBottomRightRadius: 20,
-  paddingBottom: 8,
-  alignItems: "center",
-  zIndex: 1000,
-}
-
-const $handleButton: ViewStyle = {
-  paddingVertical: 4,
-  paddingHorizontal: 20,
-  alignItems: "center",
-}
-
-const $handleBar: ViewStyle = {
-  width: 32,
-  height: 3,
-  backgroundColor: "#fff",
-  borderRadius: 2,
+  // Add subtle shadow for depth
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.3,
+  shadowRadius: 8,
+  elevation: 8, // Android shadow
+  // Height will be controlled by animatedContainerStyle
 }
 
 const $navigationIcons: ViewStyle = {
   flexDirection: "row",
   justifyContent: "space-around",
   alignItems: "center",
-  paddingTop: 16,
+  paddingTop: 12, // Reduced padding
+  paddingBottom: 12, // Increased space between icons and handle
+}
+
+
+const $handleButton: ViewStyle = {
+  paddingVertical: 12,
+  paddingHorizontal: 20,
+  alignItems: "center",
+  justifyContent: "center",
+  position: "absolute",
+  bottom: 0,
+  left: 0,
+  right: 0,
+}
+
+const $handleBar: ViewStyle = {
+  width: 36, // Slightly wider
+  height: 4, // Slightly taller
+  backgroundColor: "#fff",
+  borderRadius: 2,
+  // Add subtle shadow for depth
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 1 },
+  shadowOpacity: 0.2,
+  shadowRadius: 2,
+  elevation: 1,
 }
 
 const $navButton: ViewStyle = {
   padding: 12,
   borderRadius: 20,
-  backgroundColor: "rgba(255, 255, 255, 0.1)",
+  backgroundColor: "rgba(255, 255, 255, 0.15)", // Slightly more visible
   alignItems: "center",
   justifyContent: "center",
   minWidth: 60,
+  // Add subtle border for better definition
+  borderWidth: 1,
+  borderColor: "rgba(255, 255, 255, 0.2)",
+  // Add subtle shadow
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.1,
+  shadowRadius: 4,
+  elevation: 2,
 }

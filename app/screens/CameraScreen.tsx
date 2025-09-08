@@ -17,6 +17,7 @@ import Reanimated, {
   useDerivedValue,
   runOnJS,
   interpolate,
+  withTiming,
 } from "react-native-reanimated"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Camera, useCameraDevice, useCameraPermission } from "react-native-vision-camera"
@@ -66,9 +67,22 @@ export const CameraScreen: FC = function CameraScreen() {
   const [showExposureControls, setShowExposureControls] = useState(false)
   const [currentEV, setCurrentEV] = useState("0.0 EV")
 
+  // Navigation state for camera animation
+  const [isNavigationOpen, setIsNavigationOpen] = useState(false)
+  const [navigationProgress, setNavigationProgress] = useState(0) // 0-1 progress
+  const cameraOffset = useSharedValue(0) // Camera push-up offset
+
   useEffect(() => {
     setCameraPermission(hasPermission)
   }, [hasPermission])
+
+  // Animate camera offset based on navigation progress
+  useEffect(() => {
+    const targetOffset = navigationProgress * 80 // 0-80px based on progress
+    cameraOffset.value = withTiming(targetOffset, {
+      duration: 100, // Very fast for real-time tracking
+    })
+  }, [navigationProgress, cameraOffset])
 
   // Initialize zoom with device's neutral zoom when device changes
   useEffect(() => {
@@ -244,6 +258,13 @@ export const CameraScreen: FC = function CameraScreen() {
     runOnJS(setCameraZoom)(zoom.value)
   })
 
+  // Animated style for camera container push-up effect
+  const animatedCameraContainerStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateY: cameraOffset.value }],
+    }
+  })
+
   // Map exposure slider to conservative EV range (-0.7 to +0.7 EV)
   const exposureValue = useDerivedValue(() => {
     if (!device) return 0
@@ -320,80 +341,86 @@ export const CameraScreen: FC = function CameraScreen() {
   }
 
   return (
-    <GestureDetector gesture={composedGesture}>
-      <View style={$cameraContainer}>
-        <View style={StyleSheet.absoluteFill}>
-          <ReanimatedCamera
-            {...({ ref: _cameraRef } as any)}
-            isActive={isActive}
-            device={device}
-            style={StyleSheet.absoluteFill}
-            photo
-            video
-            zoom={cameraZoom}
-            enableZoomGesture={false} // We're using custom gesture
-            animatedProps={animatedCameraProps}
-          />
+    <View style={$container}>
+      {/* Top Navigation - Fixed at top, independent of camera movement */}
+      <TopNavigation 
+        onNavigationStateChange={setIsNavigationOpen}
+        onProgressChange={setNavigationProgress}
+      />
+      
+      {/* Camera Content - Moves down when navigation opens */}
+      <GestureDetector gesture={composedGesture}>
+        <Reanimated.View style={[$cameraContainer, animatedCameraContainerStyle]}>
+          <View style={StyleSheet.absoluteFill}>
+            <ReanimatedCamera
+              {...({ ref: _cameraRef } as any)}
+              isActive={isActive}
+              device={device}
+              style={StyleSheet.absoluteFill}
+              photo
+              video
+              zoom={cameraZoom}
+              enableZoomGesture={false} // We're using custom gesture
+              animatedProps={animatedCameraProps}
+            />
 
-          {/* Zoom Indicator - Only show when zoomed */}
-          <Reanimated.View style={[$zoomIndicator, animatedZoomStyle]}>
-            <Text style={$zoomText}>{currentZoom.toFixed(1)}x</Text>
-          </Reanimated.View>
+            {/* Zoom Indicator - Only show when zoomed */}
+            <Reanimated.View style={[$zoomIndicator, animatedZoomStyle]}>
+              <Text style={$zoomText}>{currentZoom.toFixed(1)}x</Text>
+            </Reanimated.View>
 
-          {/* Focus Ring - Only show when focusing */}
-          {showFocusRing && <Reanimated.View style={[$focusRing, animatedFocusRingStyle]} />}
+            {/* Focus Ring - Only show when focusing */}
+            {showFocusRing && <Reanimated.View style={[$focusRing, animatedFocusRingStyle]} />}
 
-          {/* AE/AF Lock Indicator - Only show when locked */}
-          {isFocusLocked && (
-            <View style={$aeLockIndicator}>
-              <Text style={$aeLockText}>AE/AF LOCK</Text>
-            </View>
-          )}
-
-          {/* Exposure Controls Toggle Button */}
-          <TouchableOpacity
-            style={$exposureToggleButton}
-            onPress={() => setShowExposureControls(!showExposureControls)}
-          >
-            <Text style={$exposureToggleText}>EV</Text>
-          </TouchableOpacity>
-
-          {/* Exposure Controls - Only show when toggled */}
-          {showExposureControls && (
-            <View style={$exposureControls}>
-              <Text style={$exposureLabel}>Exposure</Text>
-              <Text style={$exposureCurrentValue}>
-                {currentEV}
-              </Text>
-              <View style={$exposureSliderContainer}>
-                <Text style={$exposureValue}>-0.7</Text>
-                <View style={$exposureSlider}>
-                  <View style={$exposureSliderTrack}>
-                    <Reanimated.View 
-                      style={[$exposureSliderThumb, animatedThumbStyle]} 
-                    />
-                  </View>
-                  <GestureDetector gesture={exposurePanGesture}>
-                    <View style={$exposureSliderArea} />
-                  </GestureDetector>
-                </View>
-                <Text style={$exposureValue}>+0.7</Text>
+            {/* AE/AF Lock Indicator - Only show when locked */}
+            {isFocusLocked && (
+              <View style={$aeLockIndicator}>
+                <Text style={$aeLockText}>AE/AF LOCK</Text>
               </View>
-            </View>
-          )}
-        </View>
+            )}
 
-        {/* Shutter Button */}
-        <View style={$bottomControls}>
-          <TouchableOpacity style={$shutterButton} onPress={takePhoto}>
-            <View style={$shutterButtonInner} />
-          </TouchableOpacity>
-        </View>
+            {/* Exposure Controls Toggle Button */}
+            <TouchableOpacity
+              style={$exposureToggleButton}
+              onPress={() => setShowExposureControls(!showExposureControls)}
+            >
+              <Text style={$exposureToggleText}>EV</Text>
+            </TouchableOpacity>
 
-        {/* Top Navigation */}
-        <TopNavigation />
-      </View>
-    </GestureDetector>
+            {/* Exposure Controls - Only show when toggled */}
+            {showExposureControls && (
+              <View style={$exposureControls}>
+                <Text style={$exposureLabel}>Exposure</Text>
+                <Text style={$exposureCurrentValue}>
+                  {currentEV}
+                </Text>
+                <View style={$exposureSliderContainer}>
+                  <Text style={$exposureValue}>-0.7</Text>
+                  <View style={$exposureSlider}>
+                    <View style={$exposureSliderTrack}>
+                      <Reanimated.View 
+                        style={[$exposureSliderThumb, animatedThumbStyle]} 
+                      />
+                    </View>
+                    <GestureDetector gesture={exposurePanGesture}>
+                      <View style={$exposureSliderArea} />
+                    </GestureDetector>
+                  </View>
+                  <Text style={$exposureValue}>+0.7</Text>
+                </View>
+              </View>
+            )}
+          </View>
+
+          {/* Shutter Button */}
+          <View style={$bottomControls}>
+            <TouchableOpacity style={$shutterButton} onPress={takePhoto}>
+              <View style={$shutterButtonInner} />
+            </TouchableOpacity>
+          </View>
+        </Reanimated.View>
+      </GestureDetector>
+    </View>
   )
 }
 
@@ -483,7 +510,7 @@ const $aeLockText: TextStyle = {
 // Exposure Controls Styles
 const $exposureToggleButton: ViewStyle = {
   position: "absolute",
-  top: 60,
+  top: 100, // Moved down to avoid navigation drawer
   right: 20,
   backgroundColor: "rgba(0, 0, 0, 0.6)",
   paddingHorizontal: 12,
