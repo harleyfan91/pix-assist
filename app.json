@@ -25,7 +25,10 @@
     "edgeToEdgeEnabled": true,
     "permissions": [
       "android.permission.CAMERA",
-      "android.permission.RECORD_AUDIO"
+      "android.permission.RECORD_AUDIO",
+      "android.permission.READ_MEDIA_IMAGES",
+      "android.permission.READ_MEDIA_VIDEO",
+      "android.permission.READ_EXTERNAL_STORAGE"
     ]
   },
   "ios": {
@@ -34,7 +37,9 @@
     "bundleIdentifier": "com.pixassist",
     "infoPlist": {
       "NSCameraUsageDescription": "This app needs access to camera to take photos.",
-      "NSMicrophoneUsageDescription": "This app needs access to microphone for video recording."
+      "NSMicrophoneUsageDescription": "This app needs access to microphone for video recording.",
+      "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to display and manage your photos.",
+      "NSPhotoLibraryAddUsageDescription": "This app needs permission to add photos to your photo library."
     }
   },
   "web": {
