@@ -20,6 +20,7 @@ import Reanimated, {
   runOnJS,
   interpolate,
   withTiming,
+  withSpring,
 } from "react-native-reanimated"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Camera, useCameraDevice, useCameraPermission } from "react-native-vision-camera"
@@ -70,7 +71,9 @@ export const CameraScreen: FC = function CameraScreen() {
   // Exposure state
   const exposureSlider = useSharedValue(0) // -1 to 1 range
   const [showExposureControls, setShowExposureControls] = useState(false)
+  const [isExposureControlsVisible, setIsExposureControlsVisible] = useState(false) // Controls actual rendering
   const [sliderValue, setSliderValue] = useState(0) // -1 to 1 range for Gluestack Slider
+  const exposureControlsAnimation = useSharedValue(0) // 0 = closed, 1 = open
 
   // Navigation state for camera animation
   const [isNavigationOpen, setIsNavigationOpen] = useState(false)
@@ -96,10 +99,34 @@ export const CameraScreen: FC = function CameraScreen() {
   // Animate camera mode button expansion
   useEffect(() => {
     console.log("Animation effect triggered, isCameraModeExpanded:", isCameraModeExpanded)
-    cameraModeExpansion.value = withTiming(isCameraModeExpanded ? 1 : 0, {
-      duration: 300, // Smooth 300ms animation
+    cameraModeExpansion.value = withSpring(isCameraModeExpanded ? 1 : 0, {
+      damping: 20,
+      stiffness: 300,
     })
   }, [isCameraModeExpanded, cameraModeExpansion])
+
+  // Handle exposure controls visibility and animation
+  useEffect(() => {
+    if (showExposureControls) {
+      // Opening: show component and animate in
+      setIsExposureControlsVisible(true)
+      exposureControlsAnimation.value = withSpring(1, { 
+        damping: 20, 
+        stiffness: 300 
+      })
+    } else {
+      // Closing: animate out first, then hide component
+      exposureControlsAnimation.value = withSpring(0, { 
+        damping: 20, 
+        stiffness: 300 
+      }, (finished) => {
+        if (finished) {
+          // Animation completed, now hide the component
+          runOnJS(setIsExposureControlsVisible)(false)
+        }
+      })
+    }
+  }, [showExposureControls, exposureControlsAnimation])
 
   // Initialize zoom with device's neutral zoom when device changes
   useEffect(() => {
@@ -429,16 +456,23 @@ export const CameraScreen: FC = function CameraScreen() {
     }
   })
 
-  // Create animated style for exposure controls
+  // Create animated style for exposure controls (slide from bottom + scale)
   const animatedExposureControlsStyle = useAnimatedStyle(() => {
     return {
-      opacity: showExposureControls ? 1 : 0,
+      opacity: exposureControlsAnimation.value,
       transform: [
         {
           scale: interpolate(
-            showExposureControls ? 1 : 0,
+            exposureControlsAnimation.value,
             [0, 1],
-            [0.8, 1] // Slight scale animation
+            [0.9, 1] // Slight scale animation
+          )
+        },
+        {
+          translateY: interpolate(
+            exposureControlsAnimation.value,
+            [0, 1],
+            [50, 0] // Slide up from 50px below
           )
         }
       ],
@@ -526,44 +560,57 @@ export const CameraScreen: FC = function CameraScreen() {
 
 
             {/* Exposure Controls - Gluestack Slider */}
-            {showExposureControls && (
+            {isExposureControlsVisible && (
               <Reanimated.View style={[$exposureControlsVertical, animatedExposureControlsStyle]}>
-                <View style={$exposureSliderContainer}>
-                  <Text style={$exposureLabel}>+2</Text>
-                  <Slider
-                    value={sliderValue}
-                    onChange={(value: any) => {
-                      console.log('Slider onChange:', value, typeof value)
-                      const numValue = typeof value === 'number' ? value : parseFloat(value)
-                      
-                      // Validate the value to prevent NaN
-                      if (isNaN(numValue) || !isFinite(numValue)) {
-                        console.log('Invalid slider value, skipping update')
-                        return
-                      }
-                      
-                      // Clamp the value to valid range
-                      const clampedValue = Math.max(-1, Math.min(1, numValue))
-                      
-                      setSliderValue(clampedValue)
-                      exposureSlider.value = clampedValue
-                    }}
-                    minValue={-1}
-                    maxValue={1}
-                    step={0.01}
-                    orientation="vertical"
-                    style={$gluestackSlider}
-                  >
-                    <SliderTrack style={$sliderTrack}>
-                      <SliderFilledTrack style={$sliderFilledTrack} />
-                    </SliderTrack>
-                    <SliderThumb style={$sliderThumb} />
-                  </Slider>
-                  <Text style={$exposureLabel}>-2</Text>
-                </View>
-              </Reanimated.View>
+                  <View style={$exposureSliderContainer}>
+                    <Text style={$exposureLabel}>+2</Text>
+                    <Slider
+                      value={sliderValue}
+                      onChange={(value: any) => {
+                        console.log('Slider onChange:', value, typeof value)
+                        const numValue = typeof value === 'number' ? value : parseFloat(value)
+                        
+                        // Validate the value to prevent NaN
+                        if (isNaN(numValue) || !isFinite(numValue)) {
+                          console.log('Invalid slider value, skipping update')
+                          return
+                        }
+                        
+                        // Clamp the value to valid range
+                        const clampedValue = Math.max(-1, Math.min(1, numValue))
+                        
+                        setSliderValue(clampedValue)
+                        exposureSlider.value = clampedValue
+                      }}
+                      minValue={-1}
+                      maxValue={1}
+                      step={0.01}
+                      orientation="vertical"
+                      style={$gluestackSlider}
+                    >
+                      <SliderTrack style={$sliderTrack}>
+                        <SliderFilledTrack style={$sliderFilledTrack} />
+                      </SliderTrack>
+                      <SliderThumb style={$sliderThumb} />
+                    </Slider>
+                    <Text style={$exposureLabel}>-2</Text>
+                  </View>
+                </Reanimated.View>
             )}
           </View>
+
+          {/* Unified click away overlay for both menus */}
+          {(isCameraModeExpanded || showExposureControls) && (
+            <TouchableOpacity 
+              style={$unifiedOverlay}
+              onPress={() => {
+                // Close both menus when clicking away
+                if (isCameraModeExpanded) setIsCameraModeExpanded(false)
+                if (showExposureControls) setShowExposureControls(false)
+              }}
+              activeOpacity={1}
+            />
+          )}
 
           {/* Bottom Controls - iPhone-style layout */}
           <View style={$bottomControls}>
@@ -713,6 +760,7 @@ const $cameraModeButton: ViewStyle = {
   justifyContent: "center", // Center content when collapsed
   alignItems: "center",
   overflow: "hidden",
+  zIndex: 2, // Higher than overlay to remain clickable
 }
 
 const $chevronContainer: ViewStyle = {
@@ -759,6 +807,7 @@ const $exposureControlsVertical: ViewStyle = {
   justifyContent: "center",
   alignItems: "center",
   overflow: "hidden",
+  zIndex: 2, // Higher than overlay to remain clickable
 }
 
 const $exposureSliderContainer: ViewStyle = {
@@ -795,6 +844,16 @@ const $exposureLabel: TextStyle = {
   color: "#fff",
   fontSize: 10,
   fontWeight: "bold",
+}
+
+const $unifiedOverlay: ViewStyle = {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: "transparent",
+  zIndex: 1,
 }
 
 

@@ -7,8 +7,13 @@ PixAssist is a modern React Native application that provides camera functionalit
 ## Features
 
 - 📱 **Bottom Tab Navigation** - Easy access to Home, Camera, Gallery, and Settings
-- 🎨 **Gluestack UI Integration** - Modern, accessible UI components
-- 📷 **Vision Camera** - Full-screen camera with permission handling
+- 🎨 **Gluestack UI Integration** - Modern, accessible UI components with consistent theming
+- 📷 **Advanced Camera Interface** - Full-screen camera with professional controls
+- 🎛️ **Expandable Camera Controls** - iPhone-style camera mode button with smooth animations
+- 📊 **Exposure Controls** - Vertical scrubber bar with Gluestack UI Slider
+- 🎬 **Smooth Animations** - Spring-based animations with React Native Reanimated
+- 👆 **Intuitive Gestures** - Tap, pinch, and pan gestures for camera interaction
+- 🎯 **Click-Away UX** - Unified click-away system for all popup menus
 - 💾 **Local Storage** - Photos saved locally on device
 - 🌙 **Theme Support** - Light/dark mode theming
 - 🌍 **Internationalization** - Multi-language support
@@ -19,8 +24,10 @@ PixAssist is a modern React Native application that provides camera functionalit
 - **React Native 0.79.5** - Cross-platform mobile development
 - **Expo SDK 53** - Development tools and services
 - **Ignite CLI** - React Native boilerplate and tooling
-- **Gluestack UI** - Modern UI component library
-- **Vision Camera** - Advanced camera functionality
+- **Gluestack UI** - Modern UI component library with Slider components
+- **Vision Camera** - Advanced camera functionality with exposure controls
+- **React Native Reanimated** - Smooth spring animations and gestures
+- **React Native Gesture Handler** - Advanced touch and gesture handling
 - **React Navigation** - Navigation library
 - **TypeScript** - Type-safe development
 
@@ -102,7 +109,14 @@ app/
 - [x] Gluestack UI integration
 - [x] Vision Camera integration
 - [x] Camera permission handling
-- [x] Basic camera interface
+- [x] Advanced camera interface with iPhone-style layout
+- [x] Expandable camera mode button with spring animations
+- [x] Vertical exposure scrubber with Gluestack UI Slider
+- [x] Smooth spring animations for all UI interactions
+- [x] Unified click-away system for popup menus
+- [x] Gesture-based camera controls (focus, zoom, exposure)
+- [x] Templates screen with clean white background
+- [x] Top navigation drawer with smooth animations
 
 ### 🚧 In Progress
 - [ ] Photo capture functionality
@@ -112,16 +126,27 @@ app/
 
 ### 📋 Planned
 - [ ] Photo editing features
-- [ ] Advanced camera controls
+- [ ] Additional camera controls (flash, timer, etc.)
 - [ ] User preferences
 - [ ] Photo export options
+- [ ] Advanced gesture controls
 
 ## Development Notes
 
 ### Key Integrations
-- **Gluestack UI**: Provides modern, accessible components with consistent theming
-- **Vision Camera**: Enables advanced camera functionality with proper permission handling
+- **Gluestack UI**: Provides modern, accessible components with consistent theming and Slider components
+- **Vision Camera**: Enables advanced camera functionality with proper permission handling and exposure controls
+- **React Native Reanimated**: Powers smooth spring animations for all UI interactions
+- **React Native Gesture Handler**: Handles complex touch interactions and camera gestures
 - **Ignite CLI**: Provides robust boilerplate with best practices
+
+### Recent Improvements
+- **iPhone-style Camera Layout**: Gallery button on left, shutter in center, camera mode on right
+- **Expandable Camera Controls**: Smooth spring animations with bounce effects
+- **Vertical Exposure Scrubber**: Gluestack UI Slider with smooth scrubbing and proper validation
+- **Unified Click-Away System**: Single overlay handles all popup menu dismissals
+- **Consistent Animation Timing**: All animations use the same spring physics (damping: 20, stiffness: 300)
+- **Templates Screen**: Clean white background with proper navigation integration
 
 ### Compatibility
 - React Native 0.79.5
