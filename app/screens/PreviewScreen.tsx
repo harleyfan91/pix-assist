@@ -16,6 +16,21 @@ export const PreviewScreen: FC = function PreviewScreen() {
   const { photoPath } = route.params
   const deviceOrientation = useDeviceOrientation()
 
+  // Get icon rotation angle based on device orientation
+  const getIconRotation = () => {
+    switch (deviceOrientation.orientation) {
+      case 'landscape-left':
+        return '90deg'  // Rotate 90° clockwise
+      case 'landscape-right':
+        return '-90deg' // Rotate 90° counter-clockwise
+      case 'portrait-upside-down':
+        return '180deg' // Rotate 180°
+      case 'portrait':
+      default:
+        return '0deg'   // No rotation
+    }
+  }
+
   const handleSave = () => {
     // Photo is already saved, just show confirmation
     Alert.alert(
@@ -66,7 +81,7 @@ export const PreviewScreen: FC = function PreviewScreen() {
             name="camera-outline" 
             size={24} 
             color="#fff" 
-            style={{ transform: [{ rotate: deviceOrientation.isLandscape ? '90deg' : '0deg' }] }}
+            style={{ transform: [{ rotate: getIconRotation() }] }}
           />
         </TouchableOpacity>
 
@@ -75,7 +90,7 @@ export const PreviewScreen: FC = function PreviewScreen() {
             name="checkmark-outline" 
             size={24} 
             color="#fff" 
-            style={{ transform: [{ rotate: deviceOrientation.isLandscape ? '90deg' : '0deg' }] }}
+            style={{ transform: [{ rotate: getIconRotation() }] }}
           />
         </TouchableOpacity>
 
@@ -84,7 +99,7 @@ export const PreviewScreen: FC = function PreviewScreen() {
             name="images-outline" 
             size={24} 
             color="#fff" 
-            style={{ transform: [{ rotate: deviceOrientation.isLandscape ? '90deg' : '0deg' }] }}
+            style={{ transform: [{ rotate: getIconRotation() }] }}
           />
         </TouchableOpacity>
       </View>

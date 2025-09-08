@@ -54,7 +54,22 @@ export const CameraScreen: FC = function CameraScreen() {
   // Orientation detection - use device orientation for UI, screen orientation for camera
   const { orientation, isLandscape, isPortrait, isLoading } = useOrientation()
   const deviceOrientation = useDeviceOrientation()
-  
+
+  // Get icon rotation angle based on device orientation
+  const getIconRotation = () => {
+    switch (deviceOrientation.orientation) {
+      case 'landscape-left':
+        return '90deg'  // Rotate 90° clockwise
+      case 'landscape-right':
+        return '-90deg' // Rotate 90° counter-clockwise
+      case 'portrait-upside-down':
+        return '180deg' // Rotate 180°
+      case 'portrait':
+      default:
+        return '0deg'   // No rotation
+    }
+  }
+
   // Debug orientation changes
   useEffect(() => {
     if (!isLoading) {
@@ -783,7 +798,12 @@ export const CameraScreen: FC = function CameraScreen() {
                   $galleryButton,
                   galleryPressed && { opacity: 0.6 }
                 ]}>
-                  <Ionicons name="images-outline" size={24} color="#fff" />
+                  <Ionicons 
+                    name="images-outline" 
+                    size={24} 
+                    color="#fff" 
+                    style={{ transform: [{ rotate: getIconRotation() }] }}
+                  />
                 </View>
               </GestureDetector>
             </View>
@@ -811,15 +831,30 @@ export const CameraScreen: FC = function CameraScreen() {
                   {/* Camera control buttons - only visible when expanded */}
                   <Reanimated.View style={[$controlsContainer, animatedCameraControlsOpacity]}>
                     <View style={$controlButton}>
-                      <Ionicons name="flash-outline" size={20} color="#fff" />
+                      <Ionicons 
+                        name="flash-outline" 
+                        size={20} 
+                        color="#fff" 
+                        style={{ transform: [{ rotate: getIconRotation() }] }}
+                      />
                     </View>
                     <GestureDetector gesture={evButtonGesture}>
                       <View style={[$controlButton, evPressed && { opacity: 0.6 }]}>
-                        <Ionicons name="contrast-outline" size={20} color="#fff" />
+                        <Ionicons 
+                          name="contrast-outline" 
+                          size={20} 
+                          color="#fff" 
+                          style={{ transform: [{ rotate: getIconRotation() }] }}
+                        />
                       </View>
                     </GestureDetector>
                     <View style={$controlButton}>
-                      <Ionicons name="crop-outline" size={20} color="#fff" />
+                      <Ionicons 
+                        name="crop-outline" 
+                        size={20} 
+                        color="#fff" 
+                        style={{ transform: [{ rotate: getIconRotation() }] }}
+                      />
                     </View>
                   </Reanimated.View>
                   
