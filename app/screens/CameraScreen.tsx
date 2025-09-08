@@ -26,6 +26,7 @@ const ReanimatedCamera = Reanimated.createAnimatedComponent(Camera)
 
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
+import { TopNavigation } from "@/components/TopNavigation"
 
 // Enable zoom animation for Reanimated (as per Vision Camera docs)
 Reanimated.addWhitelistedNativeProps({
@@ -388,6 +389,9 @@ export const CameraScreen: FC = function CameraScreen() {
             <View style={$shutterButtonInner} />
           </TouchableOpacity>
         </View>
+
+        {/* Top Navigation */}
+        <TopNavigation />
       </View>
     </GestureDetector>
   )
@@ -410,7 +414,7 @@ const $cameraContainer: ViewStyle = {
 
 const $bottomControls: ViewStyle = {
   position: "absolute",
-  bottom: 50,
+  bottom: 80, // Back to comfortable position without drawer interference
   left: 0,
   right: 0,
   alignItems: "center",

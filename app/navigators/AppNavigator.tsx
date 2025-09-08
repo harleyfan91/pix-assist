@@ -5,8 +5,7 @@
  * and a "main" flow which the user will use once logged in.
  */
 import { ComponentProps } from "react"
-import { Ionicons } from "@expo/vector-icons"
-import { createBottomTabNavigator, BottomTabScreenProps } from "@react-navigation/bottom-tabs"
+import { createNativeStackNavigator, NativeStackScreenProps } from "@react-navigation/native-stack"
 import { NavigationContainer } from "@react-navigation/native"
 
 import Config from "@/config"
@@ -27,9 +26,9 @@ import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
  *   https://reactnavigation.org/docs/typescript#type-checking-the-navigator
  *   https://reactnavigation.org/docs/typescript/#organizing-types
  */
-export type AppTabParamList = {
-  Home: undefined
+export type AppStackParamList = {
   Camera: undefined
+  Home: undefined
   Gallery: undefined
   Settings: undefined
 }
@@ -40,65 +39,65 @@ export type AppTabParamList = {
  */
 const exitRoutes = Config.exitRoutes
 
-export type AppTabScreenProps<T extends keyof AppTabParamList> = BottomTabScreenProps<
-  AppTabParamList,
+export type AppStackScreenProps<T extends keyof AppStackParamList> = NativeStackScreenProps<
+  AppStackParamList,
   T
 >
 
-// Documentation: https://reactnavigation.org/docs/bottom-tab-navigator/
-const Tab = createBottomTabNavigator<AppTabParamList>()
+// Documentation: https://reactnavigation.org/docs/native-stack-navigator/
+const Stack = createNativeStackNavigator<AppStackParamList>()
 
-const AppTabs = () => {
+const AppStack = () => {
   return (
-    <Tab.Navigator
+    <Stack.Navigator
+      initialRouteName="Camera"
       screenOptions={{
         headerShown: false,
-        tabBarStyle: {
-          backgroundColor: "#ffffff",
-          borderTopColor: "#e0e0e0",
-        },
-        tabBarActiveTintColor: "#007AFF",
-        tabBarInactiveTintColor: "#8E8E93",
+        animation: "slide_from_bottom", // Nice modal-like transitions for non-camera screens
       }}
     >
-      <Tab.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{
-          tabBarLabel: "Home",
-          tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />,
-        }}
-      />
-      <Tab.Screen
+      {/* Camera is the main/initial screen */}
+      <Stack.Screen
         name="Camera"
         component={CameraScreen}
         options={{
-          tabBarLabel: "Camera",
-          tabBarIcon: ({ color, size }) => <Ionicons name="camera" size={size} color={color} />,
+          animation: "none", // No animation for camera - it stays as the base
         }}
       />
-      <Tab.Screen
+      
+      {/* Other screens presented as modals */}
+      <Stack.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{
+          presentation: "modal",
+          animation: "slide_from_bottom",
+        }}
+      />
+      
+      <Stack.Screen
         name="Gallery"
         component={GalleryScreen}
         options={{
-          tabBarLabel: "Gallery",
-          tabBarIcon: ({ color, size }) => <Ionicons name="images" size={size} color={color} />,
+          presentation: "modal",
+          animation: "slide_from_bottom",
         }}
       />
-      <Tab.Screen
+      
+      <Stack.Screen
         name="Settings"
         component={SettingsScreen}
         options={{
-          tabBarLabel: "Settings",
-          tabBarIcon: ({ color, size }) => <Ionicons name="settings" size={size} color={color} />,
+          presentation: "modal",
+          animation: "slide_from_bottom",
         }}
       />
-    </Tab.Navigator>
+    </Stack.Navigator>
   )
 }
 
 export interface NavigationProps
-  extends Partial<ComponentProps<typeof NavigationContainer<AppTabParamList>>> {}
+  extends Partial<ComponentProps<typeof NavigationContainer<AppStackParamList>>> {}
 
 export const AppNavigator = (props: NavigationProps) => {
   useBackButtonHandler((routeName) => exitRoutes.includes(routeName))
@@ -106,7 +105,7 @@ export const AppNavigator = (props: NavigationProps) => {
   return (
     <NavigationContainer ref={navigationRef} {...props}>
       <ErrorBoundary catchErrors={Config.catchErrors}>
-        <AppTabs />
+        <AppStack />
       </ErrorBoundary>
     </NavigationContainer>
   )
