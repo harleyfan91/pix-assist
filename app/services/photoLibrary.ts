@@ -123,8 +123,15 @@ class PhotoLibraryServiceImpl implements PhotoLibraryService {
 
       // Save photo to media library
       const asset = await MediaLibrary.saveToLibraryAsync(uri)
-      console.log('Photo saved to library:', asset.id)
-      return true
+      
+      // Check if asset was created successfully
+      if (asset && asset.id) {
+        console.log('Photo saved to library:', asset.id)
+        return true
+      } else {
+        console.log('Photo saved but no asset ID returned')
+        return true // Still consider it successful if no error was thrown
+      }
     } catch (error) {
       console.error('Error saving photo:', error)
       return false

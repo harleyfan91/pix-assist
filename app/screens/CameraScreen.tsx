@@ -6,8 +6,10 @@ import {
   View,
   ViewStyle,
   TextStyle,
+  ImageStyle,
   StyleSheet,
   Modal,
+  Image,
 } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { Button, ButtonText, Slider, SliderTrack, SliderFilledTrack, SliderThumb } from "@gluestack-ui/themed"
@@ -33,6 +35,7 @@ import { Text } from "@/components/Text"
 import { TopNavigation } from "@/components/TopNavigation"
 import { useNavigation } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators/AppNavigator"
+import { photoLibraryService } from "@/services/photoLibrary"
 
 // Enable zoom animation for Reanimated (as per Vision Camera docs)
 Reanimated.addWhitelistedNativeProps({
@@ -84,6 +87,17 @@ export const CameraScreen: FC = function CameraScreen() {
   const [isCameraModeExpanded, setIsCameraModeExpanded] = useState(false)
   const cameraModeExpansion = useSharedValue(0) // 0 = collapsed, 1 = expanded
 
+  // Photo capture state
+  const [isCapturing, setIsCapturing] = useState(false)
+  const [captureFlash, setCaptureFlash] = useState(false)
+  const flashAnimation = useSharedValue(0) // 0 = no flash, 1 = flash
+
+  // Preview state
+  const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null)
+  const [showPreview, setShowPreview] = useState(false)
+  const [isPreviewVisible, setIsPreviewVisible] = useState(false) // Controls actual rendering
+  const previewAnimation = useSharedValue(0) // 0 = hidden, 1 = visible
+
   useEffect(() => {
     setCameraPermission(hasPermission)
   }, [hasPermission])
@@ -127,6 +141,30 @@ export const CameraScreen: FC = function CameraScreen() {
       })
     }
   }, [showExposureControls, exposureControlsAnimation])
+
+  // Handle preview visibility and animation
+  useEffect(() => {
+    if (showPreview && capturedPhoto) {
+      // Opening: show component and animate in
+      setIsPreviewVisible(true)
+      previewAnimation.value = withSpring(1, { 
+        damping: 20, 
+        stiffness: 300 
+      })
+    } else {
+      // Closing: animate out first, then hide component
+      previewAnimation.value = withSpring(0, { 
+        damping: 20, 
+        stiffness: 300 
+      }, (finished) => {
+        if (finished) {
+          // Animation completed, now hide the component
+          runOnJS(setIsPreviewVisible)(false)
+          runOnJS(setCapturedPhoto)(null)
+        }
+      })
+    }
+  }, [showPreview, capturedPhoto, previewAnimation])
 
   // Initialize zoom with device's neutral zoom when device changes
   useEffect(() => {
@@ -191,10 +229,56 @@ export const CameraScreen: FC = function CameraScreen() {
     }
   }, [hasPermission, requestPermission])
 
-  const takePhoto = useCallback(() => {
-    console.log("Taking photo...")
-    // TODO: Implement photo capture
-  }, [])
+  const takePhoto = useCallback(async () => {
+    if (!_cameraRef.current || isCapturing) {
+      console.log("Camera not ready or already capturing")
+      return
+    }
+
+    try {
+      setIsCapturing(true)
+      console.log("Taking photo...")
+
+      // Trigger flash animation - fast and responsive
+      setCaptureFlash(true)
+      flashAnimation.value = withTiming(1, { duration: 50 }, () => {
+        flashAnimation.value = withTiming(0, { duration: 100 })
+      })
+
+      // Take photo with Vision Camera
+      const photo = await _cameraRef.current.takePhoto()
+
+      console.log("Photo captured:", photo.path)
+      console.log("Photo object:", photo)
+
+      // Save photo to library
+      // Ensure the path is in the correct format for expo-media-library
+      const photoPath = photo.path.startsWith('file://') ? photo.path : `file://${photo.path}`
+      const saved = await photoLibraryService.savePhoto(photoPath)
+      if (saved) {
+        console.log("Photo saved to library successfully")
+        
+        // Show preview for 2 seconds
+        setCapturedPhoto(photoPath)
+        setShowPreview(true)
+        
+        // Auto-dismiss preview after 2 seconds
+        setTimeout(() => {
+          setShowPreview(false)
+        }, 2000)
+      } else {
+        console.log("Failed to save photo to library")
+        // TODO: Show error feedback
+      }
+
+    } catch (error) {
+      console.error("Error taking photo:", error)
+      // TODO: Show error feedback
+    } finally {
+      setIsCapturing(false)
+      setCaptureFlash(false)
+    }
+  }, [isCapturing, flashAnimation])
 
   const navigateToGallery = useCallback(() => {
     navigation.navigate("Gallery")
@@ -433,6 +517,22 @@ export const CameraScreen: FC = function CameraScreen() {
     opacity: cameraModeExpansion.value,
   }))
 
+  // Animated style for flash effect
+  const animatedFlashStyle = useAnimatedStyle(() => {
+    return {
+      opacity: interpolate(flashAnimation.value, [0, 1], [0, 0.6]),
+    }
+  })
+
+  // Animated style for preview
+  const animatedPreviewStyle = useAnimatedStyle(() => {
+    return {
+      opacity: previewAnimation.value,
+      scale: interpolate(previewAnimation.value, [0, 1], [0.9, 1]),
+      translateY: interpolate(previewAnimation.value, [0, 1], [50, 0]),
+    }
+  })
+
   // Create animated style for chevron positioning
   const animatedChevronStyle = useAnimatedStyle(() => {
     return {
@@ -542,6 +642,29 @@ export const CameraScreen: FC = function CameraScreen() {
               enableZoomGesture={false} // We're using custom gesture
               animatedProps={animatedCameraProps}
             />
+            
+            {/* Flash overlay for photo capture feedback */}
+            <Reanimated.View style={[$flashOverlay, animatedFlashStyle]} />
+
+            {/* Preview overlay - shows captured photo for 2 seconds */}
+            {isPreviewVisible && capturedPhoto && (
+              <TouchableOpacity 
+                style={$previewOverlay}
+                onPress={() => {
+                  // Navigate to full preview screen
+                  navigation.navigate("Preview", { photoPath: capturedPhoto })
+                }}
+                activeOpacity={0.9}
+              >
+                <Reanimated.View style={[$previewContainer, animatedPreviewStyle]}>
+                  <Image 
+                    source={{ uri: capturedPhoto }} 
+                    style={$previewImage}
+                    resizeMode="contain"
+                  />
+                </Reanimated.View>
+              </TouchableOpacity>
+            )}
 
             {/* Zoom Indicator - Only show when zoomed */}
             <Reanimated.View style={[$zoomIndicator, animatedZoomStyle]}>
@@ -599,8 +722,8 @@ export const CameraScreen: FC = function CameraScreen() {
             )}
           </View>
 
-          {/* Unified click away overlay for both menus */}
-          {(isCameraModeExpanded || showExposureControls) && (
+          {/* Unified click away overlay for menus (not preview) */}
+          {(isCameraModeExpanded || showExposureControls) && !showPreview && (
             <TouchableOpacity 
               style={$unifiedOverlay}
               onPress={() => {
@@ -631,7 +754,7 @@ export const CameraScreen: FC = function CameraScreen() {
               <GestureDetector gesture={shutterButtonGesture}>
                 <View style={[
                   $shutterButton,
-                  shutterPressed && { opacity: 0.6 }
+                  (shutterPressed || isCapturing) && { opacity: 0.6 }
                 ]}>
                   <View style={$shutterButtonInner} />
                 </View>
@@ -737,6 +860,40 @@ const $shutterButtonInner: ViewStyle = {
   height: 60,
   borderRadius: 30,
   backgroundColor: "#fff",
+}
+
+const $flashOverlay: ViewStyle = {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: "#ffffff",
+  pointerEvents: "none",
+}
+
+const $previewOverlay: ViewStyle = {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: "rgba(0, 0, 0, 0.8)",
+  justifyContent: "center",
+  alignItems: "center",
+  zIndex: 10,
+}
+
+const $previewContainer: ViewStyle = {
+  width: "80%",
+  height: "80%",
+  justifyContent: "center",
+  alignItems: "center",
+}
+
+const $previewImage: ImageStyle = {
+  width: "100%",
+  height: "100%",
 }
 
 const $galleryButton: ViewStyle = {
