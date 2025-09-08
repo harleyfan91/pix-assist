@@ -40,7 +40,7 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({ onNavigationStateC
     }
   })
 
-  const handleNavigation = (screenName: "Home" | "Gallery" | "Settings") => {
+  const handleNavigation = (screenName: "Home" | "Gallery" | "Settings" | "Templates") => {
     navigation.navigate(screenName as any)
     setIsOpen(false)
   }
@@ -90,13 +90,13 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({ onNavigationStateC
           <Reanimated.View style={[iconsOpacity]}>
             <View style={$iconsContainer}>
               <TouchableOpacity style={$iconButton} onPress={() => handleNavigation("Home")}>
-                <Ionicons name="home" size={24} color="#fff" />
+                <Ionicons name="home-outline" size={24} color="#fff" />
               </TouchableOpacity>
-              <TouchableOpacity style={$iconButton} onPress={() => handleNavigation("Gallery")}>
-                <Ionicons name="images" size={24} color="#fff" />
+              <TouchableOpacity style={$iconButton} onPress={() => handleNavigation("Templates")}>
+                <Ionicons name="grid-outline" size={24} color="#fff" />
               </TouchableOpacity>
               <TouchableOpacity style={$iconButton} onPress={() => handleNavigation("Settings")}>
-                <Ionicons name="settings" size={24} color="#fff" />
+                <Ionicons name="settings-outline" size={24} color="#fff" />
               </TouchableOpacity>
             </View>
           </Reanimated.View>

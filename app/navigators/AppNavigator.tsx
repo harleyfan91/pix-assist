@@ -14,6 +14,7 @@ import { ErrorBoundary } from "@/screens/ErrorScreen/ErrorBoundary"
 import { GalleryScreen } from "@/screens/GalleryScreen"
 import { HomeScreen } from "@/screens/HomeScreen"
 import { SettingsScreen } from "@/screens/SettingsScreen"
+import { TemplatesScreen } from "@/screens/TemplatesScreen"
 
 import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
 
@@ -31,6 +32,7 @@ export type AppStackParamList = {
   Home: undefined
   Gallery: undefined
   Settings: undefined
+  Templates: undefined
 }
 
 /**
@@ -87,6 +89,15 @@ const AppStack = () => {
       <Stack.Screen
         name="Settings"
         component={SettingsScreen}
+        options={{
+          presentation: "modal",
+          animation: "slide_from_bottom",
+        }}
+      />
+      
+      <Stack.Screen
+        name="Templates"
+        component={TemplatesScreen}
         options={{
           presentation: "modal",
           animation: "slide_from_bottom",

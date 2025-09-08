@@ -7,7 +7,9 @@ import {
   ViewStyle,
   TextStyle,
   StyleSheet,
+  Modal,
 } from "react-native"
+import { Ionicons } from "@expo/vector-icons"
 import { Button, ButtonText } from "@gluestack-ui/themed"
 import { Gesture, GestureDetector } from "react-native-gesture-handler"
 import Reanimated, {
@@ -28,6 +30,8 @@ const ReanimatedCamera = Reanimated.createAnimatedComponent(Camera)
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { TopNavigation } from "@/components/TopNavigation"
+import { useNavigation } from "@react-navigation/native"
+import { AppStackScreenProps } from "@/navigators/AppNavigator"
 
 // Enable zoom animation for Reanimated (as per Vision Camera docs)
 Reanimated.addWhitelistedNativeProps({
@@ -38,6 +42,7 @@ Reanimated.addWhitelistedNativeProps({
 export const CameraScreen: FC = function CameraScreen() {
   const [cameraPermission, setCameraPermission] = useState<boolean | null>(null)
   const [isActive] = useState(true) // Always on by default
+  const navigation = useNavigation<AppStackScreenProps<"Camera">["navigation"]>()
 
   const { hasPermission, requestPermission } = useCameraPermission()
   // Use camera device with ultra-wide support for zoom out below 1x
@@ -72,6 +77,10 @@ export const CameraScreen: FC = function CameraScreen() {
   const [navigationProgress, setNavigationProgress] = useState(0) // 0-1 progress
   const cameraOffset = useSharedValue(0) // Camera push-up offset
 
+  // Camera mode button expansion state and animation
+  const [isCameraModeExpanded, setIsCameraModeExpanded] = useState(false)
+  const cameraModeExpansion = useSharedValue(0) // 0 = collapsed, 1 = expanded
+
   useEffect(() => {
     setCameraPermission(hasPermission)
   }, [hasPermission])
@@ -83,6 +92,14 @@ export const CameraScreen: FC = function CameraScreen() {
       duration: 100, // Very fast for real-time tracking
     })
   }, [navigationProgress, cameraOffset])
+
+  // Animate camera mode button expansion
+  useEffect(() => {
+    console.log("Animation effect triggered, isCameraModeExpanded:", isCameraModeExpanded)
+    cameraModeExpansion.value = withTiming(isCameraModeExpanded ? 1 : 0, {
+      duration: 300, // Smooth 300ms animation
+    })
+  }, [isCameraModeExpanded, cameraModeExpansion])
 
   // Initialize zoom with device's neutral zoom when device changes
   useEffect(() => {
@@ -152,13 +169,27 @@ export const CameraScreen: FC = function CameraScreen() {
     // TODO: Implement photo capture
   }, [])
 
+  const navigateToGallery = useCallback(() => {
+    navigation.navigate("Gallery")
+  }, [navigation])
+
   const toggleExposureControls = useCallback(() => {
     setShowExposureControls(prev => !prev)
+  }, [])
+
+  const toggleCameraModeExpansion = useCallback(() => {
+    console.log("Toggling camera mode expansion")
+    setIsCameraModeExpanded(prev => {
+      console.log("Previous state:", prev, "New state:", !prev)
+      return !prev
+    })
   }, [])
 
   // Button press states for visual feedback
   const [shutterPressed, setShutterPressed] = useState(false)
   const [evPressed, setEvPressed] = useState(false)
+  const [galleryPressed, setGalleryPressed] = useState(false)
+  const [cameraModePressed, setCameraModePressed] = useState(false)
 
   // Create high-priority button gestures that will compete with camera gestures
   const shutterButtonGesture = Gesture.Tap()
@@ -189,6 +220,36 @@ export const CameraScreen: FC = function CameraScreen() {
     .onFinalize(() => {
       'worklet'
       runOnJS(setEvPressed)(false)
+    })
+
+  const galleryButtonGesture = Gesture.Tap()
+    .onBegin(() => {
+      'worklet'
+      runOnJS(setGalleryPressed)(true)
+    })
+    .onEnd(() => {
+      'worklet'
+      runOnJS(navigateToGallery)()
+      runOnJS(setGalleryPressed)(false)
+    })
+    .onFinalize(() => {
+      'worklet'
+      runOnJS(setGalleryPressed)(false)
+    })
+
+  const cameraModeButtonGesture = Gesture.Tap()
+    .onBegin(() => {
+      'worklet'
+      runOnJS(setCameraModePressed)(true)
+    })
+    .onEnd(() => {
+      'worklet'
+      runOnJS(toggleCameraModeExpansion)()
+      runOnJS(setCameraModePressed)(false)
+    })
+    .onFinalize(() => {
+      'worklet'
+      runOnJS(setCameraModePressed)(false)
     })
 
   // Handle tap-to-focus
@@ -343,6 +404,50 @@ export const CameraScreen: FC = function CameraScreen() {
     left: `${(exposureSlider.value + 1) * 50}%`, // Map -1 to 1 -> 0% to 100%
   }))
 
+  // Create animated style for camera mode button expansion
+  const animatedCameraModeStyle = useAnimatedStyle(() => {
+    const expandedHeight = 200 // Height for 3 controls + padding
+    const collapsedHeight = 60 // Original button height
+    
+    return {
+      height: interpolate(
+        cameraModeExpansion.value,
+        [0, 1],
+        [collapsedHeight, expandedHeight]
+      ),
+      // No translateY - let it expand naturally from bottom
+    }
+  })
+
+  // Create animated style for camera control icons opacity
+  const animatedCameraControlsOpacity = useAnimatedStyle(() => ({
+    opacity: cameraModeExpansion.value,
+  }))
+
+  // Create animated style for chevron positioning
+  const animatedChevronStyle = useAnimatedStyle(() => {
+    return {
+      // Use transform to center when collapsed and flip when expanded
+      transform: [
+        {
+          translateY: interpolate(
+            cameraModeExpansion.value,
+            [0, 1],
+            [-8, 0] // Move up 8px when collapsed to center it in 60px button
+          )
+        },
+        {
+          scaleY: interpolate(
+            cameraModeExpansion.value,
+            [0, 1],
+            [1, -1] // Flip vertically when expanded (1 = normal, -1 = flipped)
+          )
+        }
+      ],
+    }
+  })
+
+
   const { right: _right, top: _top } = useSafeAreaInsets()
 
   if (cameraPermission == null) {
@@ -455,16 +560,60 @@ export const CameraScreen: FC = function CameraScreen() {
             )}
           </View>
 
-          {/* Shutter Button */}
+          {/* Bottom Controls - iPhone-style layout */}
           <View style={$bottomControls}>
-            <GestureDetector gesture={shutterButtonGesture}>
-              <View style={[
-                $shutterButton,
-                shutterPressed && { opacity: 0.6 }
-              ]}>
-                <View style={$shutterButtonInner} />
-              </View>
-            </GestureDetector>
+            {/* Left Container: Gallery Button */}
+            <View style={$leftControlsContainer}>
+              <GestureDetector gesture={galleryButtonGesture}>
+                <View style={[
+                  $galleryButton,
+                  galleryPressed && { opacity: 0.6 }
+                ]}>
+                  <Ionicons name="images-outline" size={24} color="#fff" />
+                </View>
+              </GestureDetector>
+            </View>
+
+            {/* Center Container: Shutter Button */}
+            <View style={$centerControlsContainer}>
+              <GestureDetector gesture={shutterButtonGesture}>
+                <View style={[
+                  $shutterButton,
+                  shutterPressed && { opacity: 0.6 }
+                ]}>
+                  <View style={$shutterButtonInner} />
+                </View>
+              </GestureDetector>
+            </View>
+
+            {/* Right Container: Camera Mode Button */}
+            <View style={$rightControlsContainer}>
+              <GestureDetector gesture={cameraModeButtonGesture}>
+                <Reanimated.View style={[
+                  $cameraModeButton,
+                  animatedCameraModeStyle,
+                  cameraModePressed && { opacity: 0.6 }
+                ]}>
+                  {/* Camera control buttons - only visible when expanded */}
+                  <Reanimated.View style={[$controlsContainer, animatedCameraControlsOpacity]}>
+                    <View style={$controlButton}>
+                      <Ionicons name="flash-outline" size={20} color="#fff" />
+                    </View>
+                    <View style={$controlButton}>
+                      <Ionicons name="timer-outline" size={20} color="#fff" />
+                    </View>
+                    <View style={$controlButton}>
+                      <Ionicons name="crop-outline" size={20} color="#fff" />
+                    </View>
+                  </Reanimated.View>
+                  
+                {/* Main chevron icon - animated positioning */}
+                <Reanimated.View style={[$chevronContainer, animatedChevronStyle]}>
+                  <Ionicons name="chevron-up-sharp" size={24} color="#fff" />
+                </Reanimated.View>
+                </Reanimated.View>
+              </GestureDetector>
+            </View>
           </View>
         </Reanimated.View>
       </GestureDetector>
@@ -492,7 +641,30 @@ const $bottomControls: ViewStyle = {
   bottom: 80, // Back to comfortable position without drawer interference
   left: 0,
   right: 0,
+  flexDirection: "row",
   alignItems: "center",
+  justifyContent: "space-between",
+  paddingHorizontal: 40,
+}
+
+const $leftControlsContainer: ViewStyle = {
+  alignItems: "center",
+  justifyContent: "center",
+  width: 60, // Fixed width to match gallery button
+}
+
+const $centerControlsContainer: ViewStyle = {
+  alignItems: "center",
+  justifyContent: "center",
+  flex: 1, // Take up remaining space to center the shutter button
+}
+
+const $rightControlsContainer: ViewStyle = {
+  alignItems: "center",
+  justifyContent: "flex-end", // Align button to bottom of container
+  height: 80, // Fixed height to match button height
+  width: 60, // Fixed width to match camera mode button
+  paddingBottom: 10, // Push button up to align with gallery button
 }
 
 const $shutterButton: ViewStyle = {
@@ -511,6 +683,61 @@ const $shutterButtonInner: ViewStyle = {
   height: 60,
   borderRadius: 30,
   backgroundColor: "#fff",
+}
+
+const $galleryButton: ViewStyle = {
+  width: 60,
+  height: 60,
+  borderRadius: 30,
+  backgroundColor: "rgba(255, 255, 255, 0.2)",
+  borderWidth: 0,
+  borderColor: "rgba(255, 255, 255, 0.5)",
+  justifyContent: "center",
+  alignItems: "center",
+}
+
+const $cameraModeButton: ViewStyle = {
+  width: 60,
+  height: 60,
+  borderRadius: 30,
+  backgroundColor: "rgba(255, 255, 255, 0.2)",
+  borderWidth: 0,
+  borderColor: "rgba(255, 255, 255, 0.5)",
+  justifyContent: "center", // Center content when collapsed
+  alignItems: "center",
+  overflow: "hidden",
+}
+
+const $chevronContainer: ViewStyle = {
+  position: "absolute",
+  bottom: 0,
+  left: 0,
+  right: 0,
+  height: 44, // Fixed height for chevron area
+  paddingVertical: 8,
+  alignItems: "center",
+  justifyContent: "center",
+}
+
+const $controlsContainer: ViewStyle = {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 44, // Leave space for chevron at bottom
+  justifyContent: "space-around",
+  alignItems: "center",
+  paddingVertical: 12,
+}
+
+const $controlButton: ViewStyle = {
+  width: 40,
+  height: 40,
+  borderRadius: 20,
+  backgroundColor: "rgba(255, 255, 255, 0.1)",
+  alignItems: "center",
+  justifyContent: "center",
+  marginVertical: 4,
 }
 
 const $zoomIndicator: ViewStyle = {
