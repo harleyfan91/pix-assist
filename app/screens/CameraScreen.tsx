@@ -90,7 +90,9 @@ export const CameraScreen: FC = function CameraScreen() {
         minZoom: device.minZoom,
         maxZoom: device.maxZoom,
         neutralZoom: device.neutralZoom,
-        physicalDevices: device.physicalDevices
+        physicalDevices: device.physicalDevices,
+        hasFlash: device.hasFlash,
+        hasTorch: device.hasTorch
       })
     }
   }, [device])
@@ -151,6 +153,29 @@ export const CameraScreen: FC = function CameraScreen() {
     }, 2000)
   }, [device, zoom])
 
+  // Flash button functionality
+  const handleFlashToggle = useCallback(() => {
+    setFlashMode(prevMode => {
+      const newMode = (() => {
+        switch (prevMode) {
+          case 'auto':
+            return 'on'
+          case 'on':
+            return 'off'
+          case 'off':
+            return 'auto'
+          default:
+            return 'auto'
+        }
+      })()
+      
+      console.log('Flash mode changed:', prevMode, '→', newMode)
+      // Update ref immediately to avoid race conditions
+      flashModeRef.current = newMode
+      return newMode
+    })
+  }, [])
+
   // Focus and exposure state
   const [isFocusLocked, setIsFocusLocked] = useState(false)
   const [showFocusRing, setShowFocusRing] = useState(false)
@@ -177,6 +202,20 @@ export const CameraScreen: FC = function CameraScreen() {
   const [isCapturing, setIsCapturing] = useState(false)
   const [captureFlash, setCaptureFlash] = useState(false)
   const flashAnimation = useSharedValue(0) // 0 = no flash, 1 = flash
+
+  // Flash mode state: 'auto' | 'on' | 'off'
+  const [flashMode, setFlashMode] = useState<'auto' | 'on' | 'off'>('auto')
+  const flashModeRef = useRef<'auto' | 'on' | 'off'>('auto')
+
+  // Debug flash mode changes and update ref
+  useEffect(() => {
+    console.log('Flash mode updated to:', flashMode)
+    flashModeRef.current = flashMode // Keep ref in sync
+    console.log('Device flash capabilities:', {
+      hasFlash: device?.hasFlash,
+      hasTorch: device?.hasTorch
+    })
+  }, [flashMode, device])
 
   // Preview state
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null)
@@ -325,14 +364,45 @@ export const CameraScreen: FC = function CameraScreen() {
       setIsCapturing(true)
       console.log("Taking photo...")
 
-      // Trigger flash animation - fast and responsive
-      setCaptureFlash(true)
-      flashAnimation.value = withTiming(1, { duration: 50 }, () => {
-        flashAnimation.value = withTiming(0, { duration: 100 })
-      })
+      // Trigger flash animation - fast and responsive (only if flash is on)
+      if (flashMode === 'on') {
+        setCaptureFlash(true)
+        flashAnimation.value = withTiming(1, { duration: 50 }, () => {
+          flashAnimation.value = withTiming(0, { duration: 100 })
+        })
+      } else if (flashMode === 'auto') {
+        // For auto mode, show a brief flash animation to indicate flash might fire
+        setCaptureFlash(true)
+        flashAnimation.value = withTiming(0.3, { duration: 30 }, () => {
+          flashAnimation.value = withTiming(0, { duration: 50 })
+        })
+      }
 
-      // Take photo with Vision Camera with timeout
-      const photoPromise = _cameraRef.current.takePhoto()
+      // Use ref to get the most current flash mode to avoid race conditions
+      const currentFlashMode = flashModeRef.current
+      console.log('Taking photo with flash mode:', currentFlashMode)
+      
+      // Set flash mode for photo capture
+      console.log('Photo options being set:', { flash: currentFlashMode })
+      
+      // Try different approaches based on flash mode
+      let photoOptions: any = {}
+      
+      if (currentFlashMode === 'on') {
+        // For 'on' mode, be more explicit
+        photoOptions = { 
+          flash: 'on',
+          enableAutoStabilization: false // Sometimes helps with flash issues
+        }
+      } else if (currentFlashMode === 'off') {
+        photoOptions = { flash: 'off' }
+      } else {
+        // Auto mode
+        photoOptions = { flash: 'auto' }
+      }
+      
+      console.log('Final photo options:', photoOptions)
+      const photoPromise = _cameraRef.current.takePhoto(photoOptions)
       const timeoutPromise = new Promise<never>((_, reject) => 
         setTimeout(() => reject(new Error('Photo capture timeout')), 5000)
       )
@@ -390,6 +460,8 @@ export const CameraScreen: FC = function CameraScreen() {
     } finally {
       setIsCapturing(false)
       setCaptureFlash(false)
+      // Ensure flash animation is reset
+      flashAnimation.value = 0
     }
   }, [isCapturing, flashAnimation])
 
@@ -411,6 +483,7 @@ export const CameraScreen: FC = function CameraScreen() {
 
   // Button press states for visual feedback
   const [shutterPressed, setShutterPressed] = useState(false)
+  const [flashPressed, setFlashPressed] = useState(false)
   const [evPressed, setEvPressed] = useState(false)
   const [galleryPressed, setGalleryPressed] = useState(false)
   const [cameraModePressed, setCameraModePressed] = useState(false)
@@ -430,6 +503,21 @@ export const CameraScreen: FC = function CameraScreen() {
     .onFinalize(() => {
       'worklet'
       runOnJS(setShutterPressed)(false)
+    })
+
+  const flashButtonGesture = Gesture.Tap()
+    .onBegin(() => {
+      'worklet'
+      runOnJS(setFlashPressed)(true)
+    })
+    .onEnd(() => {
+      'worklet'
+      runOnJS(handleFlashToggle)()
+      runOnJS(setFlashPressed)(false)
+    })
+    .onFinalize(() => {
+      'worklet'
+      runOnJS(setFlashPressed)(false)
     })
 
   const evButtonGesture = Gesture.Tap()
@@ -817,6 +905,7 @@ export const CameraScreen: FC = function CameraScreen() {
               zoom={cameraZoom}
               enableZoomGesture={false} // We're using custom gesture
               enableExposure={true} // Enable exposure control
+              flash={flashMode} // Set flash mode on camera component
               animatedProps={animatedCameraProps}
               onError={(error) => {
                 console.error('Camera error:', error)
@@ -967,14 +1056,20 @@ export const CameraScreen: FC = function CameraScreen() {
                 ]}>
                   {/* Camera control buttons - only visible when expanded */}
                   <Reanimated.View style={[$controlsContainer, animatedCameraControlsOpacity]}>
-                    <View style={$controlButton}>
-                      <Ionicons 
-                        name="flash-outline" 
-                        size={20} 
-                        color="#fff" 
-                        style={{ transform: [{ rotate: getIconRotation() }] }}
-                      />
-                    </View>
+                    <GestureDetector gesture={flashButtonGesture}>
+                      <View style={[$controlButton, flashPressed && { opacity: 0.6 }]}>
+                        <Ionicons 
+                          name={
+                            flashMode === 'auto' ? 'flash-outline' :
+                            flashMode === 'on' ? 'flash' :
+                            'flash-off-outline'
+                          }
+                          size={20} 
+                          color="#fff" 
+                          style={{ transform: [{ rotate: getIconRotation() }] }}
+                        />
+                      </View>
+                    </GestureDetector>
                     <GestureDetector gesture={evButtonGesture}>
                       <View style={[$controlButton, evPressed && { opacity: 0.6 }]}>
                         <Ionicons 
