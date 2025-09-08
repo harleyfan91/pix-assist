@@ -28,6 +28,7 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({ onNavigationStateC
   // Shared values for fluid animation
   const translateY = useSharedValue(0)
   const gestureProgress = useSharedValue(0) // 0 = closed, 1 = open
+  const drawerHeight = useSharedValue(80) // Direct height control
 
   // Notify parent component when navigation state changes
   useEffect(() => {
@@ -61,24 +62,22 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({ onNavigationStateC
       'worklet'
       const { translationY } = event
       
-      // Calculate progress based on translation
+      // Direct mapping: finger position directly controls drawer height
       // Positive translationY = swiping down (opening)
       // Negative translationY = swiping up (closing)
-      const maxTranslation = 100 // Maximum translation distance
-      const currentProgress = gestureProgress.value
+      const minHeight = 80  // Collapsed height
+      const maxHeight = 160 // Expanded height
+      const heightRange = maxHeight - minHeight
       
-      // Calculate new progress based on gesture
-      let newProgress = currentProgress
-      if (translationY > 0) {
-        // Swiping down - opening
-        newProgress = Math.min(1, currentProgress + (translationY / maxTranslation))
-      } else {
-        // Swiping up - closing
-        newProgress = Math.max(0, currentProgress + (translationY / maxTranslation))
-      }
+      // Calculate new height based on gesture start position and current translation
+      const startHeight = isOpen ? maxHeight : minHeight
+      const newHeight = Math.max(minHeight, Math.min(maxHeight, startHeight + translationY))
       
-      // Update progress and translateY
-      gestureProgress.value = newProgress
+      // Update height directly
+      drawerHeight.value = newHeight
+      
+      // Update progress for other animations (opacity, rotation)
+      gestureProgress.value = (newHeight - minHeight) / heightRange
       translateY.value = translationY
     })
     .onEnd((event) => {
@@ -112,6 +111,15 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({ onNavigationStateC
       }
       
       // Animate to final state
+      const minHeight = 80
+      const maxHeight = 160
+      const targetHeight = shouldOpen ? maxHeight : minHeight
+      
+      drawerHeight.value = withSpring(targetHeight, {
+        damping: 20,
+        stiffness: 300,
+      })
+      
       gestureProgress.value = withSpring(targetProgress, {
         damping: 20,
         stiffness: 300,
@@ -136,49 +144,22 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({ onNavigationStateC
       Extrapolate.CLAMP
     )
     
-    const scale = interpolate(
-      gestureProgress.value,
-      [0, 0.5, 1],
-      [0.8, 0.9, 1],
-      Extrapolate.CLAMP
-    )
-    
     return {
       opacity,
-      transform: [
-        { scale },
-        { translateY: translateY.value * 0.3 } // Subtle follow effect
-      ],
+      // Remove translateY - icons stay within drawer boundaries
     }
   })
 
-  // Animated container style for dynamic height
+  // Animated container style for dynamic height - direct mapping
   const animatedContainerStyle = useAnimatedStyle(() => {
-    const height = interpolate(
-      gestureProgress.value,
-      [0, 1],
-      [80, 160], // Collapsed: 80px (increased for better accessibility), Expanded: 160px
-      Extrapolate.CLAMP
-    )
-    
     return {
-      height,
+      height: drawerHeight.value,
     }
   })
 
   const animatedHandleStyle = useAnimatedStyle(() => {
-    const rotation = interpolate(
-      gestureProgress.value,
-      [0, 1],
-      [0, 180],
-      Extrapolate.CLAMP
-    )
-    
     return {
-      transform: [
-        { rotate: `${rotation}deg` },
-        { translateY: translateY.value * 0.1 }
-      ],
+      // No animations - handle stays static
     }
   })
 
