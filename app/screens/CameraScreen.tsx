@@ -10,7 +10,7 @@ import {
   Modal,
 } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
-import { Button, ButtonText } from "@gluestack-ui/themed"
+import { Button, ButtonText, Slider, SliderTrack, SliderFilledTrack, SliderThumb } from "@gluestack-ui/themed"
 import { Gesture, GestureDetector } from "react-native-gesture-handler"
 import Reanimated, {
   useSharedValue,
@@ -70,7 +70,7 @@ export const CameraScreen: FC = function CameraScreen() {
   // Exposure state
   const exposureSlider = useSharedValue(0) // -1 to 1 range
   const [showExposureControls, setShowExposureControls] = useState(false)
-  const [currentEV, setCurrentEV] = useState("0.0 EV")
+  const [sliderValue, setSliderValue] = useState(0) // -1 to 1 range for Gluestack Slider
 
   // Navigation state for camera animation
   const [isNavigationOpen, setIsNavigationOpen] = useState(false)
@@ -252,6 +252,7 @@ export const CameraScreen: FC = function CameraScreen() {
       runOnJS(setCameraModePressed)(false)
     })
 
+
   // Handle tap-to-focus
   const handleFocusTap = useCallback(
     async (x: number, y: number) => {
@@ -331,23 +332,7 @@ export const CameraScreen: FC = function CameraScreen() {
       zoom.value = clampedZoom
     })
 
-  // Exposure pan gesture
-  const exposurePanGesture = Gesture.Pan()
-    .onUpdate((event) => {
-      'worklet'
-      const sliderWidth = 200 // Approximate slider width
-      const newValue = (event.x / sliderWidth) * 2 - 1 // Map to -1 to 1
-      exposureSlider.value = Math.max(-1, Math.min(1, newValue))
-      
-      // Update EV display
-      const evValue = interpolate(newValue, [-1, 0, 1], [-0.7, 0, 0.7])
-      const evString = `${evValue > 0 ? '+' : ''}${evValue.toFixed(1)} EV`
-      runOnJS(setCurrentEV)(evString)
-    })
-    .onEnd(() => {
-      'worklet'
-      // Optional: Add haptic feedback or snap to center
-    })
+
 
   // Combine camera gestures (focus and zoom) - these compete with button gestures
   const cameraGestures = Gesture.Simultaneous(tapGesture, longPressGesture, pinchGesture)
@@ -367,13 +352,13 @@ export const CameraScreen: FC = function CameraScreen() {
     }
   })
 
-  // Map exposure slider to conservative EV range (-0.7 to +0.7 EV)
+  // Map exposure slider to device exposure range (conservative range)
   const exposureValue = useDerivedValue(() => {
     if (!device) return 0
-    // Map slider value (-1 to 1) to EV range (-0.7 to +0.7)
-    const evValue = interpolate(exposureSlider.value, [-1, 0, 1], [-0.7, 0, 0.7])
-    // Convert EV to device exposure value with very conservative mapping
-    return evValue * (device.maxExposure - device.minExposure) * 0.1 // Only 10% of device range per EV
+    // Map slider value (-1 to 1) to a conservative portion of device exposure range
+    const range = device.maxExposure - device.minExposure
+    const conservativeRange = range * 0.3 // Use only 30% of the full range
+    return interpolate(exposureSlider.value, [-1, 0, 1], [-conservativeRange/2, 0, conservativeRange/2])
   }, [exposureSlider, device])
 
   // Create animated style for zoom indicator visibility
@@ -399,10 +384,7 @@ export const CameraScreen: FC = function CameraScreen() {
     exposure: exposureValue.value,
   }), [exposureValue])
 
-  // Create animated style for exposure slider thumb
-  const animatedThumbStyle = useAnimatedStyle(() => ({
-    left: `${(exposureSlider.value + 1) * 50}%`, // Map -1 to 1 -> 0% to 100%
-  }))
+
 
   // Create animated style for camera mode button expansion
   const animatedCameraModeStyle = useAnimatedStyle(() => {
@@ -446,6 +428,23 @@ export const CameraScreen: FC = function CameraScreen() {
       ],
     }
   })
+
+  // Create animated style for exposure controls
+  const animatedExposureControlsStyle = useAnimatedStyle(() => {
+    return {
+      opacity: showExposureControls ? 1 : 0,
+      transform: [
+        {
+          scale: interpolate(
+            showExposureControls ? 1 : 0,
+            [0, 1],
+            [0.8, 1] // Slight scale animation
+          )
+        }
+      ],
+    }
+  })
+
 
 
   const { right: _right, top: _top } = useSafeAreaInsets()
@@ -525,38 +524,44 @@ export const CameraScreen: FC = function CameraScreen() {
               </View>
             )}
 
-            {/* Exposure Controls Toggle Button */}
-            <GestureDetector gesture={evButtonGesture}>
-              <View style={[
-                $exposureToggleButton,
-                evPressed && { opacity: 0.6 }
-              ]}>
-                <Text style={$exposureToggleText}>EV</Text>
-              </View>
-            </GestureDetector>
 
-            {/* Exposure Controls - Only show when toggled */}
+            {/* Exposure Controls - Gluestack Slider */}
             {showExposureControls && (
-              <View style={$exposureControls}>
-                <Text style={$exposureLabel}>Exposure</Text>
-                <Text style={$exposureCurrentValue}>
-                  {currentEV}
-                </Text>
+              <Reanimated.View style={[$exposureControlsVertical, animatedExposureControlsStyle]}>
                 <View style={$exposureSliderContainer}>
-                  <Text style={$exposureValue}>-0.7</Text>
-                  <View style={$exposureSlider}>
-                    <View style={$exposureSliderTrack}>
-                      <Reanimated.View 
-                        style={[$exposureSliderThumb, animatedThumbStyle]} 
-                      />
-                    </View>
-                    <GestureDetector gesture={exposurePanGesture}>
-                      <View style={$exposureSliderArea} />
-                    </GestureDetector>
-                  </View>
-                  <Text style={$exposureValue}>+0.7</Text>
+                  <Text style={$exposureLabel}>+2</Text>
+                  <Slider
+                    value={sliderValue}
+                    onChange={(value: any) => {
+                      console.log('Slider onChange:', value, typeof value)
+                      const numValue = typeof value === 'number' ? value : parseFloat(value)
+                      
+                      // Validate the value to prevent NaN
+                      if (isNaN(numValue) || !isFinite(numValue)) {
+                        console.log('Invalid slider value, skipping update')
+                        return
+                      }
+                      
+                      // Clamp the value to valid range
+                      const clampedValue = Math.max(-1, Math.min(1, numValue))
+                      
+                      setSliderValue(clampedValue)
+                      exposureSlider.value = clampedValue
+                    }}
+                    minValue={-1}
+                    maxValue={1}
+                    step={0.01}
+                    orientation="vertical"
+                    style={$gluestackSlider}
+                  >
+                    <SliderTrack style={$sliderTrack}>
+                      <SliderFilledTrack style={$sliderFilledTrack} />
+                    </SliderTrack>
+                    <SliderThumb style={$sliderThumb} />
+                  </Slider>
+                  <Text style={$exposureLabel}>-2</Text>
                 </View>
-              </View>
+              </Reanimated.View>
             )}
           </View>
 
@@ -599,9 +604,11 @@ export const CameraScreen: FC = function CameraScreen() {
                     <View style={$controlButton}>
                       <Ionicons name="flash-outline" size={20} color="#fff" />
                     </View>
-                    <View style={$controlButton}>
-                      <Ionicons name="timer-outline" size={20} color="#fff" />
-                    </View>
+                    <GestureDetector gesture={evButtonGesture}>
+                      <View style={[$controlButton, evPressed && { opacity: 0.6 }]}>
+                        <Ionicons name="contrast-outline" size={20} color="#fff" />
+                      </View>
+                    </GestureDetector>
                     <View style={$controlButton}>
                       <Ionicons name="crop-outline" size={20} color="#fff" />
                     </View>
@@ -740,6 +747,58 @@ const $controlButton: ViewStyle = {
   marginVertical: 4,
 }
 
+// Vertical Exposure Controls Styles
+const $exposureControlsVertical: ViewStyle = {
+  position: "absolute",
+  bottom: 300, // Position well above the camera mode button to avoid overlap
+  right: 40, // Same right position as camera mode button
+  width: 60,
+  height: 200, // Same height as expanded camera mode button
+  backgroundColor: "rgba(255, 255, 255, 0.2)",
+  borderRadius: 30,
+  justifyContent: "center",
+  alignItems: "center",
+  overflow: "hidden",
+}
+
+const $exposureSliderContainer: ViewStyle = {
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "space-between",
+  height: 160,
+}
+
+const $gluestackSlider: ViewStyle = {
+  height: 100,
+  width: 4,
+}
+
+const $sliderTrack: ViewStyle = {
+  height: 100,
+  width: 4,
+  backgroundColor: "rgba(255, 255, 255, 0.3)",
+  borderRadius: 2,
+}
+
+const $sliderFilledTrack: ViewStyle = {
+  backgroundColor: "rgba(255, 255, 255, 0.6)",
+}
+
+const $sliderThumb: ViewStyle = {
+  backgroundColor: "#fff",
+  width: 20,
+  height: 20,
+  borderRadius: 10,
+}
+
+const $exposureLabel: TextStyle = {
+  color: "#fff",
+  fontSize: 10,
+  fontWeight: "bold",
+}
+
+
+
 const $zoomIndicator: ViewStyle = {
   position: "absolute",
   top: 60,
@@ -782,92 +841,3 @@ const $aeLockText: TextStyle = {
   fontWeight: "bold",
 }
 
-// Exposure Controls Styles
-const $exposureToggleButton: ViewStyle = {
-  position: "absolute",
-  top: 100, // Moved down to avoid navigation drawer
-  right: 20,
-  backgroundColor: "rgba(0, 0, 0, 0.6)",
-  paddingHorizontal: 12,
-  paddingVertical: 8,
-  borderRadius: 16,
-}
-
-const $exposureToggleText: TextStyle = {
-  color: "#fff",
-  fontSize: 14,
-  fontWeight: "bold",
-}
-
-const $exposureControls: ViewStyle = {
-  position: "absolute",
-  bottom: 120,
-  left: 20,
-  right: 20,
-  backgroundColor: "rgba(0, 0, 0, 0.8)",
-  padding: 16,
-  borderRadius: 12,
-}
-
-const $exposureLabel: TextStyle = {
-  color: "#fff",
-  fontSize: 16,
-  fontWeight: "bold",
-  marginBottom: 8,
-  textAlign: "center",
-}
-
-const $exposureCurrentValue: TextStyle = {
-  color: "#FFD700", // Gold color for current value
-  fontSize: 18,
-  fontWeight: "bold",
-  marginBottom: 12,
-  textAlign: "center",
-}
-
-const $exposureSliderContainer: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "space-between",
-}
-
-const $exposureValue: TextStyle = {
-  color: "#fff",
-  fontSize: 12,
-  fontWeight: "bold",
-  minWidth: 24,
-  textAlign: "center",
-}
-
-const $exposureSlider: ViewStyle = {
-  flex: 1,
-  marginHorizontal: 16,
-  height: 40,
-  justifyContent: "center",
-}
-
-const $exposureSliderTrack: ViewStyle = {
-  height: 4,
-  backgroundColor: "rgba(255, 255, 255, 0.3)",
-  borderRadius: 2,
-  position: "relative",
-}
-
-const $exposureSliderThumb: ViewStyle = {
-  position: "absolute",
-  top: -8,
-  width: 20,
-  height: 20,
-  backgroundColor: "#fff",
-  borderRadius: 10,
-  marginLeft: -10,
-}
-
-const $exposureSliderArea: ViewStyle = {
-  position: "absolute",
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  backgroundColor: "transparent",
-}
