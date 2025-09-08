@@ -26,6 +26,7 @@ import Reanimated, {
 } from "react-native-reanimated"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Camera, useCameraDevice, useCameraPermission } from "react-native-vision-camera"
+import * as Haptics from 'expo-haptics'
 
 // Create Reanimated Camera component for animated exposure
 const ReanimatedCamera = Reanimated.createAnimatedComponent(Camera)
@@ -36,9 +37,7 @@ import { TopNavigation } from "@/components/TopNavigation"
 import { useNavigation } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { photoLibraryService } from "@/services/photoLibrary"
-import { useOrientation } from "@/hooks/useOrientation"
 import { useDeviceOrientation } from "@/hooks/useDeviceOrientation"
-import * as ScreenOrientation from 'expo-screen-orientation'
 
 // Enable zoom animation for Reanimated (as per Vision Camera docs)
 Reanimated.addWhitelistedNativeProps({
@@ -48,11 +47,11 @@ Reanimated.addWhitelistedNativeProps({
 
 export const CameraScreen: FC = function CameraScreen() {
   const [cameraPermission, setCameraPermission] = useState<boolean | null>(null)
-  const [isActive] = useState(true) // Always on by default
+  const [isActive, setIsActive] = useState(true) // Camera active state
+  const [cameraError, setCameraError] = useState<string | null>(null)
   const navigation = useNavigation<AppStackScreenProps<"Camera">["navigation"]>()
   
-  // Orientation detection - use device orientation for UI, screen orientation for camera
-  const { orientation, isLandscape, isPortrait, isLoading } = useOrientation()
+  // Device orientation detection for UI adjustments (screen is locked to portrait)
   const deviceOrientation = useDeviceOrientation()
 
   // Get icon rotation angle based on device orientation
@@ -70,33 +69,59 @@ export const CameraScreen: FC = function CameraScreen() {
     }
   }
 
-  // Debug orientation changes
+  // Debug device orientation changes (for UI adjustments only) - only log when orientation actually changes
   useEffect(() => {
-    if (!isLoading) {
-      console.log('CameraScreen orientation:', { orientation, isLandscape, isPortrait })
-    }
-  }, [orientation, isLandscape, isPortrait, isLoading])
+    // Only log when orientation changes, not on every render
+    console.log('CameraScreen device orientation changed:', deviceOrientation.orientation)
+  }, [deviceOrientation.orientation])
 
-  // Lock screen orientation to prevent jarring rotation animation
-  useEffect(() => {
-    const lockOrientation = async () => {
-      try {
-        // Lock to portrait to prevent screen rotation animation
-        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP)
-        console.log("Screen orientation locked to portrait")
-      } catch (error) {
-        console.error("Failed to lock screen orientation:", error)
-      }
-    }
-
-    lockOrientation()
-  }, [])
+  // Note: Screen orientation is locked at app level to prevent rotation
 
   const { hasPermission, requestPermission } = useCameraPermission()
   // Use camera device with ultra-wide support for zoom out below 1x
   const device = useCameraDevice("back", {
     physicalDevices: ["ultra-wide-angle-camera", "wide-angle-camera", "telephoto-camera"],
   })
+  
+  // Debug device zoom info
+  useEffect(() => {
+    if (device) {
+      console.log('📱 Camera Device Info:', {
+        minZoom: device.minZoom,
+        maxZoom: device.maxZoom,
+        neutralZoom: device.neutralZoom,
+        physicalDevices: device.physicalDevices
+      })
+    }
+  }, [device])
+  
+  // Simple zoom debug function
+  const logZoomInfo = useCallback((message: string, currentZoom: number) => {
+    if (device) {
+      console.log(`🔍 ${message}:`, {
+        current: currentZoom.toFixed(2),
+        neutral: device.neutralZoom.toFixed(2),
+        distance: Math.abs(currentZoom - device.neutralZoom).toFixed(2)
+      })
+    }
+  }, [device])
+  
+  // Safe haptic feedback function
+  const triggerHaptic = useCallback(async (type: 'impact' | 'selection' = 'impact', style: 'light' | 'medium' | 'heavy' = 'medium') => {
+    try {
+      if (type === 'impact') {
+        const impactStyle = style === 'light' ? Haptics.ImpactFeedbackStyle.Light :
+                           style === 'heavy' ? Haptics.ImpactFeedbackStyle.Heavy :
+                           Haptics.ImpactFeedbackStyle.Medium
+        await Haptics.impactAsync(impactStyle)
+      } else if (type === 'selection') {
+        await Haptics.selectionAsync()
+      }
+    } catch (error) {
+      console.log('Haptic not available:', error)
+    }
+  }, [])
+
   const _cameraRef = useRef<Camera>(null)
   
   // Callback ref to get camera instance
@@ -108,6 +133,23 @@ export const CameraScreen: FC = function CameraScreen() {
   const zoom = useSharedValue(device?.neutralZoom ?? 1)
   const zoomOffset = useSharedValue(0)
   const [currentZoom, setCurrentZoom] = useState(device?.neutralZoom ?? 1)
+
+  // Camera error recovery function
+  const recoverFromCameraError = useCallback(() => {
+    console.log("Attempting camera recovery from zoom error...")
+    setCameraError("Camera temporarily unavailable")
+    setIsActive(false)
+    
+    setTimeout(() => {
+      console.log("Resuming camera after recovery...")
+      setIsActive(true)
+      setCameraError(null)
+      // Reset zoom to neutral to prevent further errors
+      if (device) {
+        zoom.value = device.neutralZoom
+      }
+    }, 2000)
+  }, [device, zoom])
 
   // Focus and exposure state
   const [isFocusLocked, setIsFocusLocked] = useState(false)
@@ -289,8 +331,13 @@ export const CameraScreen: FC = function CameraScreen() {
         flashAnimation.value = withTiming(0, { duration: 100 })
       })
 
-      // Take photo with Vision Camera
-      const photo = await _cameraRef.current.takePhoto()
+      // Take photo with Vision Camera with timeout
+      const photoPromise = _cameraRef.current.takePhoto()
+      const timeoutPromise = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('Photo capture timeout')), 5000)
+      )
+      
+      const photo = await Promise.race([photoPromise, timeoutPromise])
 
       console.log("Photo captured:", photo.path)
       console.log("Photo object:", photo)
@@ -317,7 +364,29 @@ export const CameraScreen: FC = function CameraScreen() {
 
     } catch (error) {
       console.error("Error taking photo:", error)
-      // TODO: Show error feedback
+      
+      // Handle specific AVFoundation errors
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      if (errorMessage.includes('AVFoundationErrorDomain') || 
+          errorMessage.includes('Cannot Complete Action')) {
+        console.log("AVFoundation error detected - attempting camera recovery")
+        setCameraError("Camera temporarily unavailable")
+        
+        // Try to recover by briefly pausing and resuming camera
+        setIsActive(false)
+        setTimeout(() => {
+          console.log("Attempting camera recovery...")
+          setIsActive(true)
+          setCameraError(null)
+        }, 2000)
+      }
+      
+      // Show user-friendly error message
+      Alert.alert(
+        "Camera Error",
+        "Unable to take photo. Please try again.",
+        [{ text: "OK" }]
+      )
     } finally {
       setIsCapturing(false)
       setCaptureFlash(false)
@@ -354,6 +423,7 @@ export const CameraScreen: FC = function CameraScreen() {
     })
     .onEnd(() => {
       'worklet'
+      runOnJS(triggerHaptic)('impact', 'medium')
       runOnJS(takePhoto)()
       runOnJS(setShutterPressed)(false)
     })
@@ -466,7 +536,7 @@ export const CameraScreen: FC = function CameraScreen() {
       runOnJS(handleFocusLock)(x, y)
     })
 
-  // Create pinch gesture following Vision Camera example
+  // Create pinch gesture following Vision Camera example with snap-to-neutral
   const pinchGesture = Gesture.Pinch()
     .onBegin(() => {
       'worklet'
@@ -476,15 +546,54 @@ export const CameraScreen: FC = function CameraScreen() {
       'worklet'
       if (!device) return
 
-      // Use a more direct approach for zoom calculation
-      const baseZoom = zoomOffset.value
-      const scaleFactor = event.scale
-      const newZoom = baseZoom * scaleFactor
+      try {
+        // Use a more direct approach for zoom calculation
+        const baseZoom = zoomOffset.value
+        const scaleFactor = event.scale
+        const newZoom = baseZoom * scaleFactor
 
-      // Clamp to reasonable limits (following best practices)
-      const maxReasonableZoom = Math.min(device.maxZoom, 16) // Cap at 16x for usability
-      const clampedZoom = Math.max(device.minZoom, Math.min(newZoom, maxReasonableZoom))
-      zoom.value = clampedZoom
+        // Clamp to reasonable limits (following best practices)
+        const maxReasonableZoom = Math.min(device.maxZoom, 10) // Cap at 10x as requested
+        const clampedZoom = Math.max(device.minZoom, Math.min(newZoom, maxReasonableZoom))
+        
+        // Only update zoom if the change is significant to prevent excessive updates
+        if (Math.abs(clampedZoom - zoom.value) > 0.01) {
+          zoom.value = clampedZoom
+        }
+      } catch (error) {
+        console.log('Zoom update error:', error)
+        // Don't update zoom on error to prevent further issues
+      }
+    })
+    .onEnd(() => {
+      'worklet'
+      if (!device) return
+      
+      try {
+        const neutralZoom = device.neutralZoom
+        const currentZoom = zoom.value
+        
+        // Define snap threshold - if within 0.5x of neutral, snap to neutral
+        const snapThreshold = 0.5
+        const distanceFromNeutral = Math.abs(currentZoom - neutralZoom)
+        
+        if (distanceFromNeutral <= snapThreshold) {
+          // Snap to neutral zoom with smooth spring animation
+          runOnJS(logZoomInfo)('Snapping to neutral', currentZoom)
+          runOnJS(triggerHaptic)('impact', 'light') // Light haptic feedback for zoom snap
+          zoom.value = withSpring(neutralZoom, {
+            damping: 18,
+            stiffness: 250,
+            mass: 0.7,
+          })
+        } else {
+          runOnJS(logZoomInfo)('Staying at current zoom', currentZoom)
+        }
+      } catch (error) {
+        console.log('Zoom end error:', error)
+        // Trigger camera recovery on zoom error
+        runOnJS(recoverFromCameraError)()
+      }
     })
 
 
@@ -497,7 +606,12 @@ export const CameraScreen: FC = function CameraScreen() {
   
   // Update camera zoom when zoom value changes using derived value
   useDerivedValue(() => {
-    runOnJS(setCameraZoom)(zoom.value)
+    try {
+      runOnJS(setCameraZoom)(zoom.value)
+    } catch (error) {
+      console.log('Camera zoom update error:', error)
+      // Don't update camera zoom on error
+    }
   })
 
   // Animated style for camera container push-up effect
@@ -686,6 +800,13 @@ export const CameraScreen: FC = function CameraScreen() {
               zoom={cameraZoom}
               enableZoomGesture={false} // We're using custom gesture
               animatedProps={animatedCameraProps}
+              onError={(error) => {
+                console.error('Camera error:', error)
+                if (error.message?.includes('AVFoundationErrorDomain') || 
+                    error.message?.includes('Cannot Complete Action')) {
+                  recoverFromCameraError()
+                }
+              }}
             />
             
             {/* Flash overlay for photo capture feedback */}
@@ -717,13 +838,11 @@ export const CameraScreen: FC = function CameraScreen() {
             </Reanimated.View>
 
             {/* Orientation Debug Indicator */}
-            {!isLoading && (
-              <View style={$orientationIndicator}>
-                <Text style={$orientationText}>
-                  {deviceOrientation.isLandscape ? '📱 Device: Landscape' : deviceOrientation.isPortrait ? '📱 Device: Portrait' : '📱 Device: Unknown'}
-                </Text>
-              </View>
-            )}
+            <View style={$orientationIndicator}>
+              <Text style={$orientationText}>
+                {deviceOrientation.isLandscape ? '📱 Device: Landscape' : deviceOrientation.isPortrait ? '📱 Device: Portrait' : '📱 Device: Unknown'}
+              </Text>
+            </View>
 
             {/* Focus Ring - Only show when focusing */}
             {showFocusRing && <Reanimated.View style={[$focusRing, animatedFocusRingStyle]} />}
@@ -1120,9 +1239,10 @@ const $unifiedOverlay: ViewStyle = {
 
 const $zoomIndicator: ViewStyle = {
   position: "absolute",
-  top: 60,
-  left: 20,
-  backgroundColor: "rgba(0, 0, 0, 0.6)",
+  bottom: 200, // Position above the shutter button area
+  left: "50%",
+  marginLeft: -30, // Center horizontally (adjust based on content width)
+  backgroundColor: "rgba(255, 255, 255, 0.2)",
   paddingHorizontal: 12,
   paddingVertical: 6,
   borderRadius: 16,
@@ -1133,7 +1253,7 @@ const $zoomIndicatorLandscape: ViewStyle = {
   position: "absolute",
   top: 60,
   right: 20,
-  backgroundColor: "rgba(0, 0, 0, 0.6)",
+  backgroundColor: "rgba(255, 255, 255, 0.2)",
   paddingHorizontal: 12,
   paddingVertical: 6,
   borderRadius: 16,
@@ -1141,7 +1261,7 @@ const $zoomIndicatorLandscape: ViewStyle = {
 
 const $zoomText: TextStyle = {
   color: "#fff",
-  fontSize: 14,
+  fontSize: 10,
   fontWeight: "bold",
 }
 

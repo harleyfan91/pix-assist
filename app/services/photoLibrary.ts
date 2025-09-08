@@ -56,8 +56,8 @@ class PhotoLibraryServiceImpl implements PhotoLibraryService {
         return true
       }
 
-      // Handle limited access (iOS 14+)
-      if (newStatus === MediaLibrary.PermissionStatus.LIMITED) {
+      // Handle limited access (iOS 14+) - check if LIMITED exists
+      if (newStatus === 'limited' as any) {
         console.log('Limited photo library access granted')
         return true
       }
@@ -122,16 +122,11 @@ class PhotoLibraryServiceImpl implements PhotoLibraryService {
       }
 
       // Save photo to media library
-      const asset = await MediaLibrary.saveToLibraryAsync(uri)
+      await MediaLibrary.saveToLibraryAsync(uri)
       
-      // Check if asset was created successfully
-      if (asset && asset.id) {
-        console.log('Photo saved to library:', asset.id)
-        return true
-      } else {
-        console.log('Photo saved but no asset ID returned')
-        return true // Still consider it successful if no error was thrown
-      }
+      // If no error was thrown, consider it successful
+      console.log('Photo saved to library successfully')
+      return true
     } catch (error) {
       console.error('Error saving photo:', error)
       return false

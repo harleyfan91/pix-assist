@@ -31,6 +31,7 @@ export const PreviewScreen: FC = function PreviewScreen() {
     }
   }
 
+
   const handleSave = () => {
     // Photo is already saved, just show confirmation
     Alert.alert(
@@ -42,12 +43,12 @@ export const PreviewScreen: FC = function PreviewScreen() {
 
   const handleRetake = () => {
     Alert.alert(
-      "Retake Photo",
-      "Are you sure you want to retake this photo?",
+      "Delete Photo",
+      "Are you sure you want to delete this photo?",
       [
         { text: "Cancel", style: "cancel" },
         { 
-          text: "Retake", 
+          text: "Delete", 
           style: "destructive",
           onPress: () => navigation.goBack()
         }
@@ -55,8 +56,13 @@ export const PreviewScreen: FC = function PreviewScreen() {
     )
   }
 
-  const handleGallery = () => {
-    (navigation as any).navigate("Gallery")
+  const handleEditPhoto = () => {
+    // TODO: Navigate to edit photo page
+    Alert.alert(
+      "Edit Photo",
+      "Photo editing feature coming soon!",
+      [{ text: "OK" }]
+    )
   }
 
 
@@ -68,8 +74,7 @@ export const PreviewScreen: FC = function PreviewScreen() {
         source={{ uri: photoPath }}
         style={[
           $photoImage,
-          deviceOrientation.isLandscape ? $photoImageLandscape : $photoImagePortrait,
-          { transform: [{ rotate: deviceOrientation.isLandscape ? '90deg' : '0deg' }] }
+          deviceOrientation.isLandscape ? $photoImageLandscape : $photoImagePortrait
         ]}
         resizeMode="contain"
       />
@@ -78,7 +83,7 @@ export const PreviewScreen: FC = function PreviewScreen() {
       <View style={$actionsContainer}>
         <TouchableOpacity style={$actionButton} onPress={handleRetake}>
           <Ionicons 
-            name="camera-outline" 
+            name="close-outline" 
             size={24} 
             color="#fff" 
             style={{ transform: [{ rotate: getIconRotation() }] }}
@@ -87,16 +92,16 @@ export const PreviewScreen: FC = function PreviewScreen() {
 
         <TouchableOpacity style={$actionButton} onPress={handleSave}>
           <Ionicons 
-            name="checkmark-outline" 
+            name="download-outline" 
             size={24} 
             color="#fff" 
             style={{ transform: [{ rotate: getIconRotation() }] }}
           />
         </TouchableOpacity>
 
-        <TouchableOpacity style={$actionButton} onPress={handleGallery}>
+        <TouchableOpacity style={$actionButton} onPress={handleEditPhoto}>
           <Ionicons 
-            name="images-outline" 
+            name="create-outline" 
             size={24} 
             color="#fff" 
             style={{ transform: [{ rotate: getIconRotation() }] }}

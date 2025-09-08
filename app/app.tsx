@@ -21,6 +21,7 @@ import "./utils/gestureHandler"
 import { useEffect, useState } from "react"
 import { useFonts } from "expo-font"
 import * as Linking from "expo-linking"
+import * as ScreenOrientation from 'expo-screen-orientation'
 import { config as gluestackConfig } from "@gluestack-ui/config"
 import { GluestackUIProvider } from "@gluestack-ui/themed"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
@@ -61,6 +62,20 @@ export function App() {
 
   const [areFontsLoaded, fontLoadError] = useFonts(customFontsToLoad)
   const [isI18nInitialized, setIsI18nInitialized] = useState(false)
+
+  // Lock screen orientation immediately when app starts to prevent rotation
+  useEffect(() => {
+    const lockOrientation = async () => {
+      try {
+        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP)
+        console.log("App: Screen orientation locked to portrait")
+      } catch (error) {
+        console.error("App: Failed to lock screen orientation:", error)
+      }
+    }
+
+    lockOrientation()
+  }, [])
 
   useEffect(() => {
     initI18n()

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Accelerometer } from 'expo-sensors'
 
 export interface DeviceOrientation {
@@ -13,15 +13,27 @@ export const useDeviceOrientation = () => {
     isPortrait: true,
     orientation: 'portrait'
   })
+  
+  const lastUpdateTime = useRef<number>(0)
+  const debounceDelay = 1000 // 1 second debounce
 
   useEffect(() => {
     let subscription: any
 
     const startAccelerometer = async () => {
-      // Set update interval to 100ms for responsive detection
-      Accelerometer.setUpdateInterval(100)
+      // Set update interval to 1 second to reduce frequency and prevent loops
+      Accelerometer.setUpdateInterval(1000)
       
       subscription = Accelerometer.addListener(({ x, y, z }) => {
+        const now = Date.now()
+        
+        // Debounce updates to prevent excessive re-renders
+        if (now - lastUpdateTime.current < debounceDelay) {
+          return
+        }
+        
+        lastUpdateTime.current = now
+        
         // Calculate orientation based on accelerometer values
         const absX = Math.abs(x)
         const absY = Math.abs(y)
@@ -68,7 +80,13 @@ export const useDeviceOrientation = () => {
           }
         }
 
-        setOrientation(newOrientation)
+        // Only update state if orientation actually changed to prevent unnecessary re-renders
+        setOrientation(prevOrientation => {
+          if (prevOrientation.orientation !== newOrientation.orientation) {
+            return newOrientation
+          }
+          return prevOrientation
+        })
       })
     }
 
@@ -79,7 +97,7 @@ export const useDeviceOrientation = () => {
         subscription.remove()
       }
     }
-  }, [])
+  }, [debounceDelay])
 
   return orientation
 }

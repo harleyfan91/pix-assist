@@ -1,5 +1,5 @@
 import { FC, useEffect, useState } from "react"
-import { View, ViewStyle, FlatList, Image, TouchableOpacity, Alert, ActivityIndicator } from "react-native"
+import { View, ViewStyle, FlatList, Image, TouchableOpacity, Alert, ActivityIndicator, ImageStyle, TextStyle } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 
 import { Screen } from "@/components/Screen"
@@ -150,7 +150,7 @@ const $photoContainer: ViewStyle = {
   backgroundColor: '#f0f0f0',
 }
 
-const $photoImage: ViewStyle = {
+const $photoImage: ImageStyle = {
   width: '100%',
   height: '100%',
 }
@@ -162,12 +162,12 @@ const $emptyState: ViewStyle = {
   paddingHorizontal: 40,
 }
 
-const $emptyText: ViewStyle = {
+const $emptyText: TextStyle = {
   marginTop: 16,
   textAlign: 'center',
 }
 
-const $emptySubtext: ViewStyle = {
+const $emptySubtext: TextStyle = {
   marginTop: 8,
   textAlign: 'center',
   color: '#666',
@@ -181,13 +181,13 @@ const $errorState: ViewStyle = {
   paddingHorizontal: 40,
 }
 
-const $errorText: ViewStyle = {
+const $errorText: TextStyle = {
   marginTop: 16,
   textAlign: 'center',
   color: '#ff6b6b',
 }
 
-const $errorSubtext: ViewStyle = {
+const $errorSubtext: TextStyle = {
   marginTop: 8,
   textAlign: 'center',
   color: '#666',
@@ -202,7 +202,7 @@ const $retryButton: ViewStyle = {
   borderRadius: 8,
 }
 
-const $retryButtonText: ViewStyle = {
+const $retryButtonText: TextStyle = {
   color: '#fff',
   fontWeight: '600',
 }
@@ -213,7 +213,7 @@ const $loadingState: ViewStyle = {
   alignItems: 'center',
 }
 
-const $loadingText: ViewStyle = {
+const $loadingText: TextStyle = {
   marginTop: 16,
   color: '#666',
 }

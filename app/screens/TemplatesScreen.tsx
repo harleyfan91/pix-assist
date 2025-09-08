@@ -1,5 +1,5 @@
 import { FC } from "react"
-import { View, ViewStyle } from "react-native"
+import { View, ViewStyle, TextStyle } from "react-native"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 
@@ -30,7 +30,7 @@ const $content: ViewStyle = {
   paddingHorizontal: 20,
 }
 
-const $description: ViewStyle = {
+const $description: TextStyle = {
   textAlign: "center",
   marginTop: 20,
   opacity: 0.7,
