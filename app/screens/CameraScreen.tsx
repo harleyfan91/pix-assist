@@ -172,6 +172,12 @@ export const CameraScreen: FC = function CameraScreen() {
       console.log('Flash mode changed:', prevMode, '→', newMode)
       // Update ref immediately to avoid race conditions
       flashModeRef.current = newMode
+      
+      // Show flash mode in popup
+      const flashText = newMode === 'auto' ? 'Auto' : newMode === 'on' ? 'On' : 'Off'
+      setPopupTextOverride(flashText)
+      setTimeout(() => setPopupTextOverride(null), 1500)
+      
       return newMode
     })
   }, [])
@@ -206,6 +212,9 @@ export const CameraScreen: FC = function CameraScreen() {
   // Flash mode state: 'auto' | 'on' | 'off'
   const [flashMode, setFlashMode] = useState<'auto' | 'on' | 'off'>('auto')
   const flashModeRef = useRef<'auto' | 'on' | 'off'>('auto')
+  
+  // Temporary popup text override (for flash feedback)
+  const [popupTextOverride, setPopupTextOverride] = useState<string | null>(null)
 
   // Debug flash mode changes and update ref
   useEffect(() => {
@@ -740,7 +749,7 @@ export const CameraScreen: FC = function CameraScreen() {
     const neutralZoom = device?.neutralZoom ?? 1
     const isZoomed = Math.abs(zoom.value - neutralZoom) > 0.1
     return {
-      opacity: isZoomed ? 1 : 0,
+      opacity: (isZoomed || popupTextOverride) ? 1 : 0,
     }
   })
 
@@ -941,7 +950,7 @@ export const CameraScreen: FC = function CameraScreen() {
 
             {/* Zoom Indicator - Only show when zoomed */}
             <Reanimated.View style={[$zoomIndicator, animatedZoomStyle]}>
-              <Text style={$zoomText}>{currentZoom.toFixed(1)}x</Text>
+              <Text style={$zoomText}>{popupTextOverride || `${currentZoom.toFixed(1)}x`}</Text>
             </Reanimated.View>
 
             {/* Orientation Debug Indicator */}
