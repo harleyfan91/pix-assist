@@ -16,9 +16,13 @@ import Reanimated, {
   useAnimatedProps,
   useDerivedValue,
   runOnJS,
+  interpolate,
 } from "react-native-reanimated"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Camera, useCameraDevice, useCameraPermission } from "react-native-vision-camera"
+
+// Create Reanimated Camera component for animated exposure
+const ReanimatedCamera = Reanimated.createAnimatedComponent(Camera)
 
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
@@ -26,9 +30,8 @@ import { Text } from "@/components/Text"
 // Enable zoom animation for Reanimated (as per Vision Camera docs)
 Reanimated.addWhitelistedNativeProps({
   zoom: true,
+  exposure: true,
 })
-
-const ReanimatedCamera = Reanimated.createAnimatedComponent(Camera)
 
 export const CameraScreen: FC = function CameraScreen() {
   const [cameraPermission, setCameraPermission] = useState<boolean | null>(null)
@@ -56,6 +59,11 @@ export const CameraScreen: FC = function CameraScreen() {
   const [showFocusRing, setShowFocusRing] = useState(false)
   const focusRingOpacity = useSharedValue(0)
   const focusRingPosition = useSharedValue({ x: 0, y: 0 })
+  
+  // Exposure state
+  const exposureSlider = useSharedValue(0) // -1 to 1 range
+  const [showExposureControls, setShowExposureControls] = useState(false)
+  const [currentEV, setCurrentEV] = useState("0.0 EV")
 
   useEffect(() => {
     setCameraPermission(hasPermission)
@@ -206,6 +214,24 @@ export const CameraScreen: FC = function CameraScreen() {
       zoom.value = clampedZoom
     })
 
+  // Exposure pan gesture
+  const exposurePanGesture = Gesture.Pan()
+    .onUpdate((event) => {
+      'worklet'
+      const sliderWidth = 200 // Approximate slider width
+      const newValue = (event.x / sliderWidth) * 2 - 1 // Map to -1 to 1
+      exposureSlider.value = Math.max(-1, Math.min(1, newValue))
+      
+      // Update EV display
+      const evValue = interpolate(newValue, [-1, 0, 1], [-0.7, 0, 0.7])
+      const evString = `${evValue > 0 ? '+' : ''}${evValue.toFixed(1)} EV`
+      runOnJS(setCurrentEV)(evString)
+    })
+    .onEnd(() => {
+      'worklet'
+      // Optional: Add haptic feedback or snap to center
+    })
+
   // Combine all gestures
   const composedGesture = Gesture.Simultaneous(tapGesture, longPressGesture, pinchGesture)
 
@@ -216,6 +242,15 @@ export const CameraScreen: FC = function CameraScreen() {
   useDerivedValue(() => {
     runOnJS(setCameraZoom)(zoom.value)
   })
+
+  // Map exposure slider to conservative EV range (-0.7 to +0.7 EV)
+  const exposureValue = useDerivedValue(() => {
+    if (!device) return 0
+    // Map slider value (-1 to 1) to EV range (-0.7 to +0.7)
+    const evValue = interpolate(exposureSlider.value, [-1, 0, 1], [-0.7, 0, 0.7])
+    // Convert EV to device exposure value with very conservative mapping
+    return evValue * (device.maxExposure - device.minExposure) * 0.1 // Only 10% of device range per EV
+  }, [exposureSlider, device])
 
   // Create animated style for zoom indicator visibility
   const animatedZoomStyle = useAnimatedStyle(() => {
@@ -233,6 +268,16 @@ export const CameraScreen: FC = function CameraScreen() {
       { translateX: focusRingPosition.value.x - 50 }, // Center the ring
       { translateY: focusRingPosition.value.y - 50 },
     ],
+  }))
+
+  // Create animated props for camera exposure
+  const animatedCameraProps = useAnimatedProps(() => ({
+    exposure: exposureValue.value,
+  }), [exposureValue])
+
+  // Create animated style for exposure slider thumb
+  const animatedThumbStyle = useAnimatedStyle(() => ({
+    left: `${(exposureSlider.value + 1) * 50}%`, // Map -1 to 1 -> 0% to 100%
   }))
 
   const { right: _right, top: _top } = useSafeAreaInsets()
@@ -277,7 +322,7 @@ export const CameraScreen: FC = function CameraScreen() {
     <GestureDetector gesture={composedGesture}>
       <View style={$cameraContainer}>
         <View style={StyleSheet.absoluteFill}>
-          <Camera
+          <ReanimatedCamera
             {...({ ref: _cameraRef } as any)}
             isActive={isActive}
             device={device}
@@ -286,6 +331,7 @@ export const CameraScreen: FC = function CameraScreen() {
             video
             zoom={cameraZoom}
             enableZoomGesture={false} // We're using custom gesture
+            animatedProps={animatedCameraProps}
           />
 
           {/* Zoom Indicator - Only show when zoomed */}
@@ -300,6 +346,38 @@ export const CameraScreen: FC = function CameraScreen() {
           {isFocusLocked && (
             <View style={$aeLockIndicator}>
               <Text style={$aeLockText}>AE/AF LOCK</Text>
+            </View>
+          )}
+
+          {/* Exposure Controls Toggle Button */}
+          <TouchableOpacity
+            style={$exposureToggleButton}
+            onPress={() => setShowExposureControls(!showExposureControls)}
+          >
+            <Text style={$exposureToggleText}>EV</Text>
+          </TouchableOpacity>
+
+          {/* Exposure Controls - Only show when toggled */}
+          {showExposureControls && (
+            <View style={$exposureControls}>
+              <Text style={$exposureLabel}>Exposure</Text>
+              <Text style={$exposureCurrentValue}>
+                {currentEV}
+              </Text>
+              <View style={$exposureSliderContainer}>
+                <Text style={$exposureValue}>-0.7</Text>
+                <View style={$exposureSlider}>
+                  <View style={$exposureSliderTrack}>
+                    <Reanimated.View 
+                      style={[$exposureSliderThumb, animatedThumbStyle]} 
+                    />
+                  </View>
+                  <GestureDetector gesture={exposurePanGesture}>
+                    <View style={$exposureSliderArea} />
+                  </GestureDetector>
+                </View>
+                <Text style={$exposureValue}>+0.7</Text>
+              </View>
             </View>
           )}
         </View>
@@ -396,4 +474,94 @@ const $aeLockText: TextStyle = {
   color: "#000",
   fontSize: 12,
   fontWeight: "bold",
+}
+
+// Exposure Controls Styles
+const $exposureToggleButton: ViewStyle = {
+  position: "absolute",
+  top: 60,
+  right: 20,
+  backgroundColor: "rgba(0, 0, 0, 0.6)",
+  paddingHorizontal: 12,
+  paddingVertical: 8,
+  borderRadius: 16,
+}
+
+const $exposureToggleText: TextStyle = {
+  color: "#fff",
+  fontSize: 14,
+  fontWeight: "bold",
+}
+
+const $exposureControls: ViewStyle = {
+  position: "absolute",
+  bottom: 120,
+  left: 20,
+  right: 20,
+  backgroundColor: "rgba(0, 0, 0, 0.8)",
+  padding: 16,
+  borderRadius: 12,
+}
+
+const $exposureLabel: TextStyle = {
+  color: "#fff",
+  fontSize: 16,
+  fontWeight: "bold",
+  marginBottom: 8,
+  textAlign: "center",
+}
+
+const $exposureCurrentValue: TextStyle = {
+  color: "#FFD700", // Gold color for current value
+  fontSize: 18,
+  fontWeight: "bold",
+  marginBottom: 12,
+  textAlign: "center",
+}
+
+const $exposureSliderContainer: ViewStyle = {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+}
+
+const $exposureValue: TextStyle = {
+  color: "#fff",
+  fontSize: 12,
+  fontWeight: "bold",
+  minWidth: 24,
+  textAlign: "center",
+}
+
+const $exposureSlider: ViewStyle = {
+  flex: 1,
+  marginHorizontal: 16,
+  height: 40,
+  justifyContent: "center",
+}
+
+const $exposureSliderTrack: ViewStyle = {
+  height: 4,
+  backgroundColor: "rgba(255, 255, 255, 0.3)",
+  borderRadius: 2,
+  position: "relative",
+}
+
+const $exposureSliderThumb: ViewStyle = {
+  position: "absolute",
+  top: -8,
+  width: 20,
+  height: 20,
+  backgroundColor: "#fff",
+  borderRadius: 10,
+  marginLeft: -10,
+}
+
+const $exposureSliderArea: ViewStyle = {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: "transparent",
 }
