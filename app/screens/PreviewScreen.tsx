@@ -1,6 +1,9 @@
 import { FC, useState, useEffect, useCallback } from "react"
+// import { FC, useState, useEffect, useCallback, useRef } from "react"
 import { View, ViewStyle, TouchableOpacity, Alert, Image, ImageStyle, ActivityIndicator } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
+// import { ReactNativeZoomableView } from "@openspacelabs/react-native-zoomable-view"
+import { SnapbackZoom } from "react-native-zoom-toolkit"
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native"
 import * as ImageManipulator from 'expo-image-manipulator'
 import * as FileSystem from 'expo-file-system'
@@ -30,7 +33,8 @@ export const PreviewScreen: FC = function PreviewScreen() {
   const [processedImages, setProcessedImages] = useState<Record<number, string>>({})
   const [currentRotationAngle, setCurrentRotationAngle] = useState<number | null>(null)
   
-  // Remove animation state - keep it simple
+  // Simple ref for zoom control
+  // const zoomRef = useRef<any>(null)
 
   // Get rotation angle based on device orientation (memoized for performance)
   const getRotationAngle = useCallback(() => {
@@ -253,13 +257,40 @@ export const PreviewScreen: FC = function PreviewScreen() {
       {/* Photo Display */}
       <View style={$photoContainer}>
         {displayUri && (
-          <Image
-            source={{ uri: displayUri }}
-            style={$photoImage}
-            resizeMode="contain"
-          />
+          <SnapbackZoom>
+            <Image
+              source={{ uri: displayUri }}
+              style={{ width: 450, height: 675 }}
+              resizeMode="contain"
+            />
+          </SnapbackZoom>
         )}
       </View>
+
+      {/* OLD ZOOM IMPLEMENTATION - COMMENTED OUT */}
+      {/* 
+      <View style={$photoContainer}>
+        {displayUri && (
+          <View style={{ width: '100%', height: '100%' }}>
+            <ReactNativeZoomableView
+              bindToBorders={true}
+              maxZoom={3}
+              minZoom={1}
+              initialZoom={1}
+              zoomStep={0.5}
+              doubleTapZoomToCenter={true}
+              style={{ width: '100%', height: '100%' }}
+            >
+              <Image
+                source={{ uri: displayUri }}
+                style={$photoImage}
+                resizeMode="contain"
+              />
+            </ReactNativeZoomableView>
+          </View>
+        )}
+      </View>
+      */}
 
       {/* Fixed Loading Indicator - Center Screen */}
       {isProcessing && (
@@ -304,8 +335,8 @@ const $container: ViewStyle = {
 }
 
 const $photoContainer: ViewStyle = {
-  width: "90%",
-  height: "70%",
+  width: 450,
+  height: 600,
   justifyContent: 'center',
   alignItems: 'center',
   alignSelf: 'center',
