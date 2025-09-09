@@ -14,6 +14,7 @@ import { ErrorBoundary } from "@/screens/ErrorScreen/ErrorBoundary"
 import { GalleryScreen } from "@/screens/GalleryScreen"
 import { HomeScreen } from "@/screens/HomeScreen"
 import { PreviewScreen } from "@/screens/PreviewScreen"
+import { RetouchScreen } from "@/screens/RetouchScreen"
 import { SettingsScreen } from "@/screens/SettingsScreen"
 import { TemplatesScreen } from "@/screens/TemplatesScreen"
 
@@ -33,6 +34,12 @@ export type AppStackParamList = {
   Home: undefined
   Gallery: undefined
   Preview: { photoPath: string }
+  Retouch: { 
+    originalUri: string
+    processedUri?: string
+    displayUri?: string
+    tempFiles?: string[]
+  }
   Settings: undefined
   Templates: undefined
 }
@@ -91,6 +98,15 @@ const AppStack = () => {
       <Stack.Screen
         name="Preview"
         component={PreviewScreen}
+        options={{
+          presentation: "modal",
+          animation: "slide_from_bottom",
+        }}
+      />
+      
+      <Stack.Screen
+        name="Retouch"
+        component={RetouchScreen}
         options={{
           presentation: "modal",
           animation: "slide_from_bottom",

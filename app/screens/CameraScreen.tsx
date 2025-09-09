@@ -421,25 +421,12 @@ export const CameraScreen: FC = function CameraScreen() {
       console.log("Photo captured:", photo.path)
       console.log("Photo object:", photo)
 
-      // Save photo to library
-      // Ensure the path is in the correct format for expo-media-library
+      // Navigate to preview screen (don't save yet - let user decide)
       const photoPath = photo.path.startsWith('file://') ? photo.path : `file://${photo.path}`
-      const saved = await photoLibraryService.savePhoto(photoPath)
-      if (saved) {
-        console.log("Photo saved to library successfully")
-        
-        // Show preview for 2 seconds
-        setCapturedPhoto(photoPath)
-        setShowPreview(true)
-        
-        // Auto-dismiss preview after 2 seconds
-        setTimeout(() => {
-          setShowPreview(false)
-        }, 2000)
-      } else {
-        console.log("Failed to save photo to library")
-        // TODO: Show error feedback
-      }
+      console.log("Photo captured, navigating to preview screen")
+      
+      // Navigate to PreviewScreen
+      navigation.navigate('Preview', { photoPath })
 
     } catch (error) {
       console.error("Error taking photo:", error)
