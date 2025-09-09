@@ -182,8 +182,9 @@ export const CameraScreen: FC = function CameraScreen() {
     })
   }, [])
 
-  // Focus and exposure state
-  const [isFocusLocked, setIsFocusLocked] = useState(false)
+  // Exposure state
+  
+  // Focus state (tap-to-focus only, no locking)
   const [showFocusRing, setShowFocusRing] = useState(false)
   const focusRingOpacity = useSharedValue(0)
   const focusRingPosition = useSharedValue({ x: 0, y: 0 })
@@ -575,8 +576,7 @@ export const CameraScreen: FC = function CameraScreen() {
       runOnJS(setCameraModePressed)(false)
     })
 
-
-  // Handle tap-to-focus
+  // Handle tap-to-focus (without locking)
   const handleFocusTap = useCallback(
     async (x: number, y: number) => {
       if (!device || !_cameraRef.current || !device.supportsFocus) return
@@ -598,9 +598,6 @@ export const CameraScreen: FC = function CameraScreen() {
           focusRingOpacity.value = 0
           setShowFocusRing(false)
         }, 2000)
-
-        // Reset focus lock
-        setIsFocusLocked(false)
       } catch (error) {
         console.error("Focus error:", error)
       }
@@ -608,38 +605,31 @@ export const CameraScreen: FC = function CameraScreen() {
     [device, focusRingPosition, focusRingOpacity],
   )
 
-  // Handle AE/AF lock (long press)
-  const handleFocusLock = useCallback(
-    (x: number, y: number) => {
-      console.log("Locking focus and exposure")
-      setIsFocusLocked(true)
-      handleFocusTap(x, y)
-    },
-    [handleFocusTap],
-  )
-
   // Create tap gesture for focus with lower priority than buttons
   const tapGesture = Gesture.Tap()
     .onEnd(({ x, y }) => {
       'worklet'
-      // Only handle focus tap if not in bottom controls area
+      // Only handle focus tap if not in control areas
       // Bottom controls are typically in the bottom 120px of the screen
       const bottomControlsHeight = 120
       const isInBottomControls = y > (800 - bottomControlsHeight) // Approximate screen height
       
-      if (!isInBottomControls) {
+      // Check if tap is in exposure controls area (right side, 60px wide, 200px high, positioned at bottom: 300)
+      const exposureControlsRight = 40
+      const exposureControlsWidth = 60
+      const exposureControlsHeight = 200
+      const exposureControlsBottom = 300
+      const exposureControlsTop = exposureControlsBottom - exposureControlsHeight
+      const isInExposureControls = x >= exposureControlsRight && 
+                                  x <= (exposureControlsRight + exposureControlsWidth) &&
+                                  y >= exposureControlsTop && 
+                                  y <= exposureControlsBottom
+      
+      if (!isInBottomControls && !isInExposureControls) {
         runOnJS(handleFocusTap)(x, y)
       }
     })
     .shouldCancelWhenOutside(true)
-
-  // Create long press gesture for AE/AF lock
-  const longPressGesture = Gesture.LongPress()
-    .minDuration(500) // 500ms for long press
-    .onStart(({ x, y }) => {
-      'worklet'
-      runOnJS(handleFocusLock)(x, y)
-    })
 
   // Create pinch gesture following Vision Camera example with snap-to-neutral
   const pinchGesture = Gesture.Pinch()
@@ -703,8 +693,8 @@ export const CameraScreen: FC = function CameraScreen() {
 
 
 
-  // Combine camera gestures (focus and zoom) - these compete with button gestures
-  const cameraGestures = Gesture.Simultaneous(tapGesture, longPressGesture, pinchGesture)
+  // Camera gestures (focus tap and zoom)
+  const cameraGestures = Gesture.Simultaneous(tapGesture, pinchGesture)
 
   // Update camera zoom when zoom value changes
   const [cameraZoom, setCameraZoom] = useState(device?.neutralZoom ?? 1)
@@ -731,7 +721,7 @@ export const CameraScreen: FC = function CameraScreen() {
     if (!device) return 0
     // Map slider value (-1 to 1) to a conservative portion of device exposure range
     const range = device.maxExposure - device.minExposure
-    const conservativeRange = range * 0.3 // Use only 30% of the full range
+    const conservativeRange = range * 0.25 // Use 25% of the full range
     const mappedValue = interpolate(exposureSlider.value, [-1, 0, 1], [-conservativeRange/2, 0, conservativeRange/2])
     
     // Debug logging
@@ -754,14 +744,6 @@ export const CameraScreen: FC = function CameraScreen() {
     }
   })
 
-  // Create animated style for focus ring
-  const animatedFocusRingStyle = useAnimatedStyle(() => ({
-    opacity: focusRingOpacity.value,
-    transform: [
-      { translateX: focusRingPosition.value.x - 50 }, // Center the ring
-      { translateY: focusRingPosition.value.y - 50 },
-    ],
-  }))
 
   // Create animated props for camera exposure
   const animatedCameraProps = useAnimatedProps(() => ({
@@ -805,6 +787,15 @@ export const CameraScreen: FC = function CameraScreen() {
       translateY: interpolate(previewAnimation.value, [0, 1], [50, 0]),
     }
   })
+
+  // Create animated style for focus ring
+  const animatedFocusRingStyle = useAnimatedStyle(() => ({
+    opacity: focusRingOpacity.value,
+    transform: [
+      { translateX: focusRingPosition.value.x - 50 }, // Center the ring
+      { translateY: focusRingPosition.value.y - 50 },
+    ],
+  }))
 
   // Create animated style for chevron positioning
   const animatedChevronStyle = useAnimatedStyle(() => {
@@ -964,12 +955,6 @@ export const CameraScreen: FC = function CameraScreen() {
             {/* Focus Ring - Only show when focusing */}
             {showFocusRing && <Reanimated.View style={[$focusRing, animatedFocusRingStyle]} />}
 
-            {/* AE/AF Lock Indicator - Only show when locked */}
-            {isFocusLocked && (
-              <View style={$aeLockIndicator}>
-                <Text style={$aeLockText}>AE/AF LOCK</Text>
-              </View>
-            )}
 
 
             {/* Exposure Controls - Gluestack Slider */}
@@ -1426,19 +1411,4 @@ const $focusRing: ViewStyle = {
   backgroundColor: "transparent",
 }
 
-const $aeLockIndicator: ViewStyle = {
-  position: "absolute",
-  top: 100,
-  left: 20,
-  backgroundColor: "rgba(255, 215, 0, 0.9)", // Gold background
-  paddingHorizontal: 12,
-  paddingVertical: 6,
-  borderRadius: 16,
-}
-
-const $aeLockText: TextStyle = {
-  color: "#000",
-  fontSize: 12,
-  fontWeight: "bold",
-}
 
