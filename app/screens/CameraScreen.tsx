@@ -466,16 +466,30 @@ export const CameraScreen: FC = function CameraScreen() {
   }, [navigation])
 
   const toggleExposureControls = useCallback(() => {
+    // Only allow exposure controls to open if mode menu is expanded
+    if (!isCameraModeExpanded && !showExposureControls) {
+      console.log("Cannot open exposure controls - mode menu must be expanded first")
+      return
+    }
+    
     setShowExposureControls(prev => !prev)
-  }, [])
+  }, [isCameraModeExpanded, showExposureControls])
 
   const toggleCameraModeExpansion = useCallback(() => {
     console.log("Toggling camera mode expansion")
     setIsCameraModeExpanded(prev => {
-      console.log("Previous state:", prev, "New state:", !prev)
-      return !prev
+      const newState = !prev
+      console.log("Previous state:", prev, "New state:", newState)
+      
+      // If closing the mode menu, also close the exposure controls
+      if (!newState && showExposureControls) {
+        setShowExposureControls(false)
+        console.log("Closing exposure controls because mode menu is closing")
+      }
+      
+      return newState
     })
-  }, [])
+  }, [showExposureControls])
 
   // Button press states for visual feedback
   const [shutterPressed, setShutterPressed] = useState(false)
@@ -943,7 +957,7 @@ export const CameraScreen: FC = function CameraScreen() {
             {/* Orientation Debug Indicator */}
             <View style={$orientationIndicator}>
               <Text style={$orientationText}>
-                {deviceOrientation.isLandscape ? '📱 Device: Landscape' : deviceOrientation.isPortrait ? '📱 Device: Portrait' : '📱 Device: Unknown'}
+                {deviceOrientation.isLandscape ? '📱: Landscape' : deviceOrientation.isPortrait ? '📱: Portrait' : '📱: Unknown'}
               </Text>
             </View>
 

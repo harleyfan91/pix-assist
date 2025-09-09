@@ -29,8 +29,11 @@ PixAssist is built as a React Native mobile application with a comprehensive, pu
   - Supports custom overlays and real-time processing
 
 ### Photo Processing & Editing
+- **Expo Image Manipulator (13.1.7)** - Professional image processing and rotation
+- **Expo File System (18.1.11)** - File management and cleanup operations
+- **Expo Media Library (17.1.7)** - Photo gallery integration and management
 - **React Native Image Editor (0.0.1)** - Basic image editing capabilities
-- **React Native Image Filter Kit (0.8.0)** - Filters and color adjustments
+- **React Native Color Matrix Image Filters (7.0.2)** - Advanced image filters
 
 ### Local Storage & File Management
 - **React Native MMKV (3.2.0)** - Fast key-value storage for app settings and preferences
@@ -49,6 +52,8 @@ PixAssist is built as a React Native mobile application with a comprehensive, pu
 ### System Integration
 - **React Native Permissions (4.1.5)** - Camera and storage permissions management
 - **React Native Share (12.2.0)** - Photo sharing capabilities
+- **Expo Screen Orientation (8.1.7)** - Screen orientation control
+- **Expo Sensors (14.1.4)** - Device orientation detection
 
 ### UI Assets & Icons
 - **Lucide React Native (0.542.0)** - Comprehensive icon library
@@ -82,7 +87,9 @@ PixAssist is built as a React Native mobile application with a comprehensive, pu
 - **New UI libraries** (Gluestack UI covers all needs)
 - **Alternative state management** (Zustand + TanStack Query are sufficient)
 - **Additional navigation libraries** (React Navigation is comprehensive)
-- **Redundant camera/photo packages** (Vision Camera + Image Editor + Filter Kit cover all needs)
+- **Redundant camera/photo packages** (Vision Camera + Expo Image Manipulator + Media Library cover all needs)
+- **Alternative image processing libraries** (Expo Image Manipulator is comprehensive)
+- **Additional file management libraries** (Expo File System + React Native FS are sufficient)
 
 ## Package Version Management
 
@@ -123,7 +130,28 @@ The architecture is optimized for:
 - **Type safety** - TypeScript prevents runtime errors
 - **Code quality** - ESLint and Prettier maintain standards
 
+## Recent Architecture Updates
+
+### Photo Processing System (January 2025)
+- **Added Expo Image Manipulator**: Professional image rotation and processing
+- **Added Expo File System**: Robust file management and cleanup
+- **Added Expo Media Library**: Native photo gallery integration
+- **Implemented Smart Caching**: Prevents unnecessary image reprocessing
+- **Added File Cleanup System**: Automatic memory management
+
+### UI/UX Improvements (January 2025)
+- **Exposure Controls State Management**: Proper dependency on mode menu
+- **Fixed Loading Indicators**: Non-intrusive overlay positioning
+- **Enhanced Navigation**: Added RetouchScreen with proper routing
+- **Improved File Management**: Comprehensive cleanup and error handling
+
+### Styling System Notes
+- **Gluestack UI Overrides**: Some React Native components are overridden
+- **ActivityIndicator**: Uses `@gluestack-ui/spinner` (burst-style) instead of standard circle
+- **Theme Integration**: Custom theme provider with Gluestack UI compatibility
+- **Component Hierarchy**: Gluestack UI wraps entire app, affecting all components
+
 ---
 
-**Last Updated**: December 2024
+**Last Updated**: January 2025
 **Next Review**: When considering new dependencies or major updates

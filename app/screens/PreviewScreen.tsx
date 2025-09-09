@@ -29,6 +29,8 @@ export const PreviewScreen: FC = function PreviewScreen() {
   // Smart caching system
   const [processedImages, setProcessedImages] = useState<Record<number, string>>({})
   const [currentRotationAngle, setCurrentRotationAngle] = useState<number | null>(null)
+  
+  // Remove animation state - keep it simple
 
   // Get rotation angle based on device orientation (memoized for performance)
   const getRotationAngle = useCallback(() => {
@@ -37,6 +39,8 @@ export const PreviewScreen: FC = function PreviewScreen() {
     if (deviceOrientation.orientation === 'portrait-upside-down') return 180
     return 0 // portrait
   }, [deviceOrientation.orientation])
+
+  // Remove animation function - keep it simple
 
   // Smart processing function with caching
   const processImageForOrientation = async (originalUri: string, rotationAngle: number) => {
@@ -83,7 +87,7 @@ export const PreviewScreen: FC = function PreviewScreen() {
     }
   }
 
-  // Smart initialization with caching
+  // Smart initialization with immediate display (no animations)
   useEffect(() => {
     if (originalUri) {
       const rotationAngle = getRotationAngle()
@@ -93,14 +97,23 @@ export const PreviewScreen: FC = function PreviewScreen() {
         console.log(`Rotation angle changed from ${currentRotationAngle}° to ${rotationAngle}°`)
         setCurrentRotationAngle(rotationAngle)
         
-        // Set display to original first, then process
-        setDisplayUri(originalUri)
-        processImageForOrientation(originalUri, rotationAngle)
-          .then(setDisplayUri)
-          .catch(console.error)
+        // Check if we have this rotation cached for instant display
+        if (processedImages[rotationAngle]) {
+          console.log(`Instantly showing cached image for rotation ${rotationAngle}°`)
+          setDisplayUri(processedImages[rotationAngle])
+        } else {
+          // Show original image immediately, then process in background
+          console.log(`Showing original image immediately, processing ${rotationAngle}° in background`)
+          setDisplayUri(originalUri)
+          
+          // Process image in background and update when ready
+          processImageForOrientation(originalUri, rotationAngle)
+            .then(setDisplayUri)
+            .catch(console.error)
+        }
       }
     }
-  }, [originalUri, deviceOrientation.orientation])
+  }, [originalUri, deviceOrientation.orientation, processedImages])
 
   // Cleanup files on unmount
   useEffect(() => {
@@ -239,7 +252,6 @@ export const PreviewScreen: FC = function PreviewScreen() {
 
       {/* Photo Display */}
       <View style={$photoContainer}>
-        {isProcessing && <ActivityIndicator size="large" color="#fff" />}
         {displayUri && (
           <Image
             source={{ uri: displayUri }}
@@ -248,6 +260,13 @@ export const PreviewScreen: FC = function PreviewScreen() {
           />
         )}
       </View>
+
+      {/* Fixed Loading Indicator - Center Screen */}
+      {isProcessing && (
+        <View style={$loadingOverlay}>
+          <ActivityIndicator size="large" />
+        </View>
+      )}
 
       {/* Action Buttons */}
       <View style={$actionsContainer}>
@@ -295,6 +314,18 @@ const $photoContainer: ViewStyle = {
 const $photoImage: ImageStyle = {
   width: "100%",
   height: "100%",
+}
+
+const $loadingOverlay: ViewStyle = {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  justifyContent: 'center',
+  alignItems: 'center',
+  backgroundColor: 'rgba(0, 0, 0, 0.3)',
+  zIndex: 1000,
 }
 
 
