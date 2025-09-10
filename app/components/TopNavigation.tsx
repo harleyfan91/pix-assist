@@ -11,6 +11,7 @@ import Reanimated, {
   useDerivedValue,
   withSpring
 } from "react-native-reanimated"
+import { BlurView } from '@react-native-community/blur'
 import { AppStackScreenProps } from "@/navigators/AppNavigator"
 
 interface TopNavigationProps {
@@ -87,6 +88,14 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({ onNavigationStateC
       {/* Drawer */}
       <GestureDetector gesture={panGesture}>
         <Reanimated.View style={[$drawer, { paddingTop: insets.top + 4 }, animatedStyle]}>
+          {/* Blur background layer */}
+          <BlurView
+            style={$blurBackground}
+            blurType="extraDark"
+            blurAmount={10}
+            reducedTransparencyFallbackColor="rgba(0, 0, 0, 0.95)"
+          />
+          
           {/* Icons */}
           <Reanimated.View style={[iconsOpacity]}>
             <View style={$iconsContainer}>
@@ -180,4 +189,14 @@ const $handleBar: ViewStyle = {
   height: 4,
   backgroundColor: "#fff",
   borderRadius: 2,
+}
+
+const $blurBackground: ViewStyle = {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  borderBottomLeftRadius: 20,
+  borderBottomRightRadius: 20,
 }

@@ -64,6 +64,6 @@ export function useIconRotation(options: UseIconRotationOptions = {}) {
   return {
     animatedIconStyle,
     deviceOrientation,
-    iconRotation: iconRotation.value,
+    iconRotation,
   }
 }

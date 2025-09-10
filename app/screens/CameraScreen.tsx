@@ -1200,16 +1200,16 @@ const $shutterButton: ViewStyle = {
   height: 80,
   borderRadius: 40,
   backgroundColor: "rgba(255, 255, 255, 0.3)",
-  borderWidth: 4,
+  borderWidth: 1,
   borderColor: "#fff",
   justifyContent: "center",
   alignItems: "center",
 }
 
 const $shutterButtonInner: ViewStyle = {
-  width: 60,
-  height: 60,
-  borderRadius: 30,
+  width: 70,
+  height: 70,
+  borderRadius: 45,
   backgroundColor: "#fff",
 }
 
