@@ -26,6 +26,7 @@ import Reanimated, {
 } from "react-native-reanimated"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Camera, useCameraDevice, useCameraPermission } from "react-native-vision-camera"
+import { BlurView } from '@react-native-community/blur'
 import * as Haptics from 'expo-haptics'
 import { writeAsync } from '@lodev09/react-native-exify'
 import { useIconRotation } from '@/hooks/useIconRotation'
@@ -925,6 +926,13 @@ export const CameraScreen: FC = function CameraScreen() {
       {/* Camera Content - Moves down when navigation opens */}
       <GestureDetector gesture={cameraGestures}>
         <Reanimated.View style={[$cameraContainer, animatedCameraContainerStyle]}>
+          {/* BlurView for padding areas when resizeMode="contain" */}
+          <BlurView
+            style={StyleSheet.absoluteFill}
+            blurType="extraDark"
+            blurAmount={10}
+            reducedTransparencyFallbackColor="black"
+          />
           <View style={StyleSheet.absoluteFill}>
             <ReanimatedCamera
               {...({ ref: _cameraRef } as any)}
@@ -945,6 +953,7 @@ export const CameraScreen: FC = function CameraScreen() {
                   recoverFromCameraError()
                 }
               }}
+              resizeMode="contain" // Change from "cover" to "contain"
             />
             
             {/* Flash overlay for photo capture feedback */}
@@ -1137,6 +1146,7 @@ export const CameraScreen: FC = function CameraScreen() {
 
 const $container: ViewStyle = {
   flex: 1,
+  backgroundColor: "black", // Black background for camera padding areas
 }
 
 const $content: ViewStyle = {
