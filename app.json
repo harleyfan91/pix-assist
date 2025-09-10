@@ -23,6 +23,7 @@
     },
     "allowBackup": false,
     "edgeToEdgeEnabled": true,
+    "screenOrientation": "portrait",
     "permissions": [
       "android.permission.CAMERA",
       "android.permission.RECORD_AUDIO",
@@ -39,7 +40,13 @@
       "NSCameraUsageDescription": "This app needs access to camera to take photos.",
       "NSMicrophoneUsageDescription": "This app needs access to microphone for video recording.",
       "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to display and manage your photos.",
-      "NSPhotoLibraryAddUsageDescription": "This app needs permission to add photos to your photo library."
+      "NSPhotoLibraryAddUsageDescription": "This app needs permission to add photos to your photo library.",
+      "UISupportedInterfaceOrientations": [
+        "UIInterfaceOrientationPortrait"
+      ],
+      "UISupportedInterfaceOrientations~ipad": [
+        "UIInterfaceOrientationPortrait"
+      ]
     }
   },
   "web": {

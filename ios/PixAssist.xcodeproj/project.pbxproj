@@ -8,28 +8,28 @@
 
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		1665F437786D3FDEEB39B8A6 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = EACF290291D40A4B4CDAE4EF /* ExpoModulesProvider.swift */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		7CEA65A553B53C16A5A83690 /* libPods-PixAssist.a in Frameworks */ = {isa = PBXBuildFile; fileRef = FFBE19366623D20EE7200C19 /* libPods-PixAssist.a */; };
-		88BA5257A22B12827FB89BFC /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD8D2F9CC471F4FF8B9D4CAD /* ExpoModulesProvider.swift */; };
-		A1B474B0980C44A0A0276648 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 343E00E0FAD343098FBB854D /* PrivacyInfo.xcprivacy */; };
+		3E4AA5AD7E2F380000169B37 /* libPods-PixAssist.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E0D330078C1FDE3F2FE75AC7 /* libPods-PixAssist.a */; };
+		B072C26F24914D6CB63EBA6F /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = C507F7BF1F204AE38AF7304B /* PrivacyInfo.xcprivacy */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		0C9AC53DCD6799DDFD648D3E /* Pods-PixAssist.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PixAssist.debug.xcconfig"; path = "Target Support Files/Pods-PixAssist/Pods-PixAssist.debug.xcconfig"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* PixAssist.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PixAssist.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = PixAssist/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = PixAssist/Info.plist; sourceTree = "<group>"; };
-		2A3B5DA08045A9E465267B39 /* Pods-PixAssist.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PixAssist.release.xcconfig"; path = "Target Support Files/Pods-PixAssist/Pods-PixAssist.release.xcconfig"; sourceTree = "<group>"; };
-		343E00E0FAD343098FBB854D /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = PrivacyInfo.xcprivacy; path = PixAssist/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		19887EDF0A806A2B518DD370 /* Pods-PixAssist.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PixAssist.release.xcconfig"; path = "Target Support Files/Pods-PixAssist/Pods-PixAssist.release.xcconfig"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = PixAssist/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		CD8D2F9CC471F4FF8B9D4CAD /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-PixAssist/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		C507F7BF1F204AE38AF7304B /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = PrivacyInfo.xcprivacy; path = PixAssist/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		E0D330078C1FDE3F2FE75AC7 /* libPods-PixAssist.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-PixAssist.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		E2D87BF2269A01CBD47956E8 /* Pods-PixAssist.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PixAssist.debug.xcconfig"; path = "Target Support Files/Pods-PixAssist/Pods-PixAssist.debug.xcconfig"; sourceTree = "<group>"; };
+		EACF290291D40A4B4CDAE4EF /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-PixAssist/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = PixAssist/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* PixAssist-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "PixAssist-Bridging-Header.h"; path = "PixAssist/PixAssist-Bridging-Header.h"; sourceTree = "<group>"; };
-		FFBE19366623D20EE7200C19 /* libPods-PixAssist.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-PixAssist.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -37,21 +37,13 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7CEA65A553B53C16A5A83690 /* libPods-PixAssist.a in Frameworks */,
+				3E4AA5AD7E2F380000169B37 /* libPods-PixAssist.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		0AF14EE4AEA6D146A7681F54 /* ExpoModulesProviders */ = {
-			isa = PBXGroup;
-			children = (
-				64851BBD4D9C45008C9BB71E /* PixAssist */,
-			);
-			name = ExpoModulesProviders;
-			sourceTree = "<group>";
-		};
 		13B07FAE1A68108700A75B9A /* PixAssist */ = {
 			isa = PBXGroup;
 			children = (
@@ -61,7 +53,7 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				343E00E0FAD343098FBB854D /* PrivacyInfo.xcprivacy */,
+				C507F7BF1F204AE38AF7304B /* PrivacyInfo.xcprivacy */,
 			);
 			name = PixAssist;
 			sourceTree = "<group>";
@@ -70,27 +62,25 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				FFBE19366623D20EE7200C19 /* libPods-PixAssist.a */,
+				E0D330078C1FDE3F2FE75AC7 /* libPods-PixAssist.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		614301ACEF171B3C67CFC880 /* Pods */ = {
+		4CD7D018F6228AB9E53D8DBF /* PixAssist */ = {
 			isa = PBXGroup;
 			children = (
-				0C9AC53DCD6799DDFD648D3E /* Pods-PixAssist.debug.xcconfig */,
-				2A3B5DA08045A9E465267B39 /* Pods-PixAssist.release.xcconfig */,
-			);
-			name = Pods;
-			path = Pods;
-			sourceTree = "<group>";
-		};
-		64851BBD4D9C45008C9BB71E /* PixAssist */ = {
-			isa = PBXGroup;
-			children = (
-				CD8D2F9CC471F4FF8B9D4CAD /* ExpoModulesProvider.swift */,
+				EACF290291D40A4B4CDAE4EF /* ExpoModulesProvider.swift */,
 			);
 			name = PixAssist;
+			sourceTree = "<group>";
+		};
+		7FC2A1EDE2638E9F2B7D7BB0 /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				4CD7D018F6228AB9E53D8DBF /* PixAssist */,
+			);
+			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -107,8 +97,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				614301ACEF171B3C67CFC880 /* Pods */,
-				0AF14EE4AEA6D146A7681F54 /* ExpoModulesProviders */,
+				D9D20986A8EF34A58A8FE2DC /* Pods */,
+				7FC2A1EDE2638E9F2B7D7BB0 /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -132,6 +122,16 @@
 			path = PixAssist/Supporting;
 			sourceTree = "<group>";
 		};
+		D9D20986A8EF34A58A8FE2DC /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				E2D87BF2269A01CBD47956E8 /* Pods-PixAssist.debug.xcconfig */,
+				19887EDF0A806A2B518DD370 /* Pods-PixAssist.release.xcconfig */,
+			);
+			name = Pods;
+			path = Pods;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -140,13 +140,13 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "PixAssist" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				91259BC229916CD46A325578 /* [Expo] Configure project */,
+				813CD978E91EF6092D1AB714 /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				BABF5C5F46D757EB45FB8F82 /* [CP] Embed Pods Frameworks */,
+				5A01B26DBE9D9393D34313CE /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -198,7 +198,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				A1B474B0980C44A0A0276648 /* PrivacyInfo.xcprivacy in Resources */,
+				B072C26F24914D6CB63EBA6F /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -242,6 +242,24 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
+		5A01B26DBE9D9393D34313CE /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-PixAssist/Pods-PixAssist-frameworks.sh",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-PixAssist/Pods-PixAssist-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -259,7 +277,6 @@
 				"${PODS_CONFIGURATION_BUILD_DIR}/RNSVG/RNSVGFilters.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/React-Core_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact/React-cxxreact_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/SDWebImage/SDWebImage.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/boost/boost_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-launcher/EXDevLauncher.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-menu/EXDevMenu.bundle",
@@ -277,7 +294,6 @@
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNSVGFilters.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-Core_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-cxxreact_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/SDWebImage.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/boost_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXDevLauncher.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXDevMenu.bundle",
@@ -288,7 +304,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-PixAssist/Pods-PixAssist-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		91259BC229916CD46A325578 /* [Expo] Configure project */ = {
+		813CD978E91EF6092D1AB714 /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -307,24 +323,6 @@
 			shellPath = /bin/sh;
 			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-PixAssist/expo-configure-project.sh\"\n";
 		};
-		BABF5C5F46D757EB45FB8F82 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-PixAssist/Pods-PixAssist-frameworks.sh",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-PixAssist/Pods-PixAssist-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -333,7 +331,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				88BA5257A22B12827FB89BFC /* ExpoModulesProvider.swift in Sources */,
+				1665F437786D3FDEEB39B8A6 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -342,7 +340,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 0C9AC53DCD6799DDFD648D3E /* Pods-PixAssist.debug.xcconfig */;
+			baseConfigurationReference = E2D87BF2269A01CBD47956E8 /* Pods-PixAssist.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -381,7 +379,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 2A3B5DA08045A9E465267B39 /* Pods-PixAssist.release.xcconfig */;
+			baseConfigurationReference = 19887EDF0A806A2B518DD370 /* Pods-PixAssist.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;

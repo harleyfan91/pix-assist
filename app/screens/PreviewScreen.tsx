@@ -5,13 +5,11 @@ import { Ionicons } from "@expo/vector-icons"
 // import { ReactNativeZoomableView } from "@openspacelabs/react-native-zoomable-view"
 import { SnapbackZoom } from "react-native-zoom-toolkit"
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native"
-import * as ImageManipulator from 'expo-image-manipulator'
 import * as FileSystem from 'expo-file-system'
 
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { AppStackParamList } from "@/navigators/AppNavigator"
-import { useDeviceOrientation } from "@/hooks/useDeviceOrientation"
 import { photoLibraryService } from "@/services/photoLibrary"
 
 type PreviewScreenRouteProp = RouteProp<AppStackParamList, "Preview">
@@ -20,7 +18,6 @@ export const PreviewScreen: FC = function PreviewScreen() {
   const navigation = useNavigation()
   const route = useRoute<PreviewScreenRouteProp>()
   const { photoPath } = route.params
-  const deviceOrientation = useDeviceOrientation()
 
   // State management for file handling
   const [originalUri, setOriginalUri] = useState<string>(photoPath)
@@ -29,104 +26,27 @@ export const PreviewScreen: FC = function PreviewScreen() {
   const [filesToCleanup, setFilesToCleanup] = useState<string[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   
-  // Smart caching system
-  const [processedImages, setProcessedImages] = useState<Record<number, string>>({})
-  const [currentRotationAngle, setCurrentRotationAngle] = useState<number | null>(null)
   
   // Simple ref for zoom control
   // const zoomRef = useRef<any>(null)
 
-  // Get rotation angle based on device orientation (memoized for performance)
-  const getRotationAngle = useCallback(() => {
-    if (deviceOrientation.orientation === 'landscape-left') return 90
-    if (deviceOrientation.orientation === 'landscape-right') return -90
-    if (deviceOrientation.orientation === 'portrait-upside-down') return 180
-    return 0 // portrait
-  }, [deviceOrientation.orientation])
+
 
   // Remove animation function - keep it simple
 
-  // Smart processing function with caching
-  const processImageForOrientation = async (originalUri: string, rotationAngle: number) => {
-    // Check if we already have this rotation cached
-    if (processedImages[rotationAngle]) {
-      console.log(`Using cached image for rotation ${rotationAngle}°`)
-      return processedImages[rotationAngle]
-    }
-    
-    // Only process if we don't have this rotation cached
-    console.log(`Processing new image for rotation ${rotationAngle}°`)
-    setIsProcessing(true)
-    try {
-      if (rotationAngle === 0) {
-        // Cache the original image for rotation 0°
-        setProcessedImages(prev => ({
-          ...prev,
-          [0]: originalUri
-        }))
-        return originalUri // No processing needed
-      }
-      
-      const result = await ImageManipulator.manipulateAsync(
-        originalUri,
-        [{ rotate: rotationAngle }],
-        { compress: 0.9, format: ImageManipulator.SaveFormat.JPEG }
-      )
-      
-      // Cache the result
-      setProcessedImages(prev => ({
-        ...prev,
-        [rotationAngle]: result.uri
-      }))
-      
-      // Track processed file for cleanup
-      setFilesToCleanup(prev => [...prev, result.uri])
-      setProcessedUri(result.uri)
-      return result.uri
-    } catch (error) {
-      console.error('Error processing image:', error)
-      return originalUri
-    } finally {
-      setIsProcessing(false)
-    }
-  }
 
-  // Smart initialization with immediate display (no animations)
+  // Simple initialization - just show the original image
   useEffect(() => {
     if (originalUri) {
-      const rotationAngle = getRotationAngle()
-      
-      // Only process if rotation angle actually changed
-      if (currentRotationAngle !== rotationAngle) {
-        console.log(`Rotation angle changed from ${currentRotationAngle}° to ${rotationAngle}°`)
-        setCurrentRotationAngle(rotationAngle)
-        
-        // Check if we have this rotation cached for instant display
-        if (processedImages[rotationAngle]) {
-          console.log(`Instantly showing cached image for rotation ${rotationAngle}°`)
-          setDisplayUri(processedImages[rotationAngle])
-        } else {
-          // Show original image immediately, then process in background
-          console.log(`Showing original image immediately, processing ${rotationAngle}° in background`)
-          setDisplayUri(originalUri)
-          
-          // Process image in background and update when ready
-          processImageForOrientation(originalUri, rotationAngle)
-            .then(setDisplayUri)
-            .catch(console.error)
-        }
-      }
+      setDisplayUri(originalUri)
     }
-  }, [originalUri, deviceOrientation.orientation, processedImages])
+  }, [originalUri])
 
   // Cleanup files on unmount
   useEffect(() => {
     return () => {
       // Clean up any temporary files when component unmounts
-      const allFilesToCleanup = [
-        ...filesToCleanup,
-        ...Object.values(processedImages)
-      ]
+      const allFilesToCleanup = filesToCleanup
       
       allFilesToCleanup.forEach(async (fileUri) => {
         try {
@@ -185,19 +105,6 @@ export const PreviewScreen: FC = function PreviewScreen() {
                 }
               }
               
-              // Delete cached images
-              for (const fileUri of Object.values(processedImages)) {
-                if (fileUri && fileUri !== originalUri) {
-                  try {
-                    const fileInfo = await FileSystem.getInfoAsync(fileUri)
-                    if (fileInfo.exists) {
-                      await FileSystem.deleteAsync(fileUri)
-                    }
-                  } catch (error) {
-                    console.log('File cleanup skipped (file may not exist):', fileUri)
-                  }
-                }
-              }
               
               // Navigate back to camera (even if some files couldn't be deleted)
               console.log('Photo discard completed, navigating back to camera')

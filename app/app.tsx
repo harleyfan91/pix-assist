@@ -21,7 +21,7 @@ import "./utils/gestureHandler"
 import { useEffect, useState } from "react"
 import { useFonts } from "expo-font"
 import * as Linking from "expo-linking"
-import * as ScreenOrientation from 'expo-screen-orientation'
+import * as SplashScreen from "expo-splash-screen"
 import { config as gluestackConfig } from "@gluestack-ui/config"
 import { GluestackUIProvider } from "@gluestack-ui/themed"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
@@ -63,25 +63,18 @@ export function App() {
   const [areFontsLoaded, fontLoadError] = useFonts(customFontsToLoad)
   const [isI18nInitialized, setIsI18nInitialized] = useState(false)
 
-  // Lock screen orientation immediately when app starts to prevent rotation
-  useEffect(() => {
-    const lockOrientation = async () => {
-      try {
-        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP)
-        console.log("App: Screen orientation locked to portrait")
-      } catch (error) {
-        console.error("App: Failed to lock screen orientation:", error)
-      }
-    }
-
-    lockOrientation()
-  }, [])
-
   useEffect(() => {
     initI18n()
       .then(() => setIsI18nInitialized(true))
       .then(() => loadDateFnsLocale())
   }, [])
+
+  // Hide splash screen when app is ready
+  useEffect(() => {
+    if (isNavigationStateRestored && isI18nInitialized && (areFontsLoaded || fontLoadError)) {
+      SplashScreen.hideAsync()
+    }
+  }, [isNavigationStateRestored, isI18nInitialized, areFontsLoaded, fontLoadError])
 
   // Before we show the app, we have to wait for our state to be ready.
   // In the meantime, don't render anything. This will be the background

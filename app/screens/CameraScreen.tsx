@@ -27,6 +27,8 @@ import Reanimated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Camera, useCameraDevice, useCameraPermission } from "react-native-vision-camera"
 import * as Haptics from 'expo-haptics'
+import { writeAsync } from '@lodev09/react-native-exify'
+import { DeviceMotion } from 'expo-sensors'
 
 // Create Reanimated Camera component for animated exposure
 const ReanimatedCamera = Reanimated.createAnimatedComponent(Camera)
@@ -37,7 +39,7 @@ import { TopNavigation } from "@/components/TopNavigation"
 import { useNavigation } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { photoLibraryService } from "@/services/photoLibrary"
-import { useDeviceOrientation } from "@/hooks/useDeviceOrientation"
+
 
 // Enable zoom animation for Reanimated (as per Vision Camera docs)
 Reanimated.addWhitelistedNativeProps({
@@ -51,31 +53,12 @@ export const CameraScreen: FC = function CameraScreen() {
   const [cameraError, setCameraError] = useState<string | null>(null)
   const navigation = useNavigation<AppStackScreenProps<"Camera">["navigation"]>()
   
-  // Device orientation detection for UI adjustments (screen is locked to portrait)
-  const deviceOrientation = useDeviceOrientation()
+  
+  
 
-  // Get icon rotation angle based on device orientation
-  const getIconRotation = () => {
-    switch (deviceOrientation.orientation) {
-      case 'landscape-left':
-        return '90deg'  // Rotate 90° clockwise
-      case 'landscape-right':
-        return '-90deg' // Rotate 90° counter-clockwise
-      case 'portrait-upside-down':
-        return '180deg' // Rotate 180°
-      case 'portrait':
-      default:
-        return '0deg'   // No rotation
-    }
-  }
 
-  // Debug device orientation changes (for UI adjustments only) - only log when orientation actually changes
-  useEffect(() => {
-    // Only log when orientation changes, not on every render
-    console.log('CameraScreen device orientation changed:', deviceOrientation.orientation)
-  }, [deviceOrientation.orientation])
 
-  // Note: Screen orientation is locked at app level to prevent rotation
+
 
   const { hasPermission, requestPermission } = useCameraPermission()
   // Use camera device with ultra-wide support for zoom out below 1x
@@ -347,6 +330,7 @@ export const CameraScreen: FC = function CameraScreen() {
     return () => clearInterval(interval)
   }, [zoom, device])
 
+  
   const promptForCameraPermissions = useCallback(async () => {
     if (hasPermission) return
     const permission = await requestPermission()
@@ -364,6 +348,7 @@ export const CameraScreen: FC = function CameraScreen() {
     }
   }, [hasPermission, requestPermission])
 
+
   const takePhoto = useCallback(async () => {
     if (!_cameraRef.current || isCapturing) {
       console.log("Camera not ready or already capturing")
@@ -373,6 +358,7 @@ export const CameraScreen: FC = function CameraScreen() {
     try {
       setIsCapturing(true)
       console.log("Taking photo...")
+
 
       // Trigger flash animation - fast and responsive (only if flash is on)
       if (flashMode === 'on') {
@@ -419,15 +405,18 @@ export const CameraScreen: FC = function CameraScreen() {
       
       const photo = await Promise.race([photoPromise, timeoutPromise])
 
-      console.log("Photo captured:", photo.path)
-      console.log("Photo object:", photo)
+        console.log("Photo captured:", photo.path)
+        // console.log("Photo object:", photo) // Commented out to reduce log spam
+
 
       // Navigate to preview screen (don't save yet - let user decide)
       const photoPath = photo.path.startsWith('file://') ? photo.path : `file://${photo.path}`
       console.log("Photo captured, navigating to preview screen")
       
       // Navigate to PreviewScreen
-      navigation.navigate('Preview', { photoPath })
+      navigation.navigate('Preview', { 
+        photoPath
+      })
 
     } catch (error) {
       console.error("Error taking photo:", error)
@@ -889,7 +878,6 @@ export const CameraScreen: FC = function CameraScreen() {
       <TopNavigation 
         onNavigationStateChange={setIsNavigationOpen}
         onProgressChange={setNavigationProgress}
-        isLandscape={deviceOrientation.isLandscape}
       />
       
       {/* Camera Content - Moves down when navigation opens */}
@@ -945,12 +933,6 @@ export const CameraScreen: FC = function CameraScreen() {
               <Text style={$zoomText}>{popupTextOverride || `${currentZoom.toFixed(1)}x`}</Text>
             </Reanimated.View>
 
-            {/* Orientation Debug Indicator */}
-            <View style={$orientationIndicator}>
-              <Text style={$orientationText}>
-                {deviceOrientation.isLandscape ? '📱: Landscape' : deviceOrientation.isPortrait ? '📱: Portrait' : '📱: Unknown'}
-              </Text>
-            </View>
 
             {/* Focus Ring - Only show when focusing */}
             {showFocusRing && <Reanimated.View style={[$focusRing, animatedFocusRingStyle]} />}
@@ -1023,7 +1005,7 @@ export const CameraScreen: FC = function CameraScreen() {
                     name="images-outline" 
                     size={24} 
                     color="#fff" 
-                    style={{ transform: [{ rotate: getIconRotation() }] }}
+                    style={{}}
                   />
                 </View>
               </GestureDetector>
@@ -1061,7 +1043,7 @@ export const CameraScreen: FC = function CameraScreen() {
                           }
                           size={20} 
                           color="#fff" 
-                          style={{ transform: [{ rotate: getIconRotation() }] }}
+                          style={{}}
                         />
                       </View>
                     </GestureDetector>
@@ -1071,7 +1053,7 @@ export const CameraScreen: FC = function CameraScreen() {
                           name="contrast-outline" 
                           size={20} 
                           color="#fff" 
-                          style={{ transform: [{ rotate: getIconRotation() }] }}
+                          style={{}}
                         />
                       </View>
                     </GestureDetector>
@@ -1080,15 +1062,15 @@ export const CameraScreen: FC = function CameraScreen() {
                         name="crop-outline" 
                         size={20} 
                         color="#fff" 
-                        style={{ transform: [{ rotate: getIconRotation() }] }}
+                        style={{}}
                       />
                     </View>
                   </Reanimated.View>
                   
-                {/* Main chevron icon - animated positioning */}
-                <Reanimated.View style={[$chevronContainer, animatedChevronStyle]}>
-                  <Ionicons name="chevron-up-sharp" size={24} color="#fff" />
-                </Reanimated.View>
+                  {/* Main chevron icon - animated positioning */}
+                  <Reanimated.View style={[$chevronContainer, animatedChevronStyle]}>
+                    <Ionicons name="chevron-up-sharp" size={24} color="#fff" />
+                  </Reanimated.View>
                 </Reanimated.View>
               </GestureDetector>
             </View>
@@ -1374,32 +1356,6 @@ const $zoomText: TextStyle = {
   fontWeight: "bold",
 }
 
-const $orientationIndicator: ViewStyle = {
-  position: "absolute",
-  top: 100,
-  left: 20,
-  backgroundColor: "rgba(0, 0, 0, 0.7)",
-  paddingHorizontal: 12,
-  paddingVertical: 6,
-  borderRadius: 8,
-}
-
-// Landscape-specific orientation indicator (moved to top-left, below zoom)
-const $orientationIndicatorLandscape: ViewStyle = {
-  position: "absolute",
-  top: 100,
-  left: 20,
-  backgroundColor: "rgba(0, 0, 0, 0.7)",
-  paddingHorizontal: 12,
-  paddingVertical: 6,
-  borderRadius: 8,
-}
-
-const $orientationText: TextStyle = {
-  color: "#fff",
-  fontSize: 12,
-  fontWeight: "600",
-}
 
 const $focusRing: ViewStyle = {
   position: "absolute",

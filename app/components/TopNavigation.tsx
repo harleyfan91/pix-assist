@@ -12,34 +12,17 @@ import Reanimated, {
   withSpring
 } from "react-native-reanimated"
 import { AppStackScreenProps } from "@/navigators/AppNavigator"
-import { useDeviceOrientation } from "@/hooks/useDeviceOrientation"
 
 interface TopNavigationProps {
   onNavigationStateChange?: (isOpen: boolean) => void
   onProgressChange?: (progress: number) => void
-  isLandscape?: boolean
 }
 
-export const TopNavigation: React.FC<TopNavigationProps> = ({ onNavigationStateChange, onProgressChange, isLandscape = false }) => {
+export const TopNavigation: React.FC<TopNavigationProps> = ({ onNavigationStateChange, onProgressChange }) => {
   const navigation = useNavigation<AppStackScreenProps<"Camera">["navigation"]>()
   const insets = useSafeAreaInsets()
   const [isOpen, setIsOpen] = useState(false)
-  const deviceOrientation = useDeviceOrientation()
 
-  // Get icon rotation angle based on device orientation
-  const getIconRotation = () => {
-    switch (deviceOrientation.orientation) {
-      case 'landscape-left':
-        return '90deg'  // Rotate 90° clockwise
-      case 'landscape-right':
-        return '-90deg' // Rotate 90° counter-clockwise
-      case 'portrait-upside-down':
-        return '180deg' // Rotate 180°
-      case 'portrait':
-      default:
-        return '0deg'   // No rotation
-    }
-  }
 
   // Single source of truth - just the height
   const height = useSharedValue(80)
@@ -112,7 +95,7 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({ onNavigationStateC
                   name="home-outline" 
                   size={24} 
                   color="#fff" 
-                  style={{ transform: [{ rotate: getIconRotation() }] }}
+                  style={{}}
                 />
               </TouchableOpacity>
               <TouchableOpacity style={$iconButton} onPress={() => handleNavigation("Templates")}>
@@ -120,7 +103,7 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({ onNavigationStateC
                   name="grid-outline" 
                   size={24} 
                   color="#fff" 
-                  style={{ transform: [{ rotate: getIconRotation() }] }}
+                  style={{}}
                 />
               </TouchableOpacity>
               <TouchableOpacity style={$iconButton} onPress={() => handleNavigation("Settings")}>
@@ -128,7 +111,7 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({ onNavigationStateC
                   name="settings-outline" 
                   size={24} 
                   color="#fff" 
-                  style={{ transform: [{ rotate: getIconRotation() }] }}
+                  style={{}}
                 />
               </TouchableOpacity>
             </View>
