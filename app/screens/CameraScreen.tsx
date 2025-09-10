@@ -28,7 +28,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Camera, useCameraDevice, useCameraPermission } from "react-native-vision-camera"
 import * as Haptics from 'expo-haptics'
 import { writeAsync } from '@lodev09/react-native-exify'
-import { DeviceMotion } from 'expo-sensors'
+import { useIconRotation } from '@/hooks/useIconRotation'
 
 // Create Reanimated Camera component for animated exposure
 const ReanimatedCamera = Reanimated.createAnimatedComponent(Camera)
@@ -200,6 +200,48 @@ export const CameraScreen: FC = function CameraScreen() {
   // Temporary popup text override (for flash feedback)
   const [popupTextOverride, setPopupTextOverride] = useState<string | null>(null)
 
+  // Device orientation for icon rotation (using custom hook)
+  const { animatedIconStyle: galleryIconStyle } = useIconRotation({
+    damping: 20,
+    stiffness: 300,
+    enabled: true
+  })
+
+  // Flash icon rotation
+  const { animatedIconStyle: flashIconStyle } = useIconRotation({
+    damping: 20,
+    stiffness: 300,
+    enabled: true
+  })
+
+  // Exposure icon rotation
+  const { animatedIconStyle: exposureIconStyle } = useIconRotation({
+    damping: 20,
+    stiffness: 300,
+    enabled: true
+  })
+
+  // Crop icon rotation
+  const { animatedIconStyle: cropIconStyle } = useIconRotation({
+    damping: 20,
+    stiffness: 300,
+    enabled: true
+  })
+
+  // Exposure label rotation (+2 and -2 text)
+  const { animatedIconStyle: exposureLabelStyle } = useIconRotation({
+    damping: 20,
+    stiffness: 300,
+    enabled: true
+  })
+
+  // Zoom/flash popup text rotation
+  const { animatedIconStyle: popupTextStyle } = useIconRotation({
+    damping: 20,
+    stiffness: 300,
+    enabled: true
+  })
+
   // Debug flash mode changes and update ref
   useEffect(() => {
     console.log('Flash mode updated to:', flashMode)
@@ -329,6 +371,7 @@ export const CameraScreen: FC = function CameraScreen() {
 
     return () => clearInterval(interval)
   }, [zoom, device])
+
 
   
   const promptForCameraPermissions = useCallback(async () => {
@@ -833,7 +876,6 @@ export const CameraScreen: FC = function CameraScreen() {
   })
 
 
-
   const { right: _right, top: _top } = useSafeAreaInsets()
 
   if (cameraPermission == null) {
@@ -929,7 +971,7 @@ export const CameraScreen: FC = function CameraScreen() {
             )}
 
             {/* Zoom Indicator - Only show when zoomed */}
-            <Reanimated.View style={[$zoomIndicator, animatedZoomStyle]}>
+            <Reanimated.View style={[$zoomIndicator, animatedZoomStyle, popupTextStyle]}>
               <Text style={$zoomText}>{popupTextOverride || `${currentZoom.toFixed(1)}x`}</Text>
             </Reanimated.View>
 
@@ -943,7 +985,9 @@ export const CameraScreen: FC = function CameraScreen() {
             {isExposureControlsVisible && (
               <Reanimated.View style={[$exposureControlsVertical, animatedExposureControlsStyle]}>
                   <View style={$exposureSliderContainer}>
-                    <Text style={$exposureLabel}>+2</Text>
+                    <Reanimated.View style={exposureLabelStyle}>
+                      <Text style={$exposureLabel}>+2</Text>
+                    </Reanimated.View>
                     <Slider
                       value={sliderValue}
                       onChange={(value: any) => {
@@ -973,7 +1017,9 @@ export const CameraScreen: FC = function CameraScreen() {
                       </SliderTrack>
                       <SliderThumb style={$sliderThumb} />
                     </Slider>
-                    <Text style={$exposureLabel}>-2</Text>
+                    <Reanimated.View style={exposureLabelStyle}>
+                      <Text style={$exposureLabel}>-2</Text>
+                    </Reanimated.View>
                   </View>
                 </Reanimated.View>
             )}
@@ -1001,12 +1047,14 @@ export const CameraScreen: FC = function CameraScreen() {
                   $galleryButton,
                   galleryPressed && { opacity: 0.6 }
                 ]}>
-                  <Ionicons 
-                    name="images-outline" 
-                    size={24} 
-                    color="#fff" 
-                    style={{}}
-                  />
+                  <Reanimated.View style={galleryIconStyle}>
+                    <Ionicons 
+                      name="images-outline" 
+                      size={24} 
+                      color="#fff" 
+                      style={{}}
+                    />
+                  </Reanimated.View>
                 </View>
               </GestureDetector>
             </View>
@@ -1035,35 +1083,41 @@ export const CameraScreen: FC = function CameraScreen() {
                   <Reanimated.View style={[$controlsContainer, animatedCameraControlsOpacity]}>
                     <GestureDetector gesture={flashButtonGesture}>
                       <View style={[$controlButton, flashPressed && { opacity: 0.6 }]}>
-                        <Ionicons 
-                          name={
-                            flashMode === 'auto' ? 'flash-outline' :
-                            flashMode === 'on' ? 'flash' :
-                            'flash-off-outline'
-                          }
-                          size={20} 
-                          color="#fff" 
-                          style={{}}
-                        />
+                        <Reanimated.View style={flashIconStyle}>
+                          <Ionicons 
+                            name={
+                              flashMode === 'auto' ? 'flash-outline' :
+                              flashMode === 'on' ? 'flash' :
+                              'flash-off-outline'
+                            }
+                            size={20} 
+                            color="#fff" 
+                            style={{}}
+                          />
+                        </Reanimated.View>
                       </View>
                     </GestureDetector>
                     <GestureDetector gesture={evButtonGesture}>
                       <View style={[$controlButton, evPressed && { opacity: 0.6 }]}>
+                        <Reanimated.View style={exposureIconStyle}>
+                          <Ionicons 
+                            name="contrast-outline" 
+                            size={20} 
+                            color="#fff" 
+                            style={{}}
+                          />
+                        </Reanimated.View>
+                      </View>
+                    </GestureDetector>
+                    <View style={$controlButton}>
+                      <Reanimated.View style={cropIconStyle}>
                         <Ionicons 
-                          name="contrast-outline" 
+                          name="crop-outline" 
                           size={20} 
                           color="#fff" 
                           style={{}}
                         />
-                      </View>
-                    </GestureDetector>
-                    <View style={$controlButton}>
-                      <Ionicons 
-                        name="crop-outline" 
-                        size={20} 
-                        color="#fff" 
-                        style={{}}
-                      />
+                      </Reanimated.View>
                     </View>
                   </Reanimated.View>
                   
