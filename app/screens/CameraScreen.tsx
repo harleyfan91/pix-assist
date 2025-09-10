@@ -180,10 +180,10 @@ export const CameraScreen: FC = function CameraScreen() {
   const [sliderValue, setSliderValue] = useState(0) // -1 to 1 range for Gluestack Slider
   const exposureControlsAnimation = useSharedValue(0) // 0 = closed, 1 = open
 
-  // Navigation state for camera animation
-  const [isNavigationOpen, setIsNavigationOpen] = useState(false)
-  const [navigationProgress, setNavigationProgress] = useState(0) // 0-1 progress
-  const cameraOffset = useSharedValue(0) // Camera push-up offset
+  // REVERSIBLE ANIMATION: Navigation state for camera animation (COMMENTED OUT FOR TESTING)
+  // const [isNavigationOpen, setIsNavigationOpen] = useState(false)
+  // const [navigationProgress, setNavigationProgress] = useState(0) // 0-1 progress
+  // const cameraOffset = useSharedValue(0) // Camera push-up offset
 
   // Camera mode button expansion state and animation
   const [isCameraModeExpanded, setIsCameraModeExpanded] = useState(false)
@@ -263,13 +263,13 @@ export const CameraScreen: FC = function CameraScreen() {
     setCameraPermission(hasPermission)
   }, [hasPermission])
 
-  // Animate camera offset based on navigation progress
-  useEffect(() => {
-    const targetOffset = navigationProgress * 80 // 0-80px based on progress
-    cameraOffset.value = withTiming(targetOffset, {
-      duration: 100, // Very fast for real-time tracking
-    })
-  }, [navigationProgress, cameraOffset])
+  // REVERSIBLE ANIMATION: Animate camera offset based on navigation progress (COMMENTED OUT)
+  // useEffect(() => {
+  //   const targetOffset = navigationProgress * 80 // 0-80px based on progress
+  //   cameraOffset.value = withTiming(targetOffset, {
+  //     duration: 100, // Very fast for real-time tracking
+  //   })
+  // }, [navigationProgress, cameraOffset])
 
   // Animate camera mode button expansion
   useEffect(() => {
@@ -742,12 +742,12 @@ export const CameraScreen: FC = function CameraScreen() {
     }
   })
 
-  // Animated style for camera container push-up effect
-  const animatedCameraContainerStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateY: cameraOffset.value }],
-    }
-  })
+  // REVERSIBLE ANIMATION: Animated style for camera container push-up effect (COMMENTED OUT)
+  // const animatedCameraContainerStyle = useAnimatedStyle(() => {
+  //   return {
+  //     transform: [{ translateY: cameraOffset.value }],
+  //   }
+  // })
 
   // Map exposure slider to device exposure range (conservative range)
   const exposureValue = useDerivedValue(() => {
@@ -918,14 +918,11 @@ export const CameraScreen: FC = function CameraScreen() {
   return (
     <View style={$container}>
       {/* Top Navigation - Fixed at top, independent of camera movement */}
-      <TopNavigation 
-        onNavigationStateChange={setIsNavigationOpen}
-        onProgressChange={setNavigationProgress}
-      />
+      <TopNavigation />
       
-      {/* Camera Content - Moves down when navigation opens */}
+      {/* Camera Content - Static positioning (animation disabled for testing) */}
       <GestureDetector gesture={cameraGestures}>
-        <Reanimated.View style={[$cameraContainer, animatedCameraContainerStyle]}>
+        <Reanimated.View style={$cameraContainer}>
           {/* BlurView for padding areas when resizeMode="contain" */}
           <BlurView
             style={StyleSheet.absoluteFill}
@@ -1162,7 +1159,7 @@ const $cameraContainer: ViewStyle = {
 
 const $bottomControls: ViewStyle = {
   position: "absolute",
-  bottom: 80, // Back to comfortable position without drawer interference
+  bottom: 85, // Moved up 5px from 80 to give more breathing room from viewfinder edge
   left: 0,
   right: 0,
   flexDirection: "row",

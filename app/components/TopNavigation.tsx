@@ -34,13 +34,13 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({ onNavigationStateC
     onNavigationStateChange?.(isOpen)
   }, [isOpen])
 
-  // Notify parent of progress using useDerivedValue
-  useDerivedValue(() => {
-    const progress = (height.value - 80) / 80
-    if (onProgressChange) {
-      runOnJS(onProgressChange)(progress)
-    }
-  })
+  // REVERSIBLE ANIMATION: Notify parent of progress using useDerivedValue (COMMENTED OUT)
+  // useDerivedValue(() => {
+  //   const progress = (height.value - 80) / 80
+  //   if (onProgressChange) {
+  //     runOnJS(onProgressChange)(progress)
+  //   }
+  // })
 
   const handleNavigation = (screenName: "Home" | "Gallery" | "Settings" | "Templates") => {
     navigation.navigate(screenName as any)
@@ -148,8 +148,9 @@ const $drawer: ViewStyle = {
   position: "absolute",
   top: 0, left: 0, right: 0,
   backgroundColor: "rgba(0, 0, 0, 0.95)",
-  borderBottomLeftRadius: 20,
-  borderBottomRightRadius: 20,
+  // REVERSIBLE ANIMATION: Rounded corners removed for straight edge alignment
+  // borderBottomLeftRadius: 20,
+  // borderBottomRightRadius: 20,
   paddingHorizontal: 20,
   paddingBottom: 4,
   zIndex: 1000,
@@ -197,6 +198,7 @@ const $blurBackground: ViewStyle = {
   left: 0,
   right: 0,
   bottom: 0,
-  borderBottomLeftRadius: 20,
-  borderBottomRightRadius: 20,
+  // REVERSIBLE ANIMATION: Rounded corners removed for straight edge alignment
+  // borderBottomLeftRadius: 20,
+  // borderBottomRightRadius: 20,
 }
