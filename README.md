@@ -27,6 +27,7 @@ PixAssist is a modern React Native application that provides camera functionalit
 - 📐 **Camera Viewfinder Hook** - Precise viewfinder area calculations for perfect alignment
 - 🎨 **Template Drawer UI** - Smooth slide-in template selection with live previews
 - 🔧 **Compressed Sizing Pattern** - Uniform scaling for UI elements within viewfinder area
+- 🔴 **Visual Calibration System** - Red square debugging methodology for perfect overlay alignment
 
 ## Tech Stack
 
@@ -177,6 +178,7 @@ app/
 - [x] **Compressed Sizing Pattern** - Uniform scaling for UI elements within viewfinder
 - [x] **Template State Management** - TemplateManager service with storage integration
 - [x] **Live Template Overlays** - Real-time template rendering over camera view
+- [x] **Visual Calibration System** - Red square debugging methodology for perfect overlay alignment
 
 ### 🚧 In Progress
 - [ ] Photo editing features in RetouchScreen
@@ -273,6 +275,8 @@ const viewfinder = useCameraViewfinder()
 - **Performance optimized**: Memoized calculations
 
 **Documentation**: See `app/hooks/useCameraViewfinder.md` for detailed usage patterns
+
+**Visual Calibration**: The hook includes a red square calibration methodology for perfect overlay alignment. When developing new overlays, use the calibration pattern to ensure pixel-perfect positioning.
 
 #### `useTemplates()`
 **Location**: `app/templates/hooks/useTemplates.ts`  

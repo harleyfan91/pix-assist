@@ -112,6 +112,15 @@ const {
 
 ## 📐 Sizing and Alignment
 
+### ⚠️ CRITICAL: Template Sizing Rules
+
+**🚨 MANDATORY**: All templates MUST follow these rules for perfect alignment:
+
+1. **ALWAYS use `useCameraViewfinder()` hook** - Never use screen dimensions
+2. **ALWAYS pass hook dimensions** to `screenDimensions` prop
+3. **ALWAYS start with visual calibration** - Use red square debugging
+4. **ALWAYS verify alignment** - Templates must match camera viewfinder exactly
+
 ### Camera Viewfinder Hook
 **Location**: `app/hooks/useCameraViewfinder.ts`
 
@@ -131,6 +140,47 @@ const viewfinder = useCameraViewfinder()
 - **Performance optimized**: Memoized calculations
 
 **Documentation**: See [useCameraViewfinder.md](../hooks/useCameraViewfinder.md) for detailed usage patterns
+
+### Template Sizing Pattern
+```typescript
+// ✅ CORRECT: Template component sizing
+export const MyTemplate: React.FC<CoreTemplateProps> = React.memo(({
+  screenDimensions // This comes from useCameraViewfinder hook
+}) => {
+  const { width, height } = screenDimensions
+  
+  return (
+    <View style={{ 
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: width,    // Uses hook dimensions
+      height: height   // Uses hook dimensions
+    }}>
+      {/* Template content */}
+    </View>
+  )
+})
+```
+
+### Template Overlay Sizing
+```typescript
+// ✅ CORRECT: TemplateOverlay container sizing
+<View style={{
+  position: 'absolute',
+  top: viewfinder.y,        // Hook position
+  left: viewfinder.x,       // Hook position
+  width: viewfinder.width,  // Hook dimensions
+  height: viewfinder.height, // Hook dimensions
+}}>
+  <TemplateComponent 
+    screenDimensions={{ 
+      width: viewfinder.width, 
+      height: viewfinder.height 
+    }}
+  />
+</View>
+```
 
 ### Compressed Sizing Pattern
 

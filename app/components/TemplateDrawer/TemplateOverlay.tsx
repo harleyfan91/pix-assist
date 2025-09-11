@@ -34,7 +34,7 @@ export const TemplateOverlay: React.FC<TemplateOverlayProps> = ({
           opacity={template.opacity}
           color={template.color}
           size={template.size}
-          screenDimensions={screenDimensions}
+          screenDimensions={{ width: viewfinder.width, height: viewfinder.height }}
         />
       )
     }
@@ -45,7 +45,7 @@ export const TemplateOverlay: React.FC<TemplateOverlayProps> = ({
       return (
         <ProComponent
           customization={template.customization}
-          screenDimensions={screenDimensions}
+          screenDimensions={{ width: viewfinder.width, height: viewfinder.height }}
         />
       )
     }
@@ -57,7 +57,7 @@ export const TemplateOverlay: React.FC<TemplateOverlayProps> = ({
         opacity={0.6}
         color="#ffffff"
         size="medium"
-        screenDimensions={screenDimensions}
+        screenDimensions={{ width: viewfinder.width, height: viewfinder.height }}
       />
     )
   }
