@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { View, Text, Dimensions } from 'react-native'
+import { View, Text, Dimensions, TouchableOpacity, Image } from 'react-native'
 import { PanGestureHandler } from 'react-native-gesture-handler'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, {
@@ -198,6 +198,34 @@ export const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
                      </Text>
                    </View>
                    */}
+
+            {/* Close Button */}
+            <TouchableOpacity
+              onPress={onClose}
+              style={{
+                position: 'absolute',
+                top: insets.top + 1,
+                left: 20,
+                zIndex: 1000,
+                backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                borderRadius: 20,
+                width: 40,
+                height: 40,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+              activeOpacity={0.7}
+            >
+              <Image
+                source={require('../../../assets/icons/x.png')}
+                style={{
+                  width: 20,
+                  height: 20,
+                  tintColor: '#ffffff',
+                }}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
 
             {/* Template Carousel with integrated category selection */}
             <TemplateCarousel

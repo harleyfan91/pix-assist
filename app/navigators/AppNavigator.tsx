@@ -4,7 +4,7 @@
  * Generally speaking, it will contain an auth flow (registration, login, forgot password)
  * and a "main" flow which the user will use once logged in.
  */
-import React, { ComponentProps } from "react"
+import React, { ComponentProps, useState } from "react"
 import { createNativeStackNavigator, NativeStackScreenProps } from "@react-navigation/native-stack"
 import { NavigationContainer } from "@react-navigation/native"
 
@@ -31,7 +31,7 @@ import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
  *   https://reactnavigation.org/docs/typescript/#organizing-types
  */
 export type AppStackParamList = {
-  Camera: undefined
+  Camera: { onTemplateDrawerToggle?: (isOpen: boolean) => void }
   Home: undefined
   Gallery: undefined
   Preview: { photoPath: string }
@@ -60,10 +60,16 @@ export type AppStackScreenProps<T extends keyof AppStackParamList> = NativeStack
 const Stack = createNativeStackNavigator<AppStackParamList>()
 
 const AppStack = () => {
+  const [isTemplateDrawerOpen, setIsTemplateDrawerOpen] = useState(false)
+
+  const handleTemplateDrawerToggle = (isOpen: boolean) => {
+    setIsTemplateDrawerOpen(isOpen)
+  }
+
   return (
     <>
-      {/* Global Top Navigation - Fixed at top, appears on all screens */}
-      <TopNavigation />
+      {/* Global Top Navigation - Fixed at top, appears on all screens except when template drawer is open */}
+      {!isTemplateDrawerOpen && <TopNavigation />}
       
       <Stack.Navigator
         initialRouteName="Camera"
@@ -79,6 +85,7 @@ const AppStack = () => {
         options={{
           animation: "none", // No animation for camera - it stays as the base
         }}
+        initialParams={{ onTemplateDrawerToggle: handleTemplateDrawerToggle }}
       />
       
       {/* Other screens presented as modals */}

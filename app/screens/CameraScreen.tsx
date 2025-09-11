@@ -46,7 +46,7 @@ const ReanimatedCamera = Reanimated.createAnimatedComponent(Camera)
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { BlurButton } from "@/components/BlurButton"
-import { useNavigation } from "@react-navigation/native"
+import { useNavigation, useRoute } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { photoLibraryService } from "@/services/photoLibrary"
 
@@ -62,6 +62,7 @@ export const CameraScreen: FC = function CameraScreen() {
   const [isActive, setIsActive] = useState(true) // Camera active state
   const [cameraError, setCameraError] = useState<string | null>(null)
   const navigation = useNavigation<AppStackScreenProps<"Camera">["navigation"]>()
+  const route = useRoute<AppStackScreenProps<"Camera">["route"]>()
   
   // Template system state
   const [isTemplateDrawerVisible, setIsTemplateDrawerVisible] = useState(false)
@@ -85,10 +86,12 @@ export const CameraScreen: FC = function CameraScreen() {
   // Template drawer handlers
   const handleTemplateDrawerOpen = () => {
     setIsTemplateDrawerVisible(true)
+    route.params?.onTemplateDrawerToggle?.(true)
   }
-  
+
   const handleTemplateDrawerClose = () => {
     setIsTemplateDrawerVisible(false)
+    route.params?.onTemplateDrawerToggle?.(false)
   }
   
   
