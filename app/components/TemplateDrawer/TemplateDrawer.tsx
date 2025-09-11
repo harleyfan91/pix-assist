@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import { View, Text, Dimensions, TouchableOpacity, Image } from 'react-native'
 import { PanGestureHandler } from 'react-native-gesture-handler'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { BlurView } from '@react-native-community/blur'
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -39,6 +40,9 @@ export const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
   
   // Get camera viewfinder dimensions for visualization
   const cameraViewfinder = useCameraViewfinder()
+  
+  // Camera viewfinder dimensions for BlurView positioning
+  // Using useCameraViewfinder hook for precise camera area calculation
 
   // Debug logging for drawer space
   console.log('Drawer space:', {
@@ -63,7 +67,7 @@ export const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
 
   // Gesture handler for closing drawer
   const gestureHandler = useAnimatedGestureHandler({
-    onStart: (_, context) => {
+    onStart: (_, context: any) => {
       context.startX = translateX.value
     },
     onActive: (event, context) => {
@@ -133,7 +137,7 @@ export const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
         pointerEvents={isVisible ? 'auto' : 'none'}
       />
 
-      {/* Drawer */}
+      {/* Drawer with VibrancyView Background */}
       <PanGestureHandler onGestureEvent={gestureHandler}>
         <Animated.View
           style={[
@@ -143,12 +147,51 @@ export const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
               left: 0, // Start from left edge
               width: DRAWER_WIDTH,
               height: SCREEN_HEIGHT,
-              backgroundColor: 'rgba(0, 0, 0, 0.9)',
               zIndex: 999,
             },
             drawerStyle,
           ]}
         >
+          {/* Top Blurred Section */}
+          <BlurView
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: cameraViewfinder.y, // From top to camera viewfinder start
+            }}
+            blurType="dark"
+            blurAmount={20}
+            reducedTransparencyFallbackColor="rgba(0, 0, 0, 0.8)"
+          />
+
+          {/* Center Transparent Section */}
+          <View
+            style={{
+              position: 'absolute',
+              top: cameraViewfinder.y,
+              left: cameraViewfinder.x,
+              width: cameraViewfinder.width,
+              height: cameraViewfinder.height,
+              backgroundColor: 'transparent', // Fully transparent for center
+            }}
+          />
+
+          {/* Bottom Blurred Section */}
+          <BlurView
+            style={{
+              position: 'absolute',
+              top: cameraViewfinder.y + cameraViewfinder.height,
+              left: 0,
+              right: 0,
+              bottom: 0,
+            }}
+            blurType="dark"
+            blurAmount={20}
+            reducedTransparencyFallbackColor="rgba(0, 0, 0, 0.8)"
+          />
+
           <View style={{ 
             paddingTop: insets.top + 5, // Add safe area top padding
             paddingBottom: 5,
