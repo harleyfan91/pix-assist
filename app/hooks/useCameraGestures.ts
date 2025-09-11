@@ -2,13 +2,14 @@ import { useCallback, useState, useRef } from "react"
 import { Gesture, GestureDetector } from "react-native-gesture-handler"
 import { useSharedValue, runOnJS, withSpring } from "react-native-reanimated"
 import { Camera } from "react-native-vision-camera"
+import { PopupState } from "./useCameraControls"
 
 export interface UseCameraGesturesProps {
   device: any // Camera device from react-native-vision-camera
   zoom: any // Shared value for zoom
   zoomOffset: any // Shared value for zoom offset
   popupVisible: any // Shared value for popup visibility
-  setPopupState: (state: any) => void
+  setPopupState: (state: PopupState | ((prev: PopupState) => PopupState)) => void
   triggerHaptic: (type: 'impact' | 'selection', style: 'light' | 'medium' | 'heavy') => void
   takePhoto: () => void
   setShutterPressed: (pressed: boolean) => void
@@ -74,7 +75,7 @@ export const useCameraGestures = ({
   // Helper functions for popup management
   const onZoomStart = useCallback(() => {
     // Clear flash timeout if zoom becomes active
-    setPopupState(prev => {
+    setPopupState((prev: PopupState) => {
       if (prev.flashTimeout) {
         clearTimeout(prev.flashTimeout)
       }
@@ -116,7 +117,7 @@ export const useCameraGestures = ({
 
   const handleZoomUpdate = useCallback((zoomLevel: number) => {
     // Only update if zoom is the active interaction OR no interaction is active
-    setPopupState(prev => {
+    setPopupState((prev: PopupState) => {
       if (prev.activeInteraction === 'zoom' || prev.activeInteraction === null) {
         const newState = {
           ...prev,
@@ -136,7 +137,7 @@ export const useCameraGestures = ({
   const onZoomEnd = useCallback(() => {
     // Clear zoom after a longer delay, but only if zoom is still active
     setTimeout(() => {
-      setPopupState(current => {
+      setPopupState((current: PopupState) => {
         if (current.activeInteraction === 'zoom') {
           popupVisible.value = withSpring(0, { damping: 15, stiffness: 200 })
           return {

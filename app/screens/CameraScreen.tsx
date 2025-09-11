@@ -12,6 +12,7 @@ import {
   Image,
 } from "react-native"
 import { BlurView } from "@react-native-community/blur"
+import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { Button, ButtonText, Slider, SliderTrack, SliderFilledTrack, SliderThumb } from "@gluestack-ui/themed"
 import { Gesture, GestureDetector } from "react-native-gesture-handler"
@@ -453,11 +454,221 @@ export const CameraScreen: FC = function CameraScreen() {
 
   if (!device) {
     return (
-      <Screen preset="fixed" contentContainerStyle={$container}>
-        <View style={$content}>
-          <Text preset="heading" text="📷 No Camera Found" />
-          <Text preset="subheading" text="No camera device available on this device." />
-        </View>
+      <Screen preset="fixed" style={$container} cameraMode={true} systemBarStyle="light">
+        {/* Camera Content - Show black viewfinder with controls */}
+        <GestureDetector gesture={cameraGestures}>
+          <Reanimated.View style={$cameraContainer}>
+            <View style={StyleSheet.absoluteFill}>
+              {/* Black viewfinder when no camera available */}
+              <View style={[StyleSheet.absoluteFill, { backgroundColor: '#000000' }]} />
+              
+              {/* Error message overlay */}
+              <View style={$noCameraOverlay}>
+                <Ionicons name="camera-outline" size={48} color="#ff6b6b" />
+                <Text style={$noCameraTitle}>No Camera Found</Text>
+                <Text style={$noCameraSubtitle}>No camera device available on this device.</Text>
+              </View>
+
+              {/* Flash overlay for photo capture feedback */}
+              <Reanimated.View style={[$flashOverlay, animatedFlashStyle]} />
+
+              {/* Focus Ring - Only show when focusing */}
+              {showFocusRing && <Reanimated.View style={[$focusRing, animatedFocusRingStyle]} />}
+
+              {/* Popup Indicator - Shows zoom level or flash status */}
+              {popupState.visible && (
+                <Reanimated.View style={[$popupIndicator, animatedPopupStyle]}>
+                  <View style={$popupBlurBackground}>
+                    <BlurView
+                      style={$popupBlurView}
+                      blurType="light"
+                      blurAmount={7}
+                      reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
+                    />
+                    <View style={$popupTextContent}>
+                      <View style={$popupTextContainer}>
+                        <Reanimated.View style={popupTextStyle}>
+                          <Text style={$popupText}>
+                            {popupState.value || 'No Value'}
+                          </Text>
+                        </Reanimated.View>
+                      </View>
+                    </View>
+                  </View>
+                </Reanimated.View>
+              )}
+
+              {/* Exposure Controls - Gluestack Slider */}
+              {isExposureControlsVisible && (
+                <Reanimated.View style={[$exposureControlsVertical, animatedExposureControlsStyle]}>
+                  <BlurButton
+                    onPress={() => {}} // No press action needed for container
+                    style={$exposureControlsBlur}
+                    blurType="light"
+                    blurAmount={7}
+                    reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
+                    disabled={true}
+                  >
+                    <View style={$exposureSliderContainer}>
+                      <Reanimated.View style={exposureLabelStyle}>
+                        <Text style={$exposureLabel}>+2</Text>
+                      </Reanimated.View>
+                      <View style={$sliderWrapper}>
+                        {/* Neutral position indicator line */}
+                        <View style={$neutralPositionLine} />
+                        <Slider
+                          value={sliderValue}
+                          onChange={handleExposureSliderChange}
+                          minValue={-1}
+                          maxValue={1}
+                          step={0.01}
+                          orientation="vertical"
+                          style={$gluestackSlider}
+                        >
+                          <SliderTrack style={$sliderTrack}>
+                            <SliderFilledTrack style={$sliderFilledTrack} />
+                          </SliderTrack>
+                          <SliderThumb style={$sliderThumb} />
+                        </Slider>
+                      </View>
+                      <Reanimated.View style={exposureLabelStyle}>
+                        <Text style={$exposureLabel}>-2</Text>
+                      </Reanimated.View>
+                    </View>
+                  </BlurButton>
+                </Reanimated.View>
+              )}
+            </View>
+
+            {/* Unified click away overlay for menus */}
+            {(isCameraModeExpanded || showExposureControls) && (
+              <TouchableOpacity 
+                style={$unifiedOverlay}
+                onPress={closeAllControls}
+                activeOpacity={1}
+              />
+            )}
+
+            {/* Bottom Controls - iPhone-style layout */}
+            <View style={$bottomControls}>
+              {/* Left Container: Gallery Button */}
+              <View style={$leftControlsContainer}>
+                <BlurButton
+                  onPress={navigateToGallery}
+                  icon={Ionicons}
+                  iconProps={{
+                    name: "images-outline",
+                    size: 24,
+                    color: "#fff"
+                  }}
+                  style={$galleryButton}
+                  blurType="light"
+                  blurAmount={7}
+                  reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
+                >
+                  <Reanimated.View style={galleryIconStyle}>
+                    <Ionicons 
+                      name="images-outline" 
+                      size={24} 
+                      color="#fff" 
+                    />
+                  </Reanimated.View>
+                </BlurButton>
+              </View>
+
+              {/* Center Container: Shutter Button */}
+              <View style={$centerControlsContainer}>
+                <GestureDetector gesture={shutterButtonGesture}>
+                  <View style={[
+                    $shutterButton,
+                    (shutterPressed || isCapturing) && { opacity: 0.6 }
+                  ]}>
+                    <View style={$shutterButtonInner} />
+                  </View>
+                </GestureDetector>
+              </View>
+
+              {/* Right Container: Camera Mode Button */}
+              <View style={$rightControlsContainer}>
+                <Reanimated.View style={[animatedCameraModeStyle, $cameraModeContainer]}>
+                  {/* Main expanding background with blur */}
+                  <BlurView
+                    style={$cameraModeBlurBackground}
+                    blurType="light"
+                    blurAmount={7}
+                    reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
+                  />
+                  
+                  {/* Camera control buttons - only visible when expanded */}
+                  <Reanimated.View style={[$controlsContainer, animatedCameraControlsOpacity]}>
+                    <BlurButton
+                      onPress={handleFlashToggle}
+                      style={$controlButton}
+                      blurType="light"
+                      blurAmount={5}
+                      reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.1)"
+                    >
+                      <Reanimated.View style={flashIconStyle}>
+                        <Ionicons 
+                          name={
+                            flashMode === 'auto' ? 'flash-outline' :
+                            flashMode === 'on' ? 'flash' :
+                            'flash-off-outline'
+                          }
+                          size={20} 
+                          color="#fff" 
+                        />
+                      </Reanimated.View>
+                    </BlurButton>
+                    
+                    <BlurButton
+                      onPress={toggleExposureControls}
+                      style={$controlButton}
+                      blurType="light"
+                      blurAmount={5}
+                      reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.1)"
+                    >
+                      <Reanimated.View style={exposureIconStyle}>
+                        <Ionicons 
+                          name="contrast-outline" 
+                          size={20} 
+                          color="#fff" 
+                        />
+                      </Reanimated.View>
+                    </BlurButton>
+                    
+                    <BlurButton
+                      onPress={() => {}} // TODO: Add crop functionality
+                      style={$controlButton}
+                      blurType="light"
+                      blurAmount={5}
+                      reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.1)"
+                    >
+                      <Reanimated.View style={cropIconStyle}>
+                        <Ionicons 
+                          name="crop-outline" 
+                          size={20} 
+                          color="#fff" 
+                        />
+                      </Reanimated.View>
+                    </BlurButton>
+                  </Reanimated.View>
+                  
+                  {/* Main chevron button - always visible at bottom */}
+                  <TouchableOpacity
+                    onPress={toggleCameraModeExpansion}
+                    style={$chevronButtonContainer}
+                    activeOpacity={0.6}
+                  >
+                    <Reanimated.View style={animatedChevronStyle}>
+                      <Ionicons name="chevron-up-sharp" size={24} color="#fff" />
+                    </Reanimated.View>
+                  </TouchableOpacity>
+                </Reanimated.View>
+              </View>
+            </View>
+          </Reanimated.View>
+        </GestureDetector>
       </Screen>
     )
   }
@@ -489,6 +700,17 @@ export const CameraScreen: FC = function CameraScreen() {
               }}
               resizeMode="contain" // Change from "cover" to "contain"
             />
+            
+            {/* Gradient layers - positioned to avoid viewfinder area */}
+            {/* JSX order is inverse: renders from bottom up, layering on top of each other */}
+            <View style={$gradientLayer8} />
+            <View style={$gradientLayer7} />
+            <View style={$gradientLayer6} />
+            <View style={$gradientLayer5} />
+            <View style={$gradientLayer4} />
+            <View style={$gradientLayer3} />
+            <View style={$gradientLayer2} />
+            <View style={$gradientLayer1} />
             
             {/* Flash overlay for photo capture feedback */}
             <Reanimated.View style={[$flashOverlay, animatedFlashStyle]} />
@@ -720,7 +942,104 @@ export const CameraScreen: FC = function CameraScreen() {
 
 const $container: ViewStyle = {
   flex: 1,
-  backgroundColor: "#1a1a1a", // Very dark gray background for camera padding areas
+  backgroundColor: "#0b0b0b", // Background - slightly lighter than layer 8
+}
+
+// Gradient layers - Layer 1 is innermost (darkest), Layer 8 is outermost (lightest)
+const $gradientLayer1: ViewStyle = {
+  position: "absolute",
+  top: "3.0%",    // 3.0% gap from top edge (happy medium)
+  bottom: "3.0%", // 3.0% gap from bottom edge
+  left: 0,
+  right: 0,
+  backgroundColor: "black", // Pure black - darkest (innermost)
+  opacity: 0.6,
+  borderRadius: 20, // Even more pronounced curved edges
+  zIndex: -1, // Behind everything
+}
+
+const $gradientLayer2: ViewStyle = {
+  position: "absolute",
+  top: "2.6%",    // 2.6% gap from top edge (happy medium)
+  bottom: "2.6%", // 2.6% gap from bottom edge
+  left: 0,
+  right: 0,
+  backgroundColor: "#040404", // Almost black
+  opacity: 0.6,
+  borderRadius: 20, // Even more pronounced curved edges
+  zIndex: -1, // Behind everything
+}
+
+const $gradientLayer3: ViewStyle = {
+  position: "absolute",
+  top: "2.2%",    // 2.2% gap from top edge (happy medium)
+  bottom: "2.2%", // 2.2% gap from bottom edge
+  left: 0,
+  right: 0,
+  backgroundColor: "#060606", // Very dark
+  opacity: 0.6,
+  borderRadius: 20, // Even more pronounced curved edges
+  zIndex: -1, // Behind everything
+}
+
+const $gradientLayer4: ViewStyle = {
+  position: "absolute",
+  top: "1.8%",    // 1.8% gap from top edge (happy medium)
+  bottom: "1.8%", // 1.8% gap from bottom edge
+  left: 0,
+  right: 0,
+  backgroundColor: "#080808", // slightly lighter than layer 3
+  opacity: 0.6,
+  borderRadius: 20, // Even more pronounced curved edges
+  zIndex: -1, // Behind everything
+}
+
+const $gradientLayer5: ViewStyle = {
+  position: "absolute",
+  top: "1.4%",    // 1.4% gap from top edge (happy medium)
+  bottom: "1.4%", // 1.4% gap from bottom edge
+  left: 0,
+  right: 0,
+  backgroundColor: "#0a0a0a", // slightly lighter than layer 4
+  opacity: 0.6,
+  borderRadius: 20, // Even more pronounced curved edges
+  zIndex: -1, // Behind everything
+}
+
+const $gradientLayer6: ViewStyle = {
+  position: "absolute",
+  top: "1.0%",    // 1.0% gap from top edge (happy medium)
+  bottom: "1.0%", // 1.0% gap from bottom edge
+  left: 0,
+  right: 0,
+  backgroundColor: "#0c0c0c", // Slightly lighter than layer 5
+  opacity: 0.7,
+  borderRadius: 20, // Even more pronounced curved edges
+  zIndex: -1, // Behind everything
+}
+
+const $gradientLayer7: ViewStyle = {
+  position: "absolute",
+  top: "0.6%",    // 0.6% gap from top edge (happy medium)
+  bottom: "0.6%", // 0.6% gap from bottom edge
+  left: 0,
+  right: 0,
+  backgroundColor: "#0e0e0e", // Very subtle difference
+  opacity: 0.8,
+  borderRadius: 20, // Even more pronounced curved edges
+  zIndex: -1, // Behind everything
+}
+
+const $gradientLayer8: ViewStyle = {
+  position: "absolute",
+  top: "0.2%",    // 0.2% gap from top edge (happy medium)
+  bottom: "0.2%", // 0.2% gap from bottom edge
+  left: 0,
+  right: 0,
+  backgroundColor: "#0d0d0d", // Slight darker than background (outermost)
+  opacity: 0.8,
+  borderRadius: 20, // Even more pronounced curved edges
+  zIndex: -1, // Behind everything
 }
 
 const $content: ViewStyle = {
@@ -1071,6 +1390,35 @@ const $neutralPositionLine: ViewStyle = {
   height: 1,
   backgroundColor: "rgba(255, 255, 255, 0.6)",
   zIndex: 0, // Behind the slider
+}
+
+// No Camera Overlay Styles
+const $noCameraOverlay: ViewStyle = {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  justifyContent: "center",
+  alignItems: "center",
+  backgroundColor: "rgba(0, 0, 0, 0.7)",
+  zIndex: 5,
+}
+
+const $noCameraTitle: TextStyle = {
+  color: "#ff6b6b",
+  fontSize: 24,
+  fontWeight: "bold",
+  marginTop: 16,
+  textAlign: "center",
+}
+
+const $noCameraSubtitle: TextStyle = {
+  color: "#ff6b6b",
+  fontSize: 16,
+  marginTop: 8,
+  textAlign: "center",
+  opacity: 0.8,
 }
 
 
