@@ -29,7 +29,7 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({ onNavigationStateC
 
   // Sync height with isOpen state
   useEffect(() => {
-    height.value = withSpring(isOpen ? 160 : 80, { damping: 20, stiffness: 300 })
+    height.value = withSpring(isOpen ? 150 : 80, { damping: 20, stiffness: 300 })
     onNavigationStateChange?.(isOpen)
   }, [isOpen])
 
@@ -67,6 +67,8 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({ onNavigationStateC
   // Simple animated styles
   const animatedStyle = useAnimatedStyle(() => ({
     height: height.value,
+    borderBottomLeftRadius: isOpen ? 20 : 0,
+    borderBottomRightRadius: isOpen ? 20 : 0,
   }))
 
   const iconsOpacity = useAnimatedStyle(() => ({
@@ -90,7 +92,7 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({ onNavigationStateC
           {/* Blur background layer - only visible when expanded */}
           {isOpen && (
             <BlurView
-              style={$blurBackground}
+              style={[$blurBackground, { borderBottomLeftRadius: 20, borderBottomRightRadius: 20 }]}
               blurType="extraDark"
               blurAmount={15}
               reducedTransparencyFallbackColor="rgba(0, 0, 0, 0.95)"
@@ -149,9 +151,6 @@ const $drawer: ViewStyle = {
   position: "absolute",
   top: 0, left: 0, right: 0,
   backgroundColor: "transparent",
-  // REVERSIBLE ANIMATION: Rounded corners removed for straight edge alignment
-  // borderBottomLeftRadius: 20,
-  // borderBottomRightRadius: 20,
   paddingHorizontal: 20,
   paddingBottom: 4,
   zIndex: 1000,
@@ -199,9 +198,6 @@ const $blurBackground: ViewStyle = {
   left: 0,
   right: 0,
   bottom: 0,
-  // REVERSIBLE ANIMATION: Rounded corners removed for straight edge alignment
-  // borderBottomLeftRadius: 20,
-  // borderBottomRightRadius: 20,
 }
 
 
