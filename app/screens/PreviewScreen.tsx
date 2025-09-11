@@ -38,6 +38,7 @@ export const PreviewScreen: FC = function PreviewScreen() {
   // Simple initialization - just show the original image
   useEffect(() => {
     if (originalUri) {
+      console.log('Setting display URI:', originalUri)
       setDisplayUri(originalUri)
     }
   }, [originalUri])
@@ -163,14 +164,20 @@ export const PreviewScreen: FC = function PreviewScreen() {
 
       {/* Photo Display */}
       <View style={$photoContainer}>
-        {displayUri && (
-          <SnapbackZoom>
-            <Image
-              source={{ uri: displayUri }}
-              style={{ width: 450, height: 675 }}
-              resizeMode="contain"
-            />
-          </SnapbackZoom>
+        {displayUri ? (
+          <View style={$snapbackContainer}>
+            <SnapbackZoom>
+              <Image
+                source={{ uri: displayUri }}
+                style={$photoImage}
+                resizeMode="contain"
+                onLoad={() => console.log('Image loaded successfully')}
+                onError={(error) => console.log('Image load error:', error)}
+              />
+            </SnapbackZoom>
+          </View>
+        ) : (
+          <Text style={{ color: 'white' }}>No image to display</Text>
         )}
       </View>
 
@@ -242,16 +249,23 @@ const $container: ViewStyle = {
 }
 
 const $photoContainer: ViewStyle = {
-  width: 450,
-  height: 600,
+  flex: 1,
+  justifyContent: 'flex-start', // Changed from 'center' to push image up
+  alignItems: 'center',
+  paddingHorizontal: 10, // Smaller padding
+  paddingTop: 0, // Push image down from top
+}
+
+const $snapbackContainer: ViewStyle = {
+  width: "100%",
+  height: 693, // Match the image height
   justifyContent: 'center',
   alignItems: 'center',
-  alignSelf: 'center',
 }
 
 const $photoImage: ImageStyle = {
-  width: "100%",
-  height: "100%",
+  width: 442, // A few more pixels wider
+  height: 693, // Proportional height
 }
 
 const $loadingOverlay: ViewStyle = {
