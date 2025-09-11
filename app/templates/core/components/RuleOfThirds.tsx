@@ -36,7 +36,13 @@ export const RuleOfThirds: React.FC<CoreTemplateProps> = React.memo(({
   }
 
   return (
-    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
+    <View style={{ 
+      position: 'absolute', 
+      top: 0, 
+      left: 0, 
+      width: width, 
+      height: height 
+    }}>
       {/* Vertical lines at 1/3 and 2/3 */}
       <View style={[$verticalLine, { left: width / 3 }]} />
       <View style={[$verticalLine, { left: (width * 2) / 3 }]} />

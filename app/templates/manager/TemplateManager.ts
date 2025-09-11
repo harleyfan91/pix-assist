@@ -1,10 +1,10 @@
 import { CoreTemplate } from '../core/types'
-import { Template, TemplateCategory } from '../types'
+import { Template, TemplateCategory, TemplateType } from '../types'
 import { templateStorage } from './TemplateStorage'
 import { RuleOfThirds } from '../core'
 
 class TemplateManager {
-  private templates: CoreTemplate[] = []
+  private templates: Template[] = []
   private activeTemplates: string[] = []
   private currentCategory: TemplateCategory = 'grid'
   private currentTemplateIndex = 0
@@ -20,6 +20,7 @@ class TemplateManager {
         id: 'rule_of_thirds',
         name: 'Rule of Thirds',
         category: 'grid',
+        type: 'core',
         component: RuleOfThirds,
         isActive: true,
         opacity: 0.6,
@@ -44,7 +45,7 @@ class TemplateManager {
     }
   }
 
-  getAvailableTemplates(): CoreTemplate[] {
+  getAvailableTemplates(): Template[] {
     return [...this.templates]
   }
 
@@ -92,7 +93,7 @@ class TemplateManager {
     await templateStorage.saveCurrentTemplateIndex(index)
   }
 
-  getTemplateById(id: string): CoreTemplate | undefined {
+  getTemplateById(id: string): Template | undefined {
     return this.templates.find(t => t.id === id)
   }
 }

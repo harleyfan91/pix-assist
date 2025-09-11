@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
-import { CoreTemplate } from '../core/types'
-import { TemplateCategory } from '../types'
+import { Template, TemplateCategory } from '../types'
 import { templateManager } from '../manager/TemplateManager'
 
 interface UseTemplatesReturn {
-  templates: CoreTemplate[]
+  templates: Template[]
   activeTemplates: string[]
   currentCategory: TemplateCategory
   currentTemplateIndex: number
@@ -14,12 +13,12 @@ interface UseTemplatesReturn {
   deactivateTemplate: (templateId: string) => Promise<void>
   setCurrentCategory: (category: TemplateCategory) => Promise<void>
   setCurrentTemplateIndex: (index: number) => Promise<void>
-  getTemplateById: (id: string) => CoreTemplate | undefined
+  getTemplateById: (id: string) => Template | undefined
   refreshTemplates: () => Promise<void>
 }
 
 export function useTemplates(): UseTemplatesReturn {
-  const [templates, setTemplates] = useState<CoreTemplate[]>([])
+  const [templates, setTemplates] = useState<Template[]>([])
   const [activeTemplates, setActiveTemplates] = useState<string[]>([])
   const [currentCategory, setCurrentCategoryState] = useState<TemplateCategory>('grid')
   const [currentTemplateIndex, setCurrentTemplateIndexState] = useState<number>(0)
@@ -102,7 +101,7 @@ export function useTemplates(): UseTemplatesReturn {
     }
   }, [])
 
-  const getTemplateById = useCallback((id: string): CoreTemplate | undefined => {
+  const getTemplateById = useCallback((id: string): Template | undefined => {
     return templateManager.getTemplateById(id)
   }, [])
 

@@ -34,6 +34,11 @@ import { useIconRotation } from '@/hooks/useIconRotation'
 import { useCameraControls } from '@/hooks/useCameraControls'
 import { useCameraGestures } from '@/hooks/useCameraGestures'
 import { useCameraAnimations } from '@/hooks/useCameraAnimations'
+import { useTemplates } from '@/templates/hooks/useTemplates'
+import { TemplateDrawer, TemplateOverlay } from '@/components/TemplateDrawer'
+import { Dimensions } from 'react-native'
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window')
 
 // Create Reanimated Camera component for animated exposure
 const ReanimatedCamera = Reanimated.createAnimatedComponent(Camera)
@@ -58,6 +63,33 @@ export const CameraScreen: FC = function CameraScreen() {
   const [cameraError, setCameraError] = useState<string | null>(null)
   const navigation = useNavigation<AppStackScreenProps<"Camera">["navigation"]>()
   
+  // Template system state
+  const [isTemplateDrawerVisible, setIsTemplateDrawerVisible] = useState(false)
+  const [currentTemplateId, setCurrentTemplateId] = useState<string | null>(null)
+  const cameraViewRef = useRef<View | null>(null)
+  
+  // Initialize template system
+  const { templates, activateTemplate, deactivateTemplate } = useTemplates()
+  
+  // Template selection handler
+  const handleTemplateSelect = async (templateId: string) => {
+    try {
+      setCurrentTemplateId(templateId)
+      await activateTemplate(templateId)
+      setIsTemplateDrawerVisible(false)
+    } catch (error) {
+      console.error('Error selecting template:', error)
+    }
+  }
+  
+  // Template drawer handlers
+  const handleTemplateDrawerOpen = () => {
+    setIsTemplateDrawerVisible(true)
+  }
+  
+  const handleTemplateDrawerClose = () => {
+    setIsTemplateDrawerVisible(false)
+  }
   
   
 
@@ -669,6 +701,13 @@ export const CameraScreen: FC = function CameraScreen() {
             </View>
           </Reanimated.View>
         </GestureDetector>
+        
+        {/* Template Drawer */}
+        <TemplateDrawer
+          isVisible={isTemplateDrawerVisible}
+          onClose={handleTemplateDrawerClose}
+          onTemplateSelect={handleTemplateSelect}
+        />
       </Screen>
     )
   }
@@ -736,6 +775,14 @@ export const CameraScreen: FC = function CameraScreen() {
             )}
 
 
+
+            {/* Template Overlay - Render selected template */}
+            {currentTemplateId && (
+              <TemplateOverlay
+                templateId={currentTemplateId}
+                screenDimensions={{ width: SCREEN_WIDTH, height: SCREEN_HEIGHT }}
+              />
+            )}
 
             {/* Focus Ring - Only show when focusing */}
             {showFocusRing && <Reanimated.View style={[$focusRing, animatedFocusRingStyle]} />}
@@ -855,8 +902,23 @@ export const CameraScreen: FC = function CameraScreen() {
               </GestureDetector>
             </View>
 
-            {/* Right Container: Camera Mode Button */}
+            {/* Right Container: Template Button and Camera Mode Button */}
             <View style={$rightControlsContainer}>
+              {/* Template Button */}
+              <BlurButton
+                onPress={handleTemplateDrawerOpen}
+                style={$templateButton}
+                blurType="light"
+                blurAmount={7}
+                reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
+              >
+                <Ionicons 
+                  name="grid-outline" 
+                  size={24} 
+                  color="#fff" 
+                />
+              </BlurButton>
+              
               <Reanimated.View style={[animatedCameraModeStyle, $cameraModeContainer]}>
                 {/* Main expanding background with blur */}
                 <BlurView
@@ -933,12 +995,19 @@ export const CameraScreen: FC = function CameraScreen() {
                 </TouchableOpacity>
               </Reanimated.View>
             </View>
-          </View>
-        </Reanimated.View>
-      </GestureDetector>
-    </Screen>
-  )
-}
+            </View>
+          </Reanimated.View>
+        </GestureDetector>
+        
+        {/* Template Drawer */}
+        <TemplateDrawer
+          isVisible={isTemplateDrawerVisible}
+          onClose={handleTemplateDrawerClose}
+          onTemplateSelect={handleTemplateSelect}
+        />
+      </Screen>
+    )
+  }
 
 const $container: ViewStyle = {
   flex: 1,
@@ -1156,6 +1225,15 @@ const $galleryButton: ViewStyle = {
   borderRadius: 30,
   borderWidth: 0,
   borderColor: "rgba(255, 255, 255, 0.5)",
+}
+
+const $templateButton: ViewStyle = {
+  width: 50,
+  height: 50,
+  borderRadius: 25,
+  alignItems: "center",
+  justifyContent: "center",
+  marginBottom: 10, // Add some spacing from the camera mode button
 }
 
 const $cameraModeButton: ViewStyle = {

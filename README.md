@@ -23,6 +23,10 @@ PixAssist is a modern React Native application that provides camera functionalit
 - 🌙 **Theme Support** - Light/dark mode theming
 - 🌍 **Internationalization** - Multi-language support
 - 📱 **Cross-Platform** - iOS and Android support
+- 🎯 **Template System** - Live camera overlay templates with Rule of Thirds
+- 📐 **Camera Viewfinder Hook** - Precise viewfinder area calculations for perfect alignment
+- 🎨 **Template Drawer UI** - Smooth slide-in template selection with live previews
+- 🔧 **Compressed Sizing Pattern** - Uniform scaling for UI elements within viewfinder area
 
 ## Tech Stack
 
@@ -100,10 +104,35 @@ npm run start:tunnel
 ```
 app/
 ├── components/          # Reusable UI components
+│   └── TemplateDrawer/  # Template system UI components
+│       ├── TemplateDrawer.tsx      # Main drawer container
+│       ├── TemplateCarousel.tsx    # Horizontal scrollable templates
+│       ├── TemplatePreviewCard.tsx # Individual template preview
+│       └── TemplateOverlay.tsx     # Live overlay renderer
+├── templates/           # Template system architecture
+│   ├── core/            # Core template components
+│   │   ├── components/  # Template visual components
+│   │   │   └── RuleOfThirds.tsx # Rule of Thirds grid overlay
+│   │   ├── types.ts     # Core template type definitions
+│   │   └── index.ts     # Core template exports
+│   ├── manager/         # Template state management
+│   │   ├── TemplateManager.ts    # Template service class
+│   │   └── TemplateStorage.ts    # Storage service
+│   ├── hooks/           # Template system hooks
+│   │   └── useTemplates.ts       # Main template hook
+│   └── types/           # Shared template types
+│       └── index.ts     # Template type definitions
+├── hooks/               # Custom React hooks
+│   ├── useCameraViewfinder.ts    # Camera viewfinder calculations
+│   ├── useCameraAnimations.ts    # Camera animation controls
+│   ├── useCameraControls.ts      # Camera control state
+│   ├── useCameraGestures.ts      # Camera gesture handling
+│   ├── useDeviceOrientation.ts   # Device orientation tracking
+│   └── useIconRotation.ts        # Icon rotation animations
 ├── navigators/          # Navigation configuration
 ├── screens/            # App screens
 │   ├── HomeScreen.tsx  # Welcome/home screen
-│   ├── CameraScreen.tsx # Camera functionality with exposure controls
+│   ├── CameraScreen.tsx # Camera functionality with template system
 │   ├── GalleryScreen.tsx # Photo gallery with media library integration
 │   ├── PreviewScreen.tsx # Photo preview with EXIF rotation and smart caching
 │   ├── RetouchScreen.tsx # Photo editing placeholder
@@ -142,6 +171,12 @@ app/
 - [x] Blur background effects for camera control buttons
 - [x] EXIF metadata preservation and orientation correction
 - [x] BlurButton reusable component for consistent UI effects
+- [x] **Template System Foundation** - Core template architecture with Rule of Thirds
+- [x] **Camera Viewfinder Hook** - Precise viewfinder area calculations (82% screen height)
+- [x] **Template Drawer UI** - Slide-in template selection with live previews
+- [x] **Compressed Sizing Pattern** - Uniform scaling for UI elements within viewfinder
+- [x] **Template State Management** - TemplateManager service with storage integration
+- [x] **Live Template Overlays** - Real-time template rendering over camera view
 
 ### 🚧 In Progress
 - [ ] Photo editing features in RetouchScreen
@@ -212,6 +247,100 @@ ThemeProvider (Custom)
 - `app/theme/spacing.ts` & `app/theme/spacingDark.ts` - Spacing system
 - `app/theme/typography.ts` - Typography definitions
 
+## Template System Architecture
+
+### Core Components
+- **TemplateDrawer** - Main slide-in drawer for template selection
+- **TemplateCarousel** - Horizontal scrollable template previews
+- **TemplatePreviewCard** - Individual template preview with live rendering
+- **TemplateOverlay** - Live template overlay on camera view
+
+### Custom Hooks
+
+#### `useCameraViewfinder()`
+**Location**: `app/hooks/useCameraViewfinder.ts`  
+**Purpose**: Calculates precise camera viewfinder dimensions for perfect template alignment
+
+```typescript
+const viewfinder = useCameraViewfinder()
+// Returns: { width, height, x, y, aspectRatio, blackBars }
+```
+
+**Key Features**:
+- **Empirically determined**: 82% of screen height for viewfinder area
+- **Perfect alignment**: Accounts for camera's `resizeMode="contain"` behavior
+- **Comprehensive data**: Includes black bar calculations and aspect ratios
+- **Performance optimized**: Memoized calculations
+
+**Documentation**: See `app/hooks/useCameraViewfinder.md` for detailed usage patterns
+
+#### `useTemplates()`
+**Location**: `app/templates/hooks/useTemplates.ts`  
+**Purpose**: Manages template state and provides template selection functionality
+
+```typescript
+const { templates, selectedTemplateId, setCurrentTemplate } = useTemplates()
+```
+
+**Key Features**:
+- **Template management**: Add, remove, activate templates
+- **Category switching**: Core vs Pro template categories
+- **State persistence**: Integrates with TemplateStorage service
+- **Real-time updates**: Reactive template state management
+
+### Sizing Patterns
+
+#### Compressed Sizing Pattern
+For UI elements that need to fit within the viewfinder area with padding:
+
+```typescript
+// ✅ BEST PRACTICE: Uniform compression with transform scale
+<View style={{
+  width: viewfinder.width,        // Full viewfinder width
+  height: viewfinder.height,      // Full viewfinder height
+  transform: [{ scale: 0.95 }],   // 5% uniform compression
+  // ... other styles
+}}>
+  {/* Content scales proportionally */}
+</View>
+```
+
+**Benefits**:
+- **Uniform compression** - maintains aspect ratio perfectly
+- **No compounding effects** - single transformation vs width/height multiplication
+- **Proportional scaling** - all internal elements scale together
+- **Clean calculations** - easy to adjust compression percentage
+
+### Template Development
+
+#### Creating New Templates
+1. **Add to core types**: Define in `app/templates/core/types.ts`
+2. **Create component**: Implement in `app/templates/core/components/`
+3. **Register in manager**: Add to `TemplateManager.ts`
+4. **Use viewfinder hook**: For accurate sizing and positioning
+
+#### Template Structure
+```typescript
+// Template component example
+export const MyTemplate: React.FC<CoreTemplateProps> = React.memo(({
+  isActive,
+  opacity,
+  color,
+  size,
+  screenDimensions
+}) => {
+  if (!isActive) return null
+  
+  const { width, height } = screenDimensions
+  
+  return (
+    <View style={{ position: 'absolute', width, height }}>
+      {/* Template content */}
+    </View>
+  )
+})
+```
+
 ### Component Overrides
 **Important**: Gluestack UI overrides some React Native components:
 - `ActivityIndicator` → `@gluestack-ui/spinner` (burst-style spinner)
@@ -277,10 +406,17 @@ npm run test:watch
 
 ## Resources
 
+### External Documentation
 - [Ignite CLI Documentation](https://github.com/infinitered/ignite/blob/master/docs/README.md)
 - [Gluestack UI Documentation](https://ui.gluestack.io/)
 - [Vision Camera Documentation](https://react-native-vision-camera.com/)
 - [React Navigation Documentation](https://reactnavigation.org/)
+
+### Internal Documentation
+- [Camera Viewfinder Hook Guide](./app/hooks/useCameraViewfinder.md) - Detailed usage patterns and best practices
+- [Template System Implementation](./TEMPLATE_SYSTEM_IMPLEMENTATION.md) - Complete template system architecture
+- [Architecture Overview](./ARCHITECTURE.md) - Project architecture and dependency management
+- [Refactoring Summary](./REFACTORING_SUMMARY.md) - Recent refactoring changes and improvements
 
 ## License
 
