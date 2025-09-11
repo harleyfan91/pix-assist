@@ -4,11 +4,12 @@
  * Generally speaking, it will contain an auth flow (registration, login, forgot password)
  * and a "main" flow which the user will use once logged in.
  */
-import { ComponentProps } from "react"
+import React, { ComponentProps } from "react"
 import { createNativeStackNavigator, NativeStackScreenProps } from "@react-navigation/native-stack"
 import { NavigationContainer } from "@react-navigation/native"
 
 import Config from "@/config"
+import { TopNavigation } from "@/components/TopNavigation"
 import { CameraScreen } from "@/screens/CameraScreen"
 import { ErrorBoundary } from "@/screens/ErrorScreen/ErrorBoundary"
 import { GalleryScreen } from "@/screens/GalleryScreen"
@@ -60,13 +61,17 @@ const Stack = createNativeStackNavigator<AppStackParamList>()
 
 const AppStack = () => {
   return (
-    <Stack.Navigator
-      initialRouteName="Camera"
-      screenOptions={{
-        headerShown: false,
-        animation: "slide_from_bottom", // Nice modal-like transitions for non-camera screens
-      }}
-    >
+    <>
+      {/* Global Top Navigation - Fixed at top, appears on all screens */}
+      <TopNavigation />
+      
+      <Stack.Navigator
+        initialRouteName="Camera"
+        screenOptions={{
+          headerShown: false,
+          animation: "slide_from_bottom", // Nice modal-like transitions for non-camera screens
+        }}
+      >
       {/* Camera is the main/initial screen */}
       <Stack.Screen
         name="Camera"
@@ -131,6 +136,7 @@ const AppStack = () => {
         }}
       />
     </Stack.Navigator>
+    </>
   )
 }
 

@@ -24,7 +24,6 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({ onNavigationStateC
   const insets = useSafeAreaInsets()
   const [isOpen, setIsOpen] = useState(false)
 
-
   // Single source of truth - just the height
   const height = useSharedValue(80)
 
@@ -88,13 +87,15 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({ onNavigationStateC
       {/* Drawer */}
       <GestureDetector gesture={panGesture}>
         <Reanimated.View style={[$drawer, { paddingTop: insets.top + 4 }, animatedStyle]}>
-          {/* Blur background layer */}
-          <BlurView
-            style={$blurBackground}
-            blurType="extraDark"
-            blurAmount={10}
-            reducedTransparencyFallbackColor="rgba(0, 0, 0, 0.95)"
-          />
+          {/* Blur background layer - only visible when expanded */}
+          {isOpen && (
+            <BlurView
+              style={$blurBackground}
+              blurType="extraDark"
+              blurAmount={15}
+              reducedTransparencyFallbackColor="rgba(0, 0, 0, 0.95)"
+            />
+          )}
           
           {/* Icons */}
           <Reanimated.View style={[iconsOpacity]}>
@@ -147,7 +148,7 @@ const $overlay: ViewStyle = {
 const $drawer: ViewStyle = {
   position: "absolute",
   top: 0, left: 0, right: 0,
-  backgroundColor: "rgba(0, 0, 0, 0.95)",
+  backgroundColor: "transparent",
   // REVERSIBLE ANIMATION: Rounded corners removed for straight edge alignment
   // borderBottomLeftRadius: 20,
   // borderBottomRightRadius: 20,
@@ -202,3 +203,5 @@ const $blurBackground: ViewStyle = {
   // borderBottomLeftRadius: 20,
   // borderBottomRightRadius: 20,
 }
+
+

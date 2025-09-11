@@ -61,6 +61,10 @@ interface BaseScreenProps {
    * Pass any additional props directly to the KeyboardAvoidingView component.
    */
   KeyboardAvoidingViewProps?: KeyboardAvoidingViewProps
+  /**
+   * Special mode for camera screens that bypasses normal content structure.
+   */
+  cameraMode?: boolean
 }
 
 interface FixedScreenProps extends BaseScreenProps {
@@ -250,6 +254,7 @@ export function Screen(props: ScreenProps) {
     safeAreaEdges,
     SystemBarsProps,
     systemBarStyle,
+    cameraMode = false,
   } = props
 
   const $containerInsets = useSafeAreaInsetsStyle(safeAreaEdges)
@@ -263,22 +268,27 @@ export function Screen(props: ScreenProps) {
       ]}
     >
       <SystemBars
-        style={systemBarStyle || (themeContext === "dark" ? "light" : "dark")}
-        {...SystemBarsProps}
-      />
+  style={systemBarStyle || (themeContext === "dark" ? "light" : "dark")}
+  {...SystemBarsProps}
+/>
 
-      <KeyboardAvoidingView
-        behavior={isIos ? "padding" : "height"}
-        keyboardVerticalOffset={keyboardOffset}
-        {...KeyboardAvoidingViewProps}
-        style={[$styles.flex1, KeyboardAvoidingViewProps?.style]}
-      >
-        {isNonScrolling(props.preset) ? (
-          <ScreenWithoutScrolling {...props} />
-        ) : (
-          <ScreenWithScrolling {...props} />
-        )}
-      </KeyboardAvoidingView>
+{cameraMode ? (
+        /* Camera mode: Direct children without additional wrappers */
+        props.children
+      ) : (
+        <KeyboardAvoidingView
+          behavior={isIos ? "padding" : "height"}
+          keyboardVerticalOffset={keyboardOffset}
+          {...KeyboardAvoidingViewProps}
+          style={[$styles.flex1, KeyboardAvoidingViewProps?.style]}
+        >
+          {isNonScrolling(props.preset) ? (
+            <ScreenWithoutScrolling {...props} />
+          ) : (
+            <ScreenWithScrolling {...props} />
+          )}
+        </KeyboardAvoidingView>
+      )}
     </View>
   )
 }

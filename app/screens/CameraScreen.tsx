@@ -36,7 +36,6 @@ const ReanimatedCamera = Reanimated.createAnimatedComponent(Camera)
 
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
-import { TopNavigation } from "@/components/TopNavigation"
 import { useNavigation } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { photoLibraryService } from "@/services/photoLibrary"
@@ -916,10 +915,7 @@ export const CameraScreen: FC = function CameraScreen() {
   }
 
   return (
-    <View style={$container}>
-      {/* Top Navigation - Fixed at top, independent of camera movement */}
-      <TopNavigation />
-      
+    <Screen preset="fixed" style={$container} cameraMode={true}>
       {/* Camera Content - Static positioning (animation disabled for testing) */}
       <GestureDetector gesture={cameraGestures}>
         <Reanimated.View style={$cameraContainer}>
@@ -1137,7 +1133,7 @@ export const CameraScreen: FC = function CameraScreen() {
           </View>
         </Reanimated.View>
       </GestureDetector>
-    </View>
+    </Screen>
   )
 }
 
