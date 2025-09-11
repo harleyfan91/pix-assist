@@ -30,6 +30,7 @@ import { Camera, useCameraDevice, useCameraPermission } from "react-native-visio
 import * as Haptics from 'expo-haptics'
 import { writeAsync } from '@lodev09/react-native-exify'
 import { useIconRotation } from '@/hooks/useIconRotation'
+import { useCameraControls } from '@/hooks/useCameraControls'
 
 // Create Reanimated Camera component for animated exposure
 const ReanimatedCamera = Reanimated.createAnimatedComponent(Camera)
@@ -66,6 +67,53 @@ export const CameraScreen: FC = function CameraScreen() {
   const device = useCameraDevice("back", {
     physicalDevices: ["ultra-wide-angle-camera", "wide-angle-camera", "telephoto-camera"],
   })
+
+  // Initialize zoom with device's neutral zoom (as per Vision Camera docs)
+  const zoom = useSharedValue(device?.neutralZoom ?? 1)
+  const zoomOffset = useSharedValue(0)
+
+  // Popup state management with active interaction priority
+  const [popupState, setPopupState] = useState({
+    type: null as 'zoom' | 'flash' | null,
+    value: '',
+    visible: false,
+    activeInteraction: null as 'zoom' | 'flash' | null,
+    flashTimeout: null as NodeJS.Timeout | null
+  })
+  
+  // Shared value for popup visibility animation
+  const popupVisible = useSharedValue(0)
+
+  // Use camera controls hook
+  const {
+    flashMode,
+    flashModeRef,
+    handleFlashToggle,
+    flashAnimation,
+    captureFlash,
+    setCaptureFlash,
+    isCameraModeExpanded,
+    cameraModeExpansion,
+    toggleCameraModeExpansion,
+    showExposureControls,
+    isExposureControlsVisible,
+    exposureControlsAnimation,
+    exposureSlider,
+    sliderValue,
+    toggleExposureControls,
+    handleExposureSliderChange,
+    isCapturing,
+    setIsCapturing,
+    shutterPressed,
+    setShutterPressed,
+    triggerHaptic,
+    closeAllControls,
+  } = useCameraControls({
+    device,
+    zoom,
+    popupVisible,
+    setPopupState
+  })
   
   // Debug device zoom info
   useEffect(() => {
@@ -82,21 +130,6 @@ export const CameraScreen: FC = function CameraScreen() {
   }, [device])
   
   
-  // Safe haptic feedback function
-  const triggerHaptic = useCallback(async (type: 'impact' | 'selection' = 'impact', style: 'light' | 'medium' | 'heavy' = 'medium') => {
-    try {
-      if (type === 'impact') {
-        const impactStyle = style === 'light' ? Haptics.ImpactFeedbackStyle.Light :
-                           style === 'heavy' ? Haptics.ImpactFeedbackStyle.Heavy :
-                           Haptics.ImpactFeedbackStyle.Medium
-        await Haptics.impactAsync(impactStyle)
-      } else if (type === 'selection') {
-        await Haptics.selectionAsync()
-      }
-    } catch (error) {
-      console.log('Haptic not available:', error)
-    }
-  }, [])
 
   const _cameraRef = useRef<Camera>(null)
   
@@ -104,10 +137,6 @@ export const CameraScreen: FC = function CameraScreen() {
   const setCameraRef = useCallback((camera: Camera | null) => {
     _cameraRef.current = camera
   }, [])
-
-  // Initialize zoom with device's neutral zoom (as per Vision Camera docs)
-  const zoom = useSharedValue(device?.neutralZoom ?? 1)
-  const zoomOffset = useSharedValue(0)
 
   // Camera error recovery function
   const recoverFromCameraError = useCallback(() => {
@@ -126,58 +155,6 @@ export const CameraScreen: FC = function CameraScreen() {
     }, 2000)
   }, [device, zoom])
 
-  // Flash button functionality with popup integration
-  const handleFlashToggle = useCallback(() => {
-    // Clear any existing flash timeout
-    if (popupState.flashTimeout) {
-      clearTimeout(popupState.flashTimeout)
-    }
-    
-    setFlashMode(prevMode => {
-      const newMode = (() => {
-        switch (prevMode) {
-          case 'auto':
-            return 'on'
-          case 'on':
-            return 'off'
-          case 'off':
-            return 'auto'
-          default:
-            return 'auto'
-        }
-      })()
-      
-      console.log('Flash mode changed:', prevMode, '→', newMode)
-      // Update ref immediately to avoid race conditions
-      flashModeRef.current = newMode
-      
-      // Flash becomes the active interaction
-      const flashText = newMode === 'auto' ? 'Auto' : newMode === 'on' ? 'On' : 'Off'
-      const flashTimeout = setTimeout(() => {
-        setPopupState(current => ({
-          ...current,
-          visible: false,
-          type: null,
-          activeInteraction: null,
-          flashTimeout: null
-        }))
-        popupVisible.value = withSpring(0, { damping: 20, stiffness: 300 })
-      }, 2000)
-      
-      setPopupState(prev => ({
-        ...prev,
-        type: 'flash',
-        value: flashText,
-        visible: true,
-        activeInteraction: 'flash',
-        flashTimeout
-      }))
-      
-      popupVisible.value = withSpring(1, { damping: 15, stiffness: 200 })
-      
-      return newMode
-    })
-  }, [])
 
   // Helper functions for popup management
   const onZoomStart = useCallback(() => {
@@ -266,42 +243,12 @@ export const CameraScreen: FC = function CameraScreen() {
   const focusRingOpacity = useSharedValue(0)
   const focusRingPosition = useSharedValue({ x: 0, y: 0 })
   
-  // Exposure state
-  const exposureSlider = useSharedValue(0) // -1 to 1 range
-  const [showExposureControls, setShowExposureControls] = useState(false)
-  const [isExposureControlsVisible, setIsExposureControlsVisible] = useState(false) // Controls actual rendering
-  const [sliderValue, setSliderValue] = useState(0) // -1 to 1 range for Gluestack Slider
-  const exposureControlsAnimation = useSharedValue(0) // 0 = closed, 1 = open
 
   // REVERSIBLE ANIMATION: Navigation state for camera animation (COMMENTED OUT FOR TESTING)
   // const [isNavigationOpen, setIsNavigationOpen] = useState(false)
   // const [navigationProgress, setNavigationProgress] = useState(0) // 0-1 progress
   // const cameraOffset = useSharedValue(0) // Camera push-up offset
 
-  // Camera mode button expansion state and animation
-  const [isCameraModeExpanded, setIsCameraModeExpanded] = useState(false)
-  const cameraModeExpansion = useSharedValue(0) // 0 = collapsed, 1 = expanded
-
-  // Photo capture state
-  const [isCapturing, setIsCapturing] = useState(false)
-  const [captureFlash, setCaptureFlash] = useState(false)
-  const flashAnimation = useSharedValue(0) // 0 = no flash, 1 = flash
-
-  // Flash mode state: 'auto' | 'on' | 'off'
-  const [flashMode, setFlashMode] = useState<'auto' | 'on' | 'off'>('auto')
-  const flashModeRef = useRef<'auto' | 'on' | 'off'>('auto')
-  
-  // Popup state management with active interaction priority
-  const [popupState, setPopupState] = useState({
-    type: null as 'zoom' | 'flash' | null,
-    value: '',
-    visible: false,
-    activeInteraction: null as 'zoom' | 'flash' | null,
-    flashTimeout: null as NodeJS.Timeout | null
-  })
-  
-  // Shared value for popup visibility animation
-  const popupVisible = useSharedValue(0)
   
 
   // Device orientation for icon rotation (using custom hook)
@@ -347,15 +294,6 @@ export const CameraScreen: FC = function CameraScreen() {
   })
 
 
-  // Debug flash mode changes and update ref
-  useEffect(() => {
-    console.log('Flash mode updated to:', flashMode)
-    flashModeRef.current = flashMode // Keep ref in sync
-    console.log('Device flash capabilities:', {
-      hasFlash: device?.hasFlash,
-      hasTorch: device?.hasTorch
-    })
-  }, [flashMode, device])
 
   // Preview state
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null)
@@ -375,37 +313,6 @@ export const CameraScreen: FC = function CameraScreen() {
   //   })
   // }, [navigationProgress, cameraOffset])
 
-  // Animate camera mode button expansion
-  useEffect(() => {
-    console.log("Animation effect triggered, isCameraModeExpanded:", isCameraModeExpanded)
-    cameraModeExpansion.value = withSpring(isCameraModeExpanded ? 1 : 0, {
-      damping: 20,
-      stiffness: 300,
-    })
-  }, [isCameraModeExpanded, cameraModeExpansion])
-
-  // Handle exposure controls visibility and animation
-  useEffect(() => {
-    if (showExposureControls) {
-      // Opening: show component and animate in
-      setIsExposureControlsVisible(true)
-      exposureControlsAnimation.value = withSpring(1, { 
-        damping: 20, 
-        stiffness: 300 
-      })
-    } else {
-      // Closing: animate out first, then hide component
-      exposureControlsAnimation.value = withSpring(0, { 
-        damping: 20, 
-        stiffness: 300 
-      }, (finished) => {
-        if (finished) {
-          // Animation completed, now hide the component
-          runOnJS(setIsExposureControlsVisible)(false)
-        }
-      })
-    }
-  }, [showExposureControls, exposureControlsAnimation])
 
   // Handle preview visibility and animation
   useEffect(() => {
@@ -572,34 +479,6 @@ export const CameraScreen: FC = function CameraScreen() {
     navigation.navigate("Gallery")
   }, [navigation])
 
-  const toggleExposureControls = useCallback(() => {
-    // Only allow exposure controls to open if mode menu is expanded
-    if (!isCameraModeExpanded && !showExposureControls) {
-      console.log("Cannot open exposure controls - mode menu must be expanded first")
-      return
-    }
-    
-    setShowExposureControls(prev => !prev)
-  }, [isCameraModeExpanded, showExposureControls])
-
-  const toggleCameraModeExpansion = useCallback(() => {
-    console.log("Toggling camera mode expansion")
-    setIsCameraModeExpanded(prev => {
-      const newState = !prev
-      console.log("Previous state:", prev, "New state:", newState)
-      
-      // If closing the mode menu, also close the exposure controls
-      if (!newState && showExposureControls) {
-        setShowExposureControls(false)
-        console.log("Closing exposure controls because mode menu is closing")
-      }
-      
-      return newState
-    })
-  }, [showExposureControls])
-
-  // Button press states for visual feedback
-  const [shutterPressed, setShutterPressed] = useState(false)
 
   // Create high-priority button gestures that will compete with camera gestures
   const shutterButtonGesture = Gesture.Tap()
@@ -1048,22 +927,7 @@ export const CameraScreen: FC = function CameraScreen() {
                     </Reanimated.View>
                     <Slider
                       value={sliderValue}
-                      onChange={(value: any) => {
-                        console.log('Slider onChange:', value, typeof value)
-                        const numValue = typeof value === 'number' ? value : parseFloat(value)
-                        
-                        // Validate the value to prevent NaN
-                        if (isNaN(numValue) || !isFinite(numValue)) {
-                          console.log('Invalid slider value, skipping update')
-                          return
-                        }
-                        
-                        // Clamp the value to valid range
-                        const clampedValue = Math.max(-1, Math.min(1, numValue))
-                        
-                        setSliderValue(clampedValue)
-                        exposureSlider.value = clampedValue
-                      }}
+                      onChange={handleExposureSliderChange}
                       minValue={-1}
                       maxValue={1}
                       step={0.01}
@@ -1088,11 +952,7 @@ export const CameraScreen: FC = function CameraScreen() {
           {(isCameraModeExpanded || showExposureControls) && !showPreview && (
             <TouchableOpacity 
               style={$unifiedOverlay}
-              onPress={() => {
-                // Close both menus when clicking away
-                if (isCameraModeExpanded) setIsCameraModeExpanded(false)
-                if (showExposureControls) setShowExposureControls(false)
-              }}
+              onPress={closeAllControls}
               activeOpacity={1}
             />
           )}
