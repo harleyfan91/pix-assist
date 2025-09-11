@@ -81,16 +81,6 @@ export const CameraScreen: FC = function CameraScreen() {
     }
   }, [device])
   
-  // Simple zoom debug function
-  const logZoomInfo = useCallback((message: string, currentZoom: number) => {
-    if (device) {
-      console.log(`🔍 ${message}:`, {
-        current: currentZoom.toFixed(2),
-        neutral: device.neutralZoom.toFixed(2),
-        distance: Math.abs(currentZoom - device.neutralZoom).toFixed(2)
-      })
-    }
-  }, [device])
   
   // Safe haptic feedback function
   const triggerHaptic = useCallback(async (type: 'impact' | 'selection' = 'impact', style: 'light' | 'medium' | 'heavy' = 'medium') => {
@@ -118,7 +108,6 @@ export const CameraScreen: FC = function CameraScreen() {
   // Initialize zoom with device's neutral zoom (as per Vision Camera docs)
   const zoom = useSharedValue(device?.neutralZoom ?? 1)
   const zoomOffset = useSharedValue(0)
-  const [currentZoom, setCurrentZoom] = useState(device?.neutralZoom ?? 1)
 
   // Camera error recovery function
   const recoverFromCameraError = useCallback(() => {
@@ -137,8 +126,13 @@ export const CameraScreen: FC = function CameraScreen() {
     }, 2000)
   }, [device, zoom])
 
-  // Flash button functionality
+  // Flash button functionality with popup integration
   const handleFlashToggle = useCallback(() => {
+    // Clear any existing flash timeout
+    if (popupState.flashTimeout) {
+      clearTimeout(popupState.flashTimeout)
+    }
+    
     setFlashMode(prevMode => {
       const newMode = (() => {
         switch (prevMode) {
@@ -157,13 +151,112 @@ export const CameraScreen: FC = function CameraScreen() {
       // Update ref immediately to avoid race conditions
       flashModeRef.current = newMode
       
-      // Show flash mode in popup
+      // Flash becomes the active interaction
       const flashText = newMode === 'auto' ? 'Auto' : newMode === 'on' ? 'On' : 'Off'
-      setPopupTextOverride(flashText)
-      setTimeout(() => setPopupTextOverride(null), 1500)
+      const flashTimeout = setTimeout(() => {
+        setPopupState(current => ({
+          ...current,
+          visible: false,
+          type: null,
+          activeInteraction: null,
+          flashTimeout: null
+        }))
+        popupVisible.value = withSpring(0, { damping: 20, stiffness: 300 })
+      }, 2000)
+      
+      setPopupState(prev => ({
+        ...prev,
+        type: 'flash',
+        value: flashText,
+        visible: true,
+        activeInteraction: 'flash',
+        flashTimeout
+      }))
+      
+      popupVisible.value = withSpring(1, { damping: 15, stiffness: 200 })
       
       return newMode
     })
+  }, [])
+
+  // Helper functions for popup management
+  const onZoomStart = useCallback(() => {
+    // Clear flash timeout if zoom becomes active
+    setPopupState(prev => {
+      if (prev.flashTimeout) {
+        clearTimeout(prev.flashTimeout)
+      }
+      
+      // Get current zoom level for initial display
+      const currentZoom = zoom.value
+      let logicalZoom: number
+      
+      if (device) {
+        if (currentZoom <= device.minZoom) {
+          logicalZoom = 0.5 // Ultra-wide
+        } else if (currentZoom >= device.neutralZoom) {
+          const scale = (currentZoom - device.neutralZoom) / (16 - device.neutralZoom)
+          logicalZoom = 1 + scale * 15 // 1x to 16x
+        } else {
+          const scale = (currentZoom - device.minZoom) / (device.neutralZoom - device.minZoom)
+          logicalZoom = 0.5 + scale * 0.5 // 0.5x to 1x
+        }
+      } else {
+        logicalZoom = currentZoom
+      }
+      
+      // Zoom becomes the active interaction
+      const newState = {
+        ...prev,
+        type: 'zoom' as const,
+        value: `${logicalZoom.toFixed(1)}x`,
+        visible: true,
+        activeInteraction: 'zoom' as const,
+        flashTimeout: null
+      }
+      
+      console.log('Zoom start - popup state:', newState)
+      popupVisible.value = withSpring(1, { damping: 15, stiffness: 200 })
+      console.log('Setting popupVisible to 1')
+      return newState
+    })
+  }, [device, zoom])
+
+  const handleZoomUpdate = useCallback((zoomLevel: number) => {
+    // Only update if zoom is the active interaction OR no interaction is active
+    setPopupState(prev => {
+      if (prev.activeInteraction === 'zoom' || prev.activeInteraction === null) {
+        const newState = {
+          ...prev,
+          type: 'zoom' as const,
+          value: `${zoomLevel.toFixed(1)}x`,
+          visible: true,
+          activeInteraction: 'zoom' as const
+        }
+        console.log('Zoom update - popup state:', newState)
+        return newState
+      }
+      console.log('Zoom update - ignoring, activeInteraction:', prev.activeInteraction)
+      return prev
+    })
+  }, [])
+
+  const onZoomEnd = useCallback(() => {
+    // Clear zoom after a longer delay, but only if zoom is still active
+    setTimeout(() => {
+      setPopupState(current => {
+        if (current.activeInteraction === 'zoom') {
+          popupVisible.value = withSpring(0, { damping: 15, stiffness: 200 })
+          return {
+            ...current,
+            visible: false,
+            type: null,
+            activeInteraction: null
+          }
+        }
+        return current
+      })
+    }, 2000) // Longer delay before hiding zoom (2 seconds)
   }, [])
 
   // Exposure state
@@ -198,8 +291,18 @@ export const CameraScreen: FC = function CameraScreen() {
   const [flashMode, setFlashMode] = useState<'auto' | 'on' | 'off'>('auto')
   const flashModeRef = useRef<'auto' | 'on' | 'off'>('auto')
   
-  // Temporary popup text override (for flash feedback)
-  const [popupTextOverride, setPopupTextOverride] = useState<string | null>(null)
+  // Popup state management with active interaction priority
+  const [popupState, setPopupState] = useState({
+    type: null as 'zoom' | 'flash' | null,
+    value: '',
+    visible: false,
+    activeInteraction: null as 'zoom' | 'flash' | null,
+    flashTimeout: null as NodeJS.Timeout | null
+  })
+  
+  // Shared value for popup visibility animation
+  const popupVisible = useSharedValue(0)
+  
 
   // Device orientation for icon rotation (using custom hook)
   const { animatedIconStyle: galleryIconStyle } = useIconRotation({
@@ -229,6 +332,13 @@ export const CameraScreen: FC = function CameraScreen() {
     enabled: true
   })
 
+  // Popup text rotation for device orientation
+  const { animatedIconStyle: popupTextStyle } = useIconRotation({
+    damping: 20,
+    stiffness: 300,
+    enabled: true
+  })
+
   // Exposure label rotation (+2 and -2 text)
   const { animatedIconStyle: exposureLabelStyle } = useIconRotation({
     damping: 20,
@@ -236,12 +346,6 @@ export const CameraScreen: FC = function CameraScreen() {
     enabled: true
   })
 
-  // Zoom/flash popup text rotation
-  const { animatedIconStyle: popupTextStyle } = useIconRotation({
-    damping: 20,
-    stiffness: 300,
-    enabled: true
-  })
 
   // Debug flash mode changes and update ref
   useEffect(() => {
@@ -338,40 +442,9 @@ export const CameraScreen: FC = function CameraScreen() {
         hasUltraWide: device.physicalDevices?.includes("ultra-wide-angle-camera"),
       })
       zoom.value = device.neutralZoom ?? 1
-      runOnJS(setCurrentZoom)(device.neutralZoom ?? 1)
     }
   }, [device, zoom])
 
-  // Update zoom text periodically (following best practices)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      // Convert actual zoom to logical zoom scale for display
-      const actualZoom = zoom.value
-      let logicalZoom: number
-
-      if (device) {
-        // Map actual zoom to logical zoom scale
-        // neutralZoom (2.0) = 1x, minZoom (1.0) = 0.5x, max = 16x
-        if (actualZoom <= device.minZoom) {
-          logicalZoom = 0.5 // Ultra-wide
-        } else if (actualZoom >= device.neutralZoom) {
-          // Scale from neutralZoom to max: 2.0 -> 16.0 maps to 1.0 -> 16.0
-          const scale = (actualZoom - device.neutralZoom) / (16 - device.neutralZoom)
-          logicalZoom = 1 + scale * 15 // 1x to 16x
-        } else {
-          // Scale from minZoom to neutralZoom: 1.0 -> 2.0 maps to 0.5 -> 1.0
-          const scale = (actualZoom - device.minZoom) / (device.neutralZoom - device.minZoom)
-          logicalZoom = 0.5 + scale * 0.5 // 0.5x to 1x
-        }
-      } else {
-        logicalZoom = actualZoom
-      }
-
-      runOnJS(setCurrentZoom)(logicalZoom)
-    }, 100) // Update every 100ms for smooth display
-
-    return () => clearInterval(interval)
-  }, [zoom, device])
 
 
   
@@ -608,6 +681,7 @@ export const CameraScreen: FC = function CameraScreen() {
     .onBegin(() => {
       'worklet'
       zoomOffset.value = zoom.value
+      runOnJS(onZoomStart)()
     })
     .onUpdate((event) => {
       'worklet'
@@ -626,6 +700,22 @@ export const CameraScreen: FC = function CameraScreen() {
         // Only update zoom if the change is significant to prevent excessive updates
         if (Math.abs(clampedZoom - zoom.value) > 0.01) {
           zoom.value = clampedZoom
+          
+          // Convert actual zoom to logical zoom scale for display
+          let logicalZoom: number
+          if (clampedZoom <= device.minZoom) {
+            logicalZoom = 0.5 // Ultra-wide
+          } else if (clampedZoom >= device.neutralZoom) {
+            // Scale from neutralZoom to max: 2.0 -> 16.0 maps to 1.0 -> 16.0
+            const scale = (clampedZoom - device.neutralZoom) / (16 - device.neutralZoom)
+            logicalZoom = 1 + scale * 15 // 1x to 16x
+          } else {
+            // Scale from minZoom to neutralZoom: 1.0 -> 2.0 maps to 0.5 -> 1.0
+            const scale = (clampedZoom - device.minZoom) / (device.neutralZoom - device.minZoom)
+            logicalZoom = 0.5 + scale * 0.5 // 0.5x to 1x
+          }
+          
+          runOnJS(handleZoomUpdate)(logicalZoom)
         }
       } catch (error) {
         console.log('Zoom update error:', error)
@@ -638,24 +728,23 @@ export const CameraScreen: FC = function CameraScreen() {
       
       try {
         const neutralZoom = device.neutralZoom
-        const currentZoom = zoom.value
+        const currentZoomValue = zoom.value
         
         // Define snap threshold - if within 0.5x of neutral, snap to neutral
         const snapThreshold = 0.5
-        const distanceFromNeutral = Math.abs(currentZoom - neutralZoom)
+        const distanceFromNeutral = Math.abs(currentZoomValue - neutralZoom)
         
         if (distanceFromNeutral <= snapThreshold) {
           // Snap to neutral zoom with smooth spring animation
-          runOnJS(logZoomInfo)('Snapping to neutral', currentZoom)
           runOnJS(triggerHaptic)('impact', 'light') // Light haptic feedback for zoom snap
           zoom.value = withSpring(neutralZoom, {
             damping: 18,
             stiffness: 250,
             mass: 0.7,
           })
-        } else {
-          runOnJS(logZoomInfo)('Staying at current zoom', currentZoom)
         }
+        
+        runOnJS(onZoomEnd)()
       } catch (error) {
         console.log('Zoom end error:', error)
         // Trigger camera recovery on zoom error
@@ -707,14 +796,6 @@ export const CameraScreen: FC = function CameraScreen() {
     return mappedValue
   }, [exposureSlider, device])
 
-  // Create animated style for zoom indicator visibility
-  const animatedZoomStyle = useAnimatedStyle(() => {
-    const neutralZoom = device?.neutralZoom ?? 1
-    const isZoomed = Math.abs(zoom.value - neutralZoom) > 0.1
-    return {
-      opacity: (isZoomed || popupTextOverride) ? 1 : 0,
-    }
-  })
 
 
   // Create animated props for camera exposure
@@ -786,6 +867,22 @@ export const CameraScreen: FC = function CameraScreen() {
             cameraModeExpansion.value,
             [0, 1],
             [1, -1] // Flip vertically when expanded (1 = normal, -1 = flipped)
+          )
+        }
+      ],
+    }
+  })
+
+  // Create animated style for popup visibility and positioning
+  const animatedPopupStyle = useAnimatedStyle(() => {
+    return {
+      opacity: popupVisible.value,
+      transform: [
+        {
+          scale: interpolate(
+            popupVisible.value,
+            [0, 1],
+            [0.7, 1]
           )
         }
       ],
@@ -905,14 +1002,33 @@ export const CameraScreen: FC = function CameraScreen() {
               </TouchableOpacity>
             )}
 
-            {/* Zoom Indicator - Only show when zoomed */}
-            <Reanimated.View style={[$zoomIndicator, animatedZoomStyle, popupTextStyle]}>
-              <Text style={$zoomText}>{popupTextOverride || `${currentZoom.toFixed(1)}x`}</Text>
-            </Reanimated.View>
 
 
             {/* Focus Ring - Only show when focusing */}
             {showFocusRing && <Reanimated.View style={[$focusRing, animatedFocusRingStyle]} />}
+
+            {/* Popup Indicator - Shows zoom level or flash status */}
+            {popupState.visible && (
+              <Reanimated.View style={[$popupIndicator, animatedPopupStyle]}>
+                <View style={$popupBlurBackground}>
+                  <BlurView
+                    style={$popupBlurView}
+                    blurType="light"
+                    blurAmount={7}
+                    reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
+                  />
+                  <View style={$popupTextContent}>
+                    <View style={$popupTextContainer}>
+                      <Reanimated.View style={popupTextStyle}>
+                        <Text style={$popupText}>
+                          {popupState.value || 'No Value'}
+                        </Text>
+                      </Reanimated.View>
+                    </View>
+                  </View>
+                </View>
+              </Reanimated.View>
+            )}
 
 
 
@@ -1382,33 +1498,6 @@ const $unifiedOverlay: ViewStyle = {
 
 
 
-const $zoomIndicator: ViewStyle = {
-  position: "absolute",
-  bottom: 200, // Position above the shutter button area
-  left: "50%",
-  marginLeft: -30, // Center horizontally (adjust based on content width)
-  backgroundColor: "rgba(255, 255, 255, 0.2)",
-  paddingHorizontal: 12,
-  paddingVertical: 6,
-  borderRadius: 16,
-}
-
-// Landscape-specific zoom indicator (moved to top-right)
-const $zoomIndicatorLandscape: ViewStyle = {
-  position: "absolute",
-  top: 60,
-  right: 20,
-  backgroundColor: "rgba(255, 255, 255, 0.2)",
-  paddingHorizontal: 12,
-  paddingVertical: 6,
-  borderRadius: 16,
-}
-
-const $zoomText: TextStyle = {
-  color: "#fff",
-  fontSize: 10,
-  fontWeight: "bold",
-}
 
 
 const $focusRing: ViewStyle = {
@@ -1419,6 +1508,52 @@ const $focusRing: ViewStyle = {
   borderColor: "#FFD700", // Gold color like iPhone
   borderRadius: 50,
   backgroundColor: "transparent",
+}
+
+// Popup Indicator Styles
+const $popupIndicator: ViewStyle = {
+  position: "absolute",
+  bottom: 180, // Position above the shutter button area
+  left: "50%",
+  marginLeft: -30, // Center horizontally (adjust based on content width)
+  zIndex: 10, // Above other elements
+}
+
+const $popupBlurBackground: ViewStyle = {
+  position: "relative",
+  paddingHorizontal: 12,
+  paddingVertical: 6,
+  borderRadius: 18,
+  minWidth: 60,
+  overflow: "hidden",
+}
+
+const $popupBlurView: ViewStyle = {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  borderRadius: 16,
+}
+
+const $popupTextContent: ViewStyle = {
+  flex: 1,
+  justifyContent: "center",
+  alignItems: "center",
+  zIndex: 1,
+}
+
+const $popupTextContainer: ViewStyle = {
+  alignItems: "center",
+  justifyContent: "center",
+}
+
+const $popupText: TextStyle = {
+  color: "#fff",
+  fontSize: 14,
+  fontWeight: "600",
+  textAlign: "center",
 }
 
 
