@@ -32,6 +32,7 @@ PixAssist is built as a React Native mobile application with a comprehensive, pu
 - **Expo Image Manipulator (13.1.7)** - Professional image processing and rotation
 - **Expo File System (18.1.11)** - File management and cleanup operations
 - **Expo Media Library (17.1.7)** - Photo gallery integration and management
+- **@lodev09/react-native-exify (0.2.7)** - EXIF metadata reading and writing
 - **React Native Image Editor (0.0.1)** - Basic image editing capabilities
 - **React Native Color Matrix Image Filters (7.0.2)** - Advanced image filters
 
@@ -59,6 +60,7 @@ PixAssist is built as a React Native mobile application with a comprehensive, pu
 - **Lucide React Native (0.542.0)** - Comprehensive icon library
 - **React Native SVG (15.11.2)** - Custom graphics and overlays
 - **Expo Vector Icons (14.0.0)** - Additional icon set for platform-specific icons
+- **@react-native-community/blur (4.4.1)** - Blur effects for UI components
 
 ### Development & Testing
 - **Jest with React Native Testing Library** - Unit testing framework
@@ -136,20 +138,27 @@ The architecture is optimized for:
 - **Added Expo Image Manipulator**: Professional image rotation and processing
 - **Added Expo File System**: Robust file management and cleanup
 - **Added Expo Media Library**: Native photo gallery integration
+- **Added @lodev09/react-native-exify**: EXIF metadata reading and writing
 - **Implemented Smart Caching**: Prevents unnecessary image reprocessing
 - **Added File Cleanup System**: Automatic memory management
+- **EXIF Metadata Preservation**: Complete metadata handling with orientation correction
 
 ### UI/UX Improvements (January 2025)
 - **Exposure Controls State Management**: Proper dependency on mode menu
 - **Fixed Loading Indicators**: Non-intrusive overlay positioning
 - **Enhanced Navigation**: Added RetouchScreen with proper routing
 - **Improved File Management**: Comprehensive cleanup and error handling
+- **Blur Background Effects**: Added @react-native-community/blur for modern UI effects
+- **BlurButton Component**: Reusable component for consistent blur effects across camera interface
 
 ### Styling System Notes
 - **Gluestack UI Overrides**: Some React Native components are overridden
 - **ActivityIndicator**: Uses `@gluestack-ui/spinner` (burst-style) instead of standard circle
 - **Theme Integration**: Custom theme provider with Gluestack UI compatibility
 - **Component Hierarchy**: Gluestack UI wraps entire app, affecting all components
+
+### Known Limitations
+- **EXIF Lens Information Display**: While photos preserve complete EXIF metadata including camera settings, GPS, and timestamps, lens information (e.g., "Wide Camera - 26mm f/1.6") may not display correctly in the iOS Photos app due to limitations in Expo's MediaLibrary. This is a known limitation and doesn't affect actual photo quality or metadata preservation.
 
 ---
 

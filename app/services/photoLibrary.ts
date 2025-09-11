@@ -1,5 +1,7 @@
 import * as MediaLibrary from 'expo-media-library'
 import { Alert, Platform } from 'react-native'
+import * as FileSystem from 'expo-file-system'
+import { exifService } from './exifService'
 
 export interface PhotoAsset {
   id: string
@@ -109,11 +111,12 @@ class PhotoLibraryServiceImpl implements PhotoLibraryService {
   }
 
   /**
-   * Save a photo to the device photo library
+   * Save a photo to the device photo library with EXIF metadata preservation
    * @param uri - URI of the photo to save
+   * @param originalUri - URI of the original photo (for metadata preservation)
    * @returns Promise<boolean> - true if saved successfully, false otherwise
    */
-  async savePhoto(uri: string): Promise<boolean> {
+  async savePhoto(uri: string, originalUri?: string): Promise<boolean> {
     try {
       // Ensure we have permissions
       const hasPermission = await this.requestPermissions()
@@ -121,11 +124,96 @@ class PhotoLibraryServiceImpl implements PhotoLibraryService {
         throw new Error('Photo library permission not granted')
       }
 
-      // Save photo to media library
-      await MediaLibrary.saveToLibraryAsync(uri)
+      let finalUri = uri
+
+      // Always preserve EXIF metadata from the original photo
+      if (originalUri && originalUri !== uri) {
+        console.log('Preserving EXIF metadata from original photo')
+        const metadataPreservedUri = await exifService.preserveMetadata(originalUri, uri)
+        if (metadataPreservedUri) {
+          finalUri = metadataPreservedUri
+          console.log('EXIF metadata preserved successfully')
+        } else {
+          console.log('Failed to preserve EXIF metadata, using processed photo')
+        }
+      } else {
+        // For the original photo, read and preserve all EXIF data
+        console.log('Preserving EXIF metadata for original photo')
+        const exifData = await exifService.readExifData(uri)
+        if (exifData) {
+          console.log('Writing complete EXIF data to photo before saving')
+          const exifPreservedUri = await exifService.writeExifData(uri, exifData)
+          if (exifPreservedUri) {
+            finalUri = exifPreservedUri
+            console.log('Complete EXIF metadata preserved successfully')
+          } else {
+            console.log('Failed to preserve EXIF metadata, using original photo')
+          }
+        } else {
+          console.log('No EXIF data found, using original photo')
+        }
+      }
+
+      // Verify EXIF data is present before saving
+      console.log('Verifying EXIF data before saving to library')
+      const verifyExif = await exifService.readExifData(finalUri)
+      if (verifyExif) {
+        console.log('EXIF verification - Key metadata before save:', {
+          Make: verifyExif.Make,
+          Model: verifyExif.Model,
+          LensMake: verifyExif.LensMake,
+          LensModel: verifyExif.LensModel,
+          FocalLength: verifyExif.FocalLength,
+          FNumber: verifyExif.FNumber,
+          Orientation: verifyExif.Orientation
+        })
+      } else {
+        console.log('WARNING: No EXIF data found before saving!')
+      }
+
+      // Create a permanent copy with EXIF data before saving to library
+      console.log('Creating permanent copy with EXIF data for library save')
+      const timestamp = Date.now()
+      const extension = finalUri.split('.').pop() || 'jpg'
+      const permanentUri = `${FileSystem.documentDirectory}photo_${timestamp}.${extension}`
+      
+      // Copy the file with EXIF data to a permanent location
+      await FileSystem.copyAsync({
+        from: finalUri,
+        to: permanentUri
+      })
+
+      console.log('Permanent copy created at:', permanentUri)
+
+      // Verify EXIF data is still present in the copy
+      const copyExif = await exifService.readExifData(permanentUri)
+      if (copyExif) {
+        console.log('EXIF verification - Key metadata in copy:', {
+          Make: copyExif.Make,
+          Model: copyExif.Model,
+          LensMake: copyExif.LensMake,
+          LensModel: copyExif.LensModel,
+          FocalLength: copyExif.FocalLength,
+          FNumber: copyExif.FNumber,
+          Orientation: copyExif.Orientation
+        })
+      } else {
+        console.log('WARNING: No EXIF data found in copy!')
+      }
+
+      // Save the permanent copy to media library
+      await MediaLibrary.saveToLibraryAsync(permanentUri)
+      
+      // Clean up the permanent copy after saving
+      try {
+        await FileSystem.deleteAsync(permanentUri)
+        console.log('Permanent copy cleaned up successfully')
+      } catch (cleanupError) {
+        console.log('Note: Could not clean up permanent copy:', cleanupError)
+      }
       
       // If no error was thrown, consider it successful
-      console.log('Photo saved to library successfully')
+      console.log('Photo saved to library successfully with EXIF metadata')
       return true
     } catch (error) {
       console.error('Error saving photo:', error)

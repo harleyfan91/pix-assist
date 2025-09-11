@@ -124,9 +124,9 @@ export const PreviewScreen: FC = function PreviewScreen() {
 
   const savePhoto = async () => {
     try {
-      // Save the currently displayed version
+      // Save the currently displayed version with EXIF metadata preservation
       const finalUri = displayUri || originalUri
-      const success = await photoLibraryService.savePhoto(finalUri)
+      const success = await photoLibraryService.savePhoto(finalUri, originalUri)
       
       if (success) {
         // Clean up temporary processed file if different from original

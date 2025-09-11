@@ -19,6 +19,7 @@ PixAssist is a modern React Native application that provides camera functionalit
 - 🗂️ **Three-Button Workflow** - Discard, Save, and Retouch functionality
 - 🎨 **Retouch Screen** - Placeholder for future photo editing features
 - 💾 **Local Storage** - Photos saved locally on device
+- 🎨 **Blur Background Controls** - Modern blur effects for camera interface buttons
 - 🌙 **Theme Support** - Light/dark mode theming
 - 🌍 **Internationalization** - Multi-language support
 - 📱 **Cross-Platform** - iOS and Android support
@@ -36,6 +37,8 @@ PixAssist is a modern React Native application that provides camera functionalit
 - **Expo Image Manipulator** - Professional image processing and rotation
 - **Expo File System** - File management and cleanup
 - **Expo Media Library** - Photo gallery integration
+- **@lodev09/react-native-exify** - EXIF metadata reading and writing
+- **@react-native-community/blur** - Blur effects for UI components
 - **TypeScript** - Type-safe development
 
 > 📋 **For detailed architecture information and dependency management policies, see [ARCHITECTURE.md](./ARCHITECTURE.md)**
@@ -106,7 +109,8 @@ app/
 │   ├── RetouchScreen.tsx # Photo editing placeholder
 │   └── SettingsScreen.tsx # App settings
 ├── services/           # Business logic and API services
-│   └── photoLibrary.ts # Media library service for photo management
+│   ├── photoLibrary.ts # Media library service for photo management
+│   └── exifService.ts  # EXIF metadata handling service
 ├── theme/              # Theme configuration and styling system
 ├── i18n/               # Internationalization
 └── utils/              # Utility functions
@@ -135,6 +139,9 @@ app/
 - [x] Retouch screen placeholder with navigation
 - [x] Smart file cleanup and memory management
 - [x] Exposure controls dependency on mode menu state
+- [x] Blur background effects for camera control buttons
+- [x] EXIF metadata preservation and orientation correction
+- [x] BlurButton reusable component for consistent UI effects
 
 ### 🚧 In Progress
 - [ ] Photo editing features in RetouchScreen
@@ -147,6 +154,9 @@ app/
 - [ ] Photo export options
 - [ ] Advanced gesture controls
 - [ ] Photo filters and effects
+
+### 🔮 Future Enhancements (Low Priority)
+- [ ] **EXIF Lens Information Preservation** - Currently, photos save with complete EXIF metadata including camera settings, GPS, and timestamps, but lens information (e.g., "Wide Camera - 26mm f/1.6") may not display correctly in the iOS Photos app due to limitations in Expo's MediaLibrary. This is a known limitation and doesn't affect the actual photo quality or metadata preservation.
 
 ## Development Notes
 
@@ -168,6 +178,9 @@ app/
 - **Three-Button Photo Workflow**: Discard, Save, and Retouch functionality
 - **Smart File Management**: Automatic cleanup and memory optimization
 - **Exposure Controls State Management**: Proper dependency on mode menu state
+- **Blur Background Effects**: Modern blur effects for camera control buttons using @react-native-community/blur
+- **EXIF Metadata Handling**: Complete metadata preservation with orientation correction using @lodev09/react-native-exify
+- **Reusable BlurButton Component**: Consistent blur effects across camera interface
 
 ## Styling Architecture
 
