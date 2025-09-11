@@ -160,37 +160,45 @@ export const useCameraControls = ({
     }
   }, [isCameraModeExpanded, showExposureControls])
 
-  // Handle exposure slider change
+  // Handle exposure slider change with neutral position snapping
   const handleExposureSliderChange = useCallback((value: number) => {
-    console.log('Slider onChange:', value, typeof value)
     const numValue = typeof value === 'number' ? value : parseFloat(value)
     
     // Validate the value to prevent NaN
     if (isNaN(numValue) || !isFinite(numValue)) {
-      console.log('Invalid slider value, skipping update')
       return
     }
     
     // Clamp the value to valid range
     const clampedValue = Math.max(-1, Math.min(1, numValue))
     
-    setSliderValue(clampedValue)
-    exposureSlider.value = clampedValue
+    // Neutral position snapping logic
+    const neutralPosition = 0
+    const snapThreshold = 0.2 // Snap to neutral if within 0.2 of center
+    
+    // Check if value is close to neutral position for snapping
+    if (Math.abs(clampedValue - neutralPosition) <= snapThreshold) {
+      setSliderValue(neutralPosition)
+      exposureSlider.value = neutralPosition
+    } else {
+      setSliderValue(clampedValue)
+      exposureSlider.value = clampedValue
+    }
   }, [exposureSlider])
 
-  // Debug flash mode changes and update ref
+  // Reset exposure to neutral position
+  const resetExposure = useCallback(() => {
+    setSliderValue(0)
+    exposureSlider.value = 0
+  }, [exposureSlider])
+
+  // Update flash mode ref when flash mode changes
   useEffect(() => {
-    console.log('Flash mode updated to:', flashMode)
     flashModeRef.current = flashMode // Keep ref in sync
-    console.log('Device flash capabilities:', {
-      hasFlash: device?.hasFlash,
-      hasTorch: device?.hasTorch
-    })
-  }, [flashMode, device])
+  }, [flashMode])
 
   // Animate camera mode button expansion
   useEffect(() => {
-    console.log("Animation effect triggered, isCameraModeExpanded:", isCameraModeExpanded)
     cameraModeExpansion.value = withSpring(isCameraModeExpanded ? 1 : 0, {
       damping: 20,
       stiffness: 300,
@@ -242,6 +250,7 @@ export const useCameraControls = ({
     sliderValue,
     toggleExposureControls,
     handleExposureSliderChange,
+    resetExposure,
     
     // Photo capture
     isCapturing,

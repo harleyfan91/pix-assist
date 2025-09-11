@@ -13,6 +13,7 @@ export interface UseCameraGesturesProps {
   takePhoto: () => void
   setShutterPressed: (pressed: boolean) => void
   recoverFromCameraError: () => void
+  resetExposure: () => void // Function to reset exposure to neutral
 }
 
 export const useCameraGestures = ({
@@ -24,7 +25,8 @@ export const useCameraGestures = ({
   triggerHaptic,
   takePhoto,
   setShutterPressed,
-  recoverFromCameraError
+  recoverFromCameraError,
+  resetExposure
 }: UseCameraGesturesProps) => {
   // Focus ring state
   const [showFocusRing, setShowFocusRing] = useState(false)
@@ -45,7 +47,8 @@ export const useCameraGestures = ({
       if (!device || !_cameraRef.current || !device.supportsFocus) return
 
       try {
-        console.log("Setting focus at screen:", { x, y })
+        // Reset exposure to neutral when focusing
+        resetExposure()
 
         // Use Vision Camera's focus method with screen coordinates directly
         // The focus function expects coordinates relative to the Camera view (in points)
@@ -65,7 +68,7 @@ export const useCameraGestures = ({
         console.error("Focus error:", error)
       }
     },
-    [device, focusRingPosition, focusRingOpacity],
+    [device, focusRingPosition, focusRingOpacity, resetExposure],
   )
 
   // Helper functions for popup management
@@ -166,8 +169,9 @@ export const useCameraGestures = ({
     })
 
   // Create tap gesture for focus with lower priority than buttons
-  const tapGesture = Gesture.Tap()
-    .onEnd(({ x, y }) => {
+  const tapGesture = Gesture.LongPress()
+    .minDuration(150) // 150ms minimum duration for long press
+    .onStart(({ x, y }) => {
       'worklet'
       // Only handle focus tap if not in control areas
       // Bottom controls are typically in the bottom 120px of the screen
@@ -186,6 +190,7 @@ export const useCameraGestures = ({
                                   y <= exposureControlsBottom
       
       if (!isInBottomControls && !isInExposureControls) {
+        runOnJS(triggerHaptic)('impact', 'light')
         runOnJS(handleFocusTap)(x, y)
       }
     })

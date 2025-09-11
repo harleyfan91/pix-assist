@@ -104,6 +104,7 @@ export const CameraScreen: FC = function CameraScreen() {
     sliderValue,
     toggleExposureControls,
     handleExposureSliderChange,
+    resetExposure,
     isCapturing,
     setIsCapturing,
     shutterPressed,
@@ -121,14 +122,7 @@ export const CameraScreen: FC = function CameraScreen() {
   // Debug device zoom info
   useEffect(() => {
     if (device) {
-      console.log('📱 Camera Device Info:', {
-        minZoom: device.minZoom,
-        maxZoom: device.maxZoom,
-        neutralZoom: device.neutralZoom,
-        physicalDevices: device.physicalDevices,
-        hasFlash: device.hasFlash,
-        hasTorch: device.hasTorch
-      })
+      // Device info logged for debugging if needed
     }
   }, [device])
   
@@ -231,13 +225,6 @@ export const CameraScreen: FC = function CameraScreen() {
   // Initialize zoom with device's neutral zoom when device changes
   useEffect(() => {
     if (device) {
-      console.log("Camera device info:", {
-        minZoom: device.minZoom,
-        maxZoom: device.maxZoom,
-        neutralZoom: device.neutralZoom,
-        physicalDevices: device.physicalDevices,
-        hasUltraWide: device.physicalDevices?.includes("ultra-wide-angle-camera"),
-      })
       zoom.value = device.neutralZoom ?? 1
     }
   }, [device, zoom])
@@ -265,13 +252,11 @@ export const CameraScreen: FC = function CameraScreen() {
 
   const takePhoto = useCallback(async () => {
     if (!_cameraRef.current || isCapturing) {
-      console.log("Camera not ready or already capturing")
       return
     }
 
     try {
       setIsCapturing(true)
-      console.log("Taking photo...")
 
 
       // Trigger flash animation - fast and responsive (only if flash is on)
@@ -290,10 +275,6 @@ export const CameraScreen: FC = function CameraScreen() {
 
       // Use ref to get the most current flash mode to avoid race conditions
       const currentFlashMode = flashModeRef.current
-      console.log('Taking photo with flash mode:', currentFlashMode)
-      
-      // Set flash mode for photo capture
-      console.log('Photo options being set:', { flash: currentFlashMode })
       
       // Try different approaches based on flash mode
       let photoOptions: any = {}
@@ -311,7 +292,6 @@ export const CameraScreen: FC = function CameraScreen() {
         photoOptions = { flash: 'auto' }
       }
       
-      console.log('Final photo options:', photoOptions)
       const photoPromise = _cameraRef.current.takePhoto(photoOptions)
       const timeoutPromise = new Promise<never>((_, reject) => 
         setTimeout(() => reject(new Error('Photo capture timeout')), 5000)
@@ -319,13 +299,8 @@ export const CameraScreen: FC = function CameraScreen() {
       
       const photo = await Promise.race([photoPromise, timeoutPromise])
 
-        console.log("Photo captured:", photo.path)
-        // console.log("Photo object:", photo) // Commented out to reduce log spam
-
-
       // Navigate to preview screen (don't save yet - let user decide)
       const photoPath = photo.path.startsWith('file://') ? photo.path : `file://${photo.path}`
-      console.log("Photo captured, navigating to preview screen")
       
       // Navigate to PreviewScreen
       navigation.navigate('Preview', { 
@@ -384,7 +359,8 @@ export const CameraScreen: FC = function CameraScreen() {
     triggerHaptic,
     takePhoto,
     setShutterPressed,
-    recoverFromCameraError
+    recoverFromCameraError,
+    resetExposure
   })
 
 
@@ -576,25 +552,30 @@ export const CameraScreen: FC = function CameraScreen() {
                   blurType="light"
                   blurAmount={7}
                   reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
+                  disabled={true}
                 >
                   <View style={$exposureSliderContainer}>
                     <Reanimated.View style={exposureLabelStyle}>
                       <Text style={$exposureLabel}>+2</Text>
                     </Reanimated.View>
-                    <Slider
-                      value={sliderValue}
-                      onChange={handleExposureSliderChange}
-                      minValue={-1}
-                      maxValue={1}
-                      step={0.01}
-                      orientation="vertical"
-                      style={$gluestackSlider}
-                    >
-                      <SliderTrack style={$sliderTrack}>
-                        <SliderFilledTrack style={$sliderFilledTrack} />
-                      </SliderTrack>
-                      <SliderThumb style={$sliderThumb} />
-                    </Slider>
+                    <View style={$sliderWrapper}>
+                      {/* Neutral position indicator line */}
+                      <View style={$neutralPositionLine} />
+                      <Slider
+                        value={sliderValue}
+                        onChange={handleExposureSliderChange}
+                        minValue={-1}
+                        maxValue={1}
+                        step={0.01}
+                        orientation="vertical"
+                        style={$gluestackSlider}
+                      >
+                        <SliderTrack style={$sliderTrack}>
+                          <SliderFilledTrack style={$sliderFilledTrack} />
+                        </SliderTrack>
+                        <SliderThumb style={$sliderThumb} />
+                      </Slider>
+                    </View>
                     <Reanimated.View style={exposureLabelStyle}>
                       <Text style={$exposureLabel}>-2</Text>
                     </Reanimated.View>
@@ -1070,6 +1051,26 @@ const $popupText: TextStyle = {
   fontSize: 14,
   fontWeight: "600",
   textAlign: "center",
+}
+
+// Slider wrapper for positioning the neutral line
+const $sliderWrapper: ViewStyle = {
+  position: "relative",
+  height: 100,
+  width: 4,
+  justifyContent: "center",
+  alignItems: "center",
+}
+
+// Neutral position indicator line
+const $neutralPositionLine: ViewStyle = {
+  position: "absolute",
+  top: "50%",
+  left: -8, // Extend 8px to the left of the slider
+  right: -8, // Extend 8px to the right of the slider
+  height: 1,
+  backgroundColor: "rgba(255, 255, 255, 0.6)",
+  zIndex: 0, // Behind the slider
 }
 
 
