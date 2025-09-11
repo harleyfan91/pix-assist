@@ -32,6 +32,7 @@ import { writeAsync } from '@lodev09/react-native-exify'
 import { useIconRotation } from '@/hooks/useIconRotation'
 import { useCameraControls } from '@/hooks/useCameraControls'
 import { useCameraGestures } from '@/hooks/useCameraGestures'
+import { useCameraAnimations } from '@/hooks/useCameraAnimations'
 
 // Create Reanimated Camera component for animated exposure
 const ReanimatedCamera = Reanimated.createAnimatedComponent(Camera)
@@ -212,7 +213,6 @@ export const CameraScreen: FC = function CameraScreen() {
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null)
   const [showPreview, setShowPreview] = useState(false)
   const [isPreviewVisible, setIsPreviewVisible] = useState(false) // Controls actual rendering
-  const previewAnimation = useSharedValue(0) // 0 = hidden, 1 = visible
 
   useEffect(() => {
     setCameraPermission(hasPermission)
@@ -227,29 +227,6 @@ export const CameraScreen: FC = function CameraScreen() {
   // }, [navigationProgress, cameraOffset])
 
 
-  // Handle preview visibility and animation
-  useEffect(() => {
-    if (showPreview && capturedPhoto) {
-      // Opening: show component and animate in
-      setIsPreviewVisible(true)
-      previewAnimation.value = withSpring(1, { 
-        damping: 20, 
-        stiffness: 300 
-      })
-    } else {
-      // Closing: animate out first, then hide component
-      previewAnimation.value = withSpring(0, { 
-        damping: 20, 
-        stiffness: 300 
-      }, (finished) => {
-        if (finished) {
-          // Animation completed, now hide the component
-          runOnJS(setIsPreviewVisible)(false)
-          runOnJS(setCapturedPhoto)(null)
-        }
-      })
-    }
-  }, [showPreview, capturedPhoto, previewAnimation])
 
   // Initialize zoom with device's neutral zoom when device changes
   useEffect(() => {
@@ -410,6 +387,7 @@ export const CameraScreen: FC = function CameraScreen() {
     recoverFromCameraError
   })
 
+
   const navigateToGallery = useCallback(() => {
     navigation.navigate("Gallery")
   }, [navigation])
@@ -418,159 +396,57 @@ export const CameraScreen: FC = function CameraScreen() {
 
   // Update camera zoom when zoom value changes
   const [cameraZoom, setCameraZoom] = useState(device?.neutralZoom ?? 1)
-  
-  // Update camera zoom when zoom value changes using derived value
-  useDerivedValue(() => {
-    try {
-      runOnJS(setCameraZoom)(zoom.value)
-    } catch (error) {
-      console.log('Camera zoom update error:', error)
-      // Don't update camera zoom on error
-    }
+
+  // Use camera animations hook
+  const {
+    previewAnimation,
+    exposureValue,
+    animatedCameraProps,
+    animatedCameraModeStyle,
+    animatedCameraControlsOpacity,
+    animatedFlashStyle,
+    animatedPreviewStyle,
+    animatedFocusRingStyle,
+    animatedChevronStyle,
+    animatedPopupStyle,
+    animatedExposureControlsStyle,
+  } = useCameraAnimations({
+    device,
+    zoom,
+    zoomOffset,
+    popupVisible,
+    cameraModeExpansion,
+    flashAnimation,
+    exposureControlsAnimation,
+    exposureSlider,
+    focusRingOpacity,
+    focusRingPosition,
+    setCameraZoom
   })
 
-  // REVERSIBLE ANIMATION: Animated style for camera container push-up effect (COMMENTED OUT)
-  // const animatedCameraContainerStyle = useAnimatedStyle(() => {
-  //   return {
-  //     transform: [{ translateY: cameraOffset.value }],
-  //   }
-  // })
-
-  // Map exposure slider to device exposure range (conservative range)
-  const exposureValue = useDerivedValue(() => {
-    if (!device) return 0
-    // Map slider value (-1 to 1) to a conservative portion of device exposure range
-    const range = device.maxExposure - device.minExposure
-    const conservativeRange = range * 0.25 // Use 25% of the full range
-    const mappedValue = interpolate(exposureSlider.value, [-1, 0, 1], [-conservativeRange/2, 0, conservativeRange/2])
-    
-    // Debug logging
-    console.log('Exposure mapping:', {
-      sliderValue: exposureSlider.value.toFixed(2),
-      mappedValue: mappedValue.toFixed(2),
-      deviceRange: range.toFixed(2),
-      conservativeRange: conservativeRange.toFixed(2)
-    })
-    
-    return mappedValue
-  }, [exposureSlider, device])
-
-
-
-  // Create animated props for camera exposure
-  const animatedCameraProps = useAnimatedProps(() => ({
-    exposure: exposureValue.value,
-  }), [exposureValue])
-
-
-
-  // Create animated style for camera mode button expansion
-  const animatedCameraModeStyle = useAnimatedStyle(() => {
-    const expandedHeight = 200 // Height for 3 controls + padding
-    const collapsedHeight = 60 // Original button height
-    
-    return {
-      height: interpolate(
-        cameraModeExpansion.value,
-        [0, 1],
-        [collapsedHeight, expandedHeight]
-      ),
-      // No translateY - let it expand naturally from bottom
-    }
-  })
-
-  // Create animated style for camera control icons opacity
-  const animatedCameraControlsOpacity = useAnimatedStyle(() => ({
-    opacity: cameraModeExpansion.value,
-  }))
-
-  // Animated style for flash effect
-  const animatedFlashStyle = useAnimatedStyle(() => {
-    return {
-      opacity: interpolate(flashAnimation.value, [0, 1], [0, 0.6]),
-    }
-  })
-
-  // Animated style for preview
-  const animatedPreviewStyle = useAnimatedStyle(() => {
-    return {
-      opacity: previewAnimation.value,
-      scale: interpolate(previewAnimation.value, [0, 1], [0.9, 1]),
-      translateY: interpolate(previewAnimation.value, [0, 1], [50, 0]),
-    }
-  })
-
-  // Create animated style for focus ring
-  const animatedFocusRingStyle = useAnimatedStyle(() => ({
-    opacity: focusRingOpacity.value,
-    transform: [
-      { translateX: focusRingPosition.value.x - 50 }, // Center the ring
-      { translateY: focusRingPosition.value.y - 50 },
-    ],
-  }))
-
-  // Create animated style for chevron positioning
-  const animatedChevronStyle = useAnimatedStyle(() => {
-    return {
-      // Use transform to center when collapsed and flip when expanded
-      transform: [
-        {
-          translateY: interpolate(
-            cameraModeExpansion.value,
-            [0, 1],
-            [-8, 0] // Move up 8px when collapsed to center it in 60px button
-          )
-        },
-        {
-          scaleY: interpolate(
-            cameraModeExpansion.value,
-            [0, 1],
-            [1, -1] // Flip vertically when expanded (1 = normal, -1 = flipped)
-          )
+  // Handle preview visibility and animation
+  useEffect(() => {
+    if (showPreview && capturedPhoto) {
+      // Opening: show component and animate in
+      setIsPreviewVisible(true)
+      previewAnimation.value = withSpring(1, { 
+        damping: 20, 
+        stiffness: 300 
+      })
+    } else {
+      // Closing: animate out first, then hide component
+      previewAnimation.value = withSpring(0, { 
+        damping: 20, 
+        stiffness: 300 
+      }, (finished) => {
+        if (finished) {
+          // Animation completed, now hide the component
+          runOnJS(setIsPreviewVisible)(false)
+          runOnJS(setCapturedPhoto)(null)
         }
-      ],
+      })
     }
-  })
-
-  // Create animated style for popup visibility and positioning
-  const animatedPopupStyle = useAnimatedStyle(() => {
-    return {
-      opacity: popupVisible.value,
-      transform: [
-        {
-          scale: interpolate(
-            popupVisible.value,
-            [0, 1],
-            [0.7, 1]
-          )
-        }
-      ],
-    }
-  })
-
-  // Create animated style for exposure controls (slide from bottom + scale)
-  const animatedExposureControlsStyle = useAnimatedStyle(() => {
-    return {
-      opacity: exposureControlsAnimation.value,
-      transform: [
-        {
-          scale: interpolate(
-            exposureControlsAnimation.value,
-            [0, 1],
-            [0.9, 1] // Slight scale animation
-          )
-        },
-        {
-          translateY: interpolate(
-            exposureControlsAnimation.value,
-            [0, 1],
-            [50, 0] // Slide up from 50px below
-          )
-        }
-      ],
-    }
-  })
-
+  }, [showPreview, capturedPhoto, previewAnimation])
 
   const { right: _right, top: _top } = useSafeAreaInsets()
 
