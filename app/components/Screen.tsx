@@ -263,14 +263,15 @@ export function Screen(props: ScreenProps) {
     <View
       style={[
         $containerStyle,
-        { backgroundColor: backgroundColor || colors.background },
+        cameraMode ? {} : { backgroundColor: backgroundColor || colors.background },
         $containerInsets,
+        props.style, // Apply the style prop (includes backgroundColor for camera)
       ]}
     >
       <SystemBars
-  style={systemBarStyle || (themeContext === "dark" ? "light" : "dark")}
-  {...SystemBarsProps}
-/>
+        style={systemBarStyle || (themeContext === "dark" ? "light" : "dark")}
+        {...SystemBarsProps}
+      />
 
 {cameraMode ? (
         /* Camera mode: Direct children without additional wrappers */

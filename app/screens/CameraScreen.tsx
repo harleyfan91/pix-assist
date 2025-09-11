@@ -11,6 +11,7 @@ import {
   Modal,
   Image,
 } from "react-native"
+import { BlurView } from "@react-native-community/blur"
 import { Ionicons } from "@expo/vector-icons"
 import { Button, ButtonText, Slider, SliderTrack, SliderFilledTrack, SliderThumb } from "@gluestack-ui/themed"
 import { Gesture, GestureDetector } from "react-native-gesture-handler"
@@ -26,7 +27,6 @@ import Reanimated, {
 } from "react-native-reanimated"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Camera, useCameraDevice, useCameraPermission } from "react-native-vision-camera"
-import { BlurView } from '@react-native-community/blur'
 import * as Haptics from 'expo-haptics'
 import { writeAsync } from '@lodev09/react-native-exify'
 import { useIconRotation } from '@/hooks/useIconRotation'
@@ -915,17 +915,10 @@ export const CameraScreen: FC = function CameraScreen() {
   }
 
   return (
-    <Screen preset="fixed" style={$container} cameraMode={true}>
+    <Screen preset="fixed" style={$container} cameraMode={true} systemBarStyle="light">
       {/* Camera Content - Static positioning (animation disabled for testing) */}
       <GestureDetector gesture={cameraGestures}>
         <Reanimated.View style={$cameraContainer}>
-          {/* BlurView for padding areas when resizeMode="contain" */}
-          <BlurView
-            style={StyleSheet.absoluteFill}
-            blurType="extraDark"
-            blurAmount={10}
-            reducedTransparencyFallbackColor="black"
-          />
           <View style={StyleSheet.absoluteFill}>
             <ReanimatedCamera
               {...({ ref: _cameraRef } as any)}
@@ -1049,6 +1042,12 @@ export const CameraScreen: FC = function CameraScreen() {
                   $galleryButton,
                   galleryPressed && { opacity: 0.6 }
                 ]}>
+                  <BlurView
+                    style={$galleryBlurBackground}
+                    blurType="light"
+                    blurAmount={7}
+                    reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
+                  />
                   <Reanimated.View style={galleryIconStyle}>
                     <Ionicons 
                       name="images-outline" 
@@ -1139,7 +1138,7 @@ export const CameraScreen: FC = function CameraScreen() {
 
 const $container: ViewStyle = {
   flex: 1,
-  backgroundColor: "black", // Black background for camera padding areas
+  backgroundColor: "#1a1a1a", // Very dark gray background for camera padding areas
 }
 
 const $content: ViewStyle = {
@@ -1254,11 +1253,21 @@ const $galleryButton: ViewStyle = {
   width: 60,
   height: 60,
   borderRadius: 30,
-  backgroundColor: "rgba(255, 255, 255, 0.2)",
   borderWidth: 0,
   borderColor: "rgba(255, 255, 255, 0.5)",
   justifyContent: "center",
   alignItems: "center",
+  overflow: "hidden", // Important for blur effect
+  position: "relative",
+}
+
+const $galleryBlurBackground: ViewStyle = {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  borderRadius: 30,
 }
 
 const $cameraModeButton: ViewStyle = {
