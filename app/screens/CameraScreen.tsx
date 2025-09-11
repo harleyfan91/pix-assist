@@ -36,6 +36,7 @@ const ReanimatedCamera = Reanimated.createAnimatedComponent(Camera)
 
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
+import { BlurButton } from "@/components/BlurButton"
 import { useNavigation } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { photoLibraryService } from "@/services/photoLibrary"
@@ -526,10 +527,6 @@ export const CameraScreen: FC = function CameraScreen() {
 
   // Button press states for visual feedback
   const [shutterPressed, setShutterPressed] = useState(false)
-  const [flashPressed, setFlashPressed] = useState(false)
-  const [evPressed, setEvPressed] = useState(false)
-  const [galleryPressed, setGalleryPressed] = useState(false)
-  const [cameraModePressed, setCameraModePressed] = useState(false)
 
   // Create high-priority button gestures that will compete with camera gestures
   const shutterButtonGesture = Gesture.Tap()
@@ -548,65 +545,8 @@ export const CameraScreen: FC = function CameraScreen() {
       runOnJS(setShutterPressed)(false)
     })
 
-  const flashButtonGesture = Gesture.Tap()
-    .onBegin(() => {
-      'worklet'
-      runOnJS(setFlashPressed)(true)
-    })
-    .onEnd(() => {
-      'worklet'
-      runOnJS(handleFlashToggle)()
-      runOnJS(setFlashPressed)(false)
-    })
-    .onFinalize(() => {
-      'worklet'
-      runOnJS(setFlashPressed)(false)
-    })
 
-  const evButtonGesture = Gesture.Tap()
-    .onBegin(() => {
-      'worklet'
-      runOnJS(setEvPressed)(true)
-    })
-    .onEnd(() => {
-      'worklet'
-      runOnJS(toggleExposureControls)()
-      runOnJS(setEvPressed)(false)
-    })
-    .onFinalize(() => {
-      'worklet'
-      runOnJS(setEvPressed)(false)
-    })
 
-  const galleryButtonGesture = Gesture.Tap()
-    .onBegin(() => {
-      'worklet'
-      runOnJS(setGalleryPressed)(true)
-    })
-    .onEnd(() => {
-      'worklet'
-      runOnJS(navigateToGallery)()
-      runOnJS(setGalleryPressed)(false)
-    })
-    .onFinalize(() => {
-      'worklet'
-      runOnJS(setGalleryPressed)(false)
-    })
-
-  const cameraModeButtonGesture = Gesture.Tap()
-    .onBegin(() => {
-      'worklet'
-      runOnJS(setCameraModePressed)(true)
-    })
-    .onEnd(() => {
-      'worklet'
-      runOnJS(toggleCameraModeExpansion)()
-      runOnJS(setCameraModePressed)(false)
-    })
-    .onFinalize(() => {
-      'worklet'
-      runOnJS(setCameraModePressed)(false)
-    })
 
   // Handle tap-to-focus (without locking)
   const handleFocusTap = useCallback(
@@ -979,6 +919,13 @@ export const CameraScreen: FC = function CameraScreen() {
             {/* Exposure Controls - Gluestack Slider */}
             {isExposureControlsVisible && (
               <Reanimated.View style={[$exposureControlsVertical, animatedExposureControlsStyle]}>
+                <BlurButton
+                  onPress={() => {}} // No press action needed for container
+                  style={$exposureControlsBlur}
+                  blurType="light"
+                  blurAmount={7}
+                  reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
+                >
                   <View style={$exposureSliderContainer}>
                     <Reanimated.View style={exposureLabelStyle}>
                       <Text style={$exposureLabel}>+2</Text>
@@ -1016,7 +963,8 @@ export const CameraScreen: FC = function CameraScreen() {
                       <Text style={$exposureLabel}>-2</Text>
                     </Reanimated.View>
                   </View>
-                </Reanimated.View>
+                </BlurButton>
+              </Reanimated.View>
             )}
           </View>
 
@@ -1037,27 +985,27 @@ export const CameraScreen: FC = function CameraScreen() {
           <View style={$bottomControls}>
             {/* Left Container: Gallery Button */}
             <View style={$leftControlsContainer}>
-              <GestureDetector gesture={galleryButtonGesture}>
-                <View style={[
-                  $galleryButton,
-                  galleryPressed && { opacity: 0.6 }
-                ]}>
-                  <BlurView
-                    style={$galleryBlurBackground}
-                    blurType="light"
-                    blurAmount={7}
-                    reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
+              <BlurButton
+                onPress={navigateToGallery}
+                icon={Ionicons}
+                iconProps={{
+                  name: "images-outline",
+                  size: 24,
+                  color: "#fff"
+                }}
+                style={$galleryButton}
+                blurType="light"
+                blurAmount={7}
+                reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
+              >
+                <Reanimated.View style={galleryIconStyle}>
+                  <Ionicons 
+                    name="images-outline" 
+                    size={24} 
+                    color="#fff" 
                   />
-                  <Reanimated.View style={galleryIconStyle}>
-                    <Ionicons 
-                      name="images-outline" 
-                      size={24} 
-                      color="#fff" 
-                      style={{}}
-                    />
-                  </Reanimated.View>
-                </View>
-              </GestureDetector>
+                </Reanimated.View>
+              </BlurButton>
             </View>
 
             {/* Center Container: Shutter Button */}
@@ -1074,60 +1022,81 @@ export const CameraScreen: FC = function CameraScreen() {
 
             {/* Right Container: Camera Mode Button */}
             <View style={$rightControlsContainer}>
-              <GestureDetector gesture={cameraModeButtonGesture}>
-                <Reanimated.View style={[
-                  $cameraModeButton,
-                  animatedCameraModeStyle,
-                  cameraModePressed && { opacity: 0.6 }
-                ]}>
-                  {/* Camera control buttons - only visible when expanded */}
-                  <Reanimated.View style={[$controlsContainer, animatedCameraControlsOpacity]}>
-                    <GestureDetector gesture={flashButtonGesture}>
-                      <View style={[$controlButton, flashPressed && { opacity: 0.6 }]}>
-                        <Reanimated.View style={flashIconStyle}>
-                          <Ionicons 
-                            name={
-                              flashMode === 'auto' ? 'flash-outline' :
-                              flashMode === 'on' ? 'flash' :
-                              'flash-off-outline'
-                            }
-                            size={20} 
-                            color="#fff" 
-                            style={{}}
-                          />
-                        </Reanimated.View>
-                      </View>
-                    </GestureDetector>
-                    <GestureDetector gesture={evButtonGesture}>
-                      <View style={[$controlButton, evPressed && { opacity: 0.6 }]}>
-                        <Reanimated.View style={exposureIconStyle}>
-                          <Ionicons 
-                            name="contrast-outline" 
-                            size={20} 
-                            color="#fff" 
-                            style={{}}
-                          />
-                        </Reanimated.View>
-                      </View>
-                    </GestureDetector>
-                    <View style={$controlButton}>
-                      <Reanimated.View style={cropIconStyle}>
-                        <Ionicons 
-                          name="crop-outline" 
-                          size={20} 
-                          color="#fff" 
-                          style={{}}
-                        />
-                      </Reanimated.View>
-                    </View>
-                  </Reanimated.View>
+              <Reanimated.View style={[animatedCameraModeStyle, $cameraModeContainer]}>
+                {/* Main expanding background with blur */}
+                <BlurView
+                  style={$cameraModeBlurBackground}
+                  blurType="light"
+                  blurAmount={7}
+                  reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
+                />
+                
+                {/* Camera control buttons - only visible when expanded */}
+                <Reanimated.View style={[$controlsContainer, animatedCameraControlsOpacity]}>
+                  <BlurButton
+                    onPress={handleFlashToggle}
+                    style={$controlButton}
+                    blurType="light"
+                    blurAmount={5}
+                    reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.1)"
+                  >
+                    <Reanimated.View style={flashIconStyle}>
+                      <Ionicons 
+                        name={
+                          flashMode === 'auto' ? 'flash-outline' :
+                          flashMode === 'on' ? 'flash' :
+                          'flash-off-outline'
+                        }
+                        size={20} 
+                        color="#fff" 
+                      />
+                    </Reanimated.View>
+                  </BlurButton>
                   
-                  {/* Main chevron icon - animated positioning */}
-                  <Reanimated.View style={[$chevronContainer, animatedChevronStyle]}>
+                  <BlurButton
+                    onPress={toggleExposureControls}
+                    style={$controlButton}
+                    blurType="light"
+                    blurAmount={5}
+                    reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.1)"
+                  >
+                    <Reanimated.View style={exposureIconStyle}>
+                      <Ionicons 
+                        name="contrast-outline" 
+                        size={20} 
+                        color="#fff" 
+                      />
+                    </Reanimated.View>
+                  </BlurButton>
+                  
+                  <BlurButton
+                    onPress={() => {}} // TODO: Add crop functionality
+                    style={$controlButton}
+                    blurType="light"
+                    blurAmount={5}
+                    reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.1)"
+                  >
+                    <Reanimated.View style={cropIconStyle}>
+                      <Ionicons 
+                        name="crop-outline" 
+                        size={20} 
+                        color="#fff" 
+                      />
+                    </Reanimated.View>
+                  </BlurButton>
+                </Reanimated.View>
+                
+                {/* Main chevron button - always visible at bottom */}
+                <TouchableOpacity
+                  onPress={toggleCameraModeExpansion}
+                  style={$chevronButtonContainer}
+                  activeOpacity={0.6}
+                >
+                  <Reanimated.View style={animatedChevronStyle}>
                     <Ionicons name="chevron-up-sharp" size={24} color="#fff" />
                   </Reanimated.View>
-                </Reanimated.View>
-              </GestureDetector>
+                </TouchableOpacity>
+              </Reanimated.View>
             </View>
           </View>
         </Reanimated.View>
@@ -1255,26 +1224,12 @@ const $galleryButton: ViewStyle = {
   borderRadius: 30,
   borderWidth: 0,
   borderColor: "rgba(255, 255, 255, 0.5)",
-  justifyContent: "center",
-  alignItems: "center",
-  overflow: "hidden", // Important for blur effect
-  position: "relative",
-}
-
-const $galleryBlurBackground: ViewStyle = {
-  position: "absolute",
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  borderRadius: 30,
 }
 
 const $cameraModeButton: ViewStyle = {
   width: 60,
   height: 60,
   borderRadius: 30,
-  backgroundColor: "rgba(255, 255, 255, 0.2)",
   borderWidth: 0,
   borderColor: "rgba(255, 255, 255, 0.5)",
   justifyContent: "center", // Center content when collapsed
@@ -1283,13 +1238,41 @@ const $cameraModeButton: ViewStyle = {
   zIndex: 2, // Higher than overlay to remain clickable
 }
 
-const $chevronContainer: ViewStyle = {
+const $cameraModeContainer: ViewStyle = {
+  width: 60,
+  borderRadius: 30,
+  overflow: "hidden",
+  position: "relative",
+}
+
+const $cameraModeBlurBackground: ViewStyle = {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  borderRadius: 30,
+}
+
+const $chevronButtonContainer: ViewStyle = {
   position: "absolute",
   bottom: 0,
   left: 0,
   right: 0,
   height: 44, // Fixed height for chevron area
-  paddingVertical: 8,
+  alignItems: "center",
+  justifyContent: "center",
+  zIndex: 1, // Above the blur background
+}
+
+const $chevronButton: ViewStyle = {
+  width: 60,
+  height: 44,
+  borderRadius: 22,
+}
+
+const $chevronContainer: ViewStyle = {
+  flex: 1,
   alignItems: "center",
   justifyContent: "center",
 }
@@ -1309,7 +1292,6 @@ const $controlButton: ViewStyle = {
   width: 40,
   height: 40,
   borderRadius: 20,
-  backgroundColor: "rgba(255, 255, 255, 0.1)",
   alignItems: "center",
   justifyContent: "center",
   marginVertical: 4,
@@ -1322,12 +1304,18 @@ const $exposureControlsVertical: ViewStyle = {
   right: 40, // Same right position as camera mode button
   width: 60,
   height: 200, // Same height as expanded camera mode button
-  backgroundColor: "rgba(255, 255, 255, 0.2)",
-  borderRadius: 30,
   justifyContent: "center",
   alignItems: "center",
   overflow: "hidden",
   zIndex: 2, // Higher than overlay to remain clickable
+}
+
+const $exposureControlsBlur: ViewStyle = {
+  width: 60,
+  height: 200,
+  borderRadius: 30,
+  justifyContent: "center",
+  alignItems: "center",
 }
 
 // Landscape-specific exposure controls (positioned above camera mode button)
