@@ -2,6 +2,7 @@ import { readAsync, writeAsync, ExifTags } from '@lodev09/react-native-exify'
 import * as FileSystem from 'expo-file-system'
 import { ErrorService } from '@/services/error/ErrorService'
 import { ErrorCategory, ErrorSeverity } from '@/services/error/types'
+import { log } from '@/services/logging'
 
 export interface ExifService {
   readExifData: (uri: string) => Promise<ExifTags | null>
@@ -18,9 +19,9 @@ class ExifServiceImpl implements ExifService {
    */
   async readExifData(uri: string): Promise<ExifTags | null> {
     try {
-      console.log('Reading EXIF data from:', uri)
+      log.exif('Reading EXIF data from image', { uri })
       const exifData = await readAsync(uri)
-      console.log('EXIF data read successfully:', exifData)
+      log.exif('EXIF data read successfully', { uri, dataKeys: Object.keys(exifData || {}) })
       return exifData || null
     } catch (error) {
       // Use centralized error handling for EXIF read errors
@@ -45,9 +46,13 @@ class ExifServiceImpl implements ExifService {
    */
   async writeExifData(uri: string, tags: ExifTags): Promise<string | null> {
     try {
-      console.log('Writing EXIF data to:', uri)
-      console.log('EXIF tags to write (first 10 keys):', Object.keys(tags).slice(0, 10))
-      console.log('Key camera metadata being written:', {
+      log.exif('Writing EXIF data to image', { 
+        uri, 
+        tagCount: Object.keys(tags).length,
+        firstKeys: Object.keys(tags).slice(0, 10)
+      })
+      
+      const keyMetadata = {
         Make: tags.Make,
         Model: tags.Model,
         LensMake: tags.LensMake,
@@ -55,16 +60,17 @@ class ExifServiceImpl implements ExifService {
         FocalLength: tags.FocalLength,
         FNumber: tags.FNumber,
         Orientation: tags.Orientation
-      })
+      }
+      log.exif('Key camera metadata being written', { uri, metadata: keyMetadata })
       
       const result = await writeAsync(uri, tags)
-      console.log('EXIF data written successfully:', result)
+      log.exif('EXIF data written successfully', { uri, resultUri: result?.uri })
       
       if (result?.uri) {
-        console.log('New URI after EXIF write:', result.uri)
+        log.exif('New URI after EXIF write', { originalUri: uri, newUri: result.uri })
         return result.uri
       } else {
-        console.log('No URI returned from EXIF write, using original')
+        log.exif('No URI returned from EXIF write, using original', { uri })
         return uri
       }
     } catch (error) {
@@ -89,28 +95,28 @@ class ExifServiceImpl implements ExifService {
    */
   async correctOrientation(inputUri: string): Promise<string | null> {
     try {
-      console.log('Correcting orientation for:', inputUri)
+      log.exif('Correcting orientation for image', { inputUri })
       
       // Read EXIF data to get orientation
       const exifData = await this.readExifData(inputUri)
       if (!exifData) {
-        console.log('No EXIF data found, returning original URI')
+        log.exif('No EXIF data found, returning original URI', { inputUri })
         return inputUri
       }
 
       const orientation = exifData.Orientation
-      console.log('Original orientation:', orientation)
+      log.exif('Original orientation detected', { inputUri, orientation })
 
       // If orientation is 1 (normal), no correction needed
       if (!orientation || orientation === 1) {
-        console.log('Image is already in correct orientation')
+        log.exif('Image is already in correct orientation', { inputUri, orientation })
         return inputUri
       }
 
       // For now, we'll preserve the original EXIF data but note the orientation
       // In a full implementation, you might want to use an image processing library
       // to actually rotate the image and set orientation to 1
-      console.log('Orientation correction needed (orientation:', orientation, ')')
+      log.exif('Orientation correction needed', { inputUri, orientation })
       
       // Return the original URI for now - the EXIF orientation will be preserved
       // and the display layer should handle the rotation
@@ -138,19 +144,16 @@ class ExifServiceImpl implements ExifService {
    */
   async preserveMetadata(originalUri: string, processedUri: string): Promise<string | null> {
     try {
-      console.log('Preserving metadata from original to processed image')
-      console.log('Original URI:', originalUri)
-      console.log('Processed URI:', processedUri)
+      log.exif('Preserving metadata from original to processed image', { originalUri, processedUri })
 
       // Read EXIF data from original image
       const originalExif = await this.readExifData(originalUri)
       if (!originalExif) {
-        console.log('No EXIF data in original image, returning processed URI')
+        log.exif('No EXIF data in original image, returning processed URI', { originalUri, processedUri })
         return processedUri
       }
 
-      console.log('Original EXIF data keys:', Object.keys(originalExif))
-      console.log('Key camera metadata:', {
+      const keyMetadata = {
         Make: originalExif.Make,
         Model: originalExif.Model,
         LensMake: originalExif.LensMake,
@@ -158,6 +161,11 @@ class ExifServiceImpl implements ExifService {
         FocalLength: originalExif.FocalLength,
         FNumber: originalExif.FNumber,
         Orientation: originalExif.Orientation
+      }
+      log.exif('Original EXIF data keys and metadata', { 
+        originalUri, 
+        dataKeys: Object.keys(originalExif),
+        keyMetadata 
       })
 
       // Create a copy of the processed image to avoid modifying the original
@@ -175,12 +183,16 @@ class ExifServiceImpl implements ExifService {
       const result = await this.writeExifData(tempUri, originalExif)
       
       if (result) {
-        console.log('Metadata preserved successfully to:', result)
+        log.exif('Metadata preserved successfully', { 
+          originalUri, 
+          processedUri, 
+          resultUri: result 
+        })
         
         // Verify the EXIF data was written correctly
         const verifyExif = await this.readExifData(result)
         if (verifyExif) {
-          console.log('Verification - EXIF data after writing:', {
+          const verifyMetadata = {
             Make: verifyExif.Make,
             Model: verifyExif.Model,
             LensMake: verifyExif.LensMake,
@@ -188,12 +200,19 @@ class ExifServiceImpl implements ExifService {
             FocalLength: verifyExif.FocalLength,
             FNumber: verifyExif.FNumber,
             Orientation: verifyExif.Orientation
+          }
+          log.exif('Verification - EXIF data after writing', { 
+            resultUri: result, 
+            verifyMetadata 
           })
         }
         
         return result
       } else {
-        console.log('Failed to preserve metadata, returning processed URI')
+        log.exif('Failed to preserve metadata, returning processed URI', { 
+          originalUri, 
+          processedUri 
+        })
         return processedUri
       }
     } catch (error) {

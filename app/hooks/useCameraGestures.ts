@@ -6,6 +6,7 @@ import { PopupState } from "./useCameraControls"
 import { useErrorHandler } from '@/hooks/useErrorHandling'
 import { ErrorCategory, ErrorSeverity } from '@/services/error/types'
 import { errorService } from '@/services/error/ErrorService'
+import { log } from '@/services/logging'
 
 export interface UseCameraGesturesProps {
   device: any // Camera device from react-native-vision-camera
@@ -120,9 +121,9 @@ export const useCameraGestures = ({
         flashTimeout: null
       }
       
-      console.log('Zoom start - popup state:', newState)
+      log.camera('Zoom start - popup state', { newState })
       popupVisible.value = withSpring(1, { damping: 15, stiffness: 200 })
-      console.log('Setting popupVisible to 1')
+      log.camera('Setting popupVisible to 1')
       return newState
     })
   }, [device, zoom, popupVisible, setPopupState])
@@ -138,10 +139,10 @@ export const useCameraGestures = ({
           visible: true,
           activeInteraction: 'zoom' as const
         }
-        console.log('Zoom update - popup state:', newState)
+        log.camera('Zoom update - popup state', { newState })
         return newState
       }
-      console.log('Zoom update - ignoring, activeInteraction:', prev.activeInteraction)
+      log.camera('Zoom update - ignoring', { activeInteraction: prev.activeInteraction })
       return prev
     })
   }, [setPopupState])

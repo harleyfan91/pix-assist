@@ -4,6 +4,7 @@ import * as FileSystem from 'expo-file-system'
 import { exifService } from './exifService'
 import { ErrorService } from '@/services/error/ErrorService'
 import { ErrorCategory, ErrorSeverity } from '@/services/error/types'
+import { log } from '@/services/logging'
 
 export interface PhotoAsset {
   id: string
@@ -62,7 +63,7 @@ class PhotoLibraryServiceImpl implements PhotoLibraryService {
 
       // Handle limited access (iOS 14+) - check if LIMITED exists
       if (newStatus === 'limited' as any) {
-        console.log('Limited photo library access granted')
+        log.gallery('Limited photo library access granted')
         return true
       }
 
@@ -148,37 +149,37 @@ class PhotoLibraryServiceImpl implements PhotoLibraryService {
 
       // Always preserve EXIF metadata from the original photo
       if (originalUri && originalUri !== uri) {
-        console.log('Preserving EXIF metadata from original photo')
+        log.gallery('Preserving EXIF metadata from original photo', { originalUri, processedUri: uri })
         const metadataPreservedUri = await exifService.preserveMetadata(originalUri, uri)
         if (metadataPreservedUri) {
           finalUri = metadataPreservedUri
-          console.log('EXIF metadata preserved successfully')
+          log.gallery('EXIF metadata preserved successfully', { originalUri, processedUri: uri, finalUri })
         } else {
-          console.log('Failed to preserve EXIF metadata, using processed photo')
+          log.gallery('Failed to preserve EXIF metadata, using processed photo', { originalUri, processedUri: uri })
         }
       } else {
         // For the original photo, read and preserve all EXIF data
-        console.log('Preserving EXIF metadata for original photo')
+        log.gallery('Preserving EXIF metadata for original photo', { uri })
         const exifData = await exifService.readExifData(uri)
         if (exifData) {
-          console.log('Writing complete EXIF data to photo before saving')
+          log.gallery('Writing complete EXIF data to photo before saving', { uri })
           const exifPreservedUri = await exifService.writeExifData(uri, exifData)
           if (exifPreservedUri) {
             finalUri = exifPreservedUri
-            console.log('Complete EXIF metadata preserved successfully')
+            log.gallery('Complete EXIF metadata preserved successfully', { uri, finalUri })
           } else {
-            console.log('Failed to preserve EXIF metadata, using original photo')
+            log.gallery('Failed to preserve EXIF metadata, using original photo', { uri })
           }
         } else {
-          console.log('No EXIF data found, using original photo')
+          log.gallery('No EXIF data found, using original photo', { uri })
         }
       }
 
       // Verify EXIF data is present before saving
-      console.log('Verifying EXIF data before saving to library')
+      log.gallery('Verifying EXIF data before saving to library', { finalUri })
       const verifyExif = await exifService.readExifData(finalUri)
       if (verifyExif) {
-        console.log('EXIF verification - Key metadata before save:', {
+        const keyMetadata = {
           Make: verifyExif.Make,
           Model: verifyExif.Model,
           LensMake: verifyExif.LensMake,
@@ -186,13 +187,14 @@ class PhotoLibraryServiceImpl implements PhotoLibraryService {
           FocalLength: verifyExif.FocalLength,
           FNumber: verifyExif.FNumber,
           Orientation: verifyExif.Orientation
-        })
+        }
+        log.gallery('EXIF verification - Key metadata before save', { finalUri, keyMetadata })
       } else {
-        console.log('WARNING: No EXIF data found before saving!')
+        log.warn('WARNING: No EXIF data found before saving!', { finalUri })
       }
 
       // Create a permanent copy with EXIF data before saving to library
-      console.log('Creating permanent copy with EXIF data for library save')
+      log.gallery('Creating permanent copy with EXIF data for library save', { finalUri })
       const timestamp = Date.now()
       const extension = finalUri.split('.').pop() || 'jpg'
       const permanentUri = `${FileSystem.documentDirectory}photo_${timestamp}.${extension}`
@@ -203,12 +205,12 @@ class PhotoLibraryServiceImpl implements PhotoLibraryService {
         to: permanentUri
       })
 
-      console.log('Permanent copy created at:', permanentUri)
+      log.gallery('Permanent copy created', { finalUri, permanentUri })
 
       // Verify EXIF data is still present in the copy
       const copyExif = await exifService.readExifData(permanentUri)
       if (copyExif) {
-        console.log('EXIF verification - Key metadata in copy:', {
+        const copyMetadata = {
           Make: copyExif.Make,
           Model: copyExif.Model,
           LensMake: copyExif.LensMake,
@@ -216,9 +218,10 @@ class PhotoLibraryServiceImpl implements PhotoLibraryService {
           FocalLength: copyExif.FocalLength,
           FNumber: copyExif.FNumber,
           Orientation: copyExif.Orientation
-        })
+        }
+        log.gallery('EXIF verification - Key metadata in copy', { permanentUri, copyMetadata })
       } else {
-        console.log('WARNING: No EXIF data found in copy!')
+        log.warn('WARNING: No EXIF data found in copy!', { permanentUri })
       }
 
       // Save the permanent copy to media library
@@ -227,13 +230,13 @@ class PhotoLibraryServiceImpl implements PhotoLibraryService {
       // Clean up the permanent copy after saving
       try {
         await FileSystem.deleteAsync(permanentUri)
-        console.log('Permanent copy cleaned up successfully')
+        log.gallery('Permanent copy cleaned up successfully', { permanentUri })
       } catch (cleanupError) {
-        console.log('Note: Could not clean up permanent copy:', cleanupError)
+        log.gallery('Note: Could not clean up permanent copy', { permanentUri, error: cleanupError })
       }
       
       // If no error was thrown, consider it successful
-      console.log('Photo saved to library successfully with EXIF metadata')
+      log.gallery('Photo saved to library successfully with EXIF metadata', { permanentUri })
       return true
     } catch (error) {
       // Use centralized error handling for photo save errors

@@ -11,6 +11,7 @@ import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { AppStackParamList } from "@/navigators/AppNavigator"
 import { photoLibraryService } from "@/services/photoLibrary"
+import { log } from '@/services/logging'
 
 type PreviewScreenRouteProp = RouteProp<AppStackParamList, "Preview">
 
@@ -38,7 +39,7 @@ export const PreviewScreen: FC = function PreviewScreen() {
   // Simple initialization - just show the original image
   useEffect(() => {
     if (originalUri) {
-      console.log('Setting display URI:', originalUri)
+      log.gallery('Setting display URI', { originalUri })
       setDisplayUri(originalUri)
     }
   }, [originalUri])
@@ -60,7 +61,7 @@ export const PreviewScreen: FC = function PreviewScreen() {
           }
         } catch (error) {
           // Silently ignore cleanup errors - files may already be cleaned up by system
-          console.log('File cleanup skipped (file may not exist):', fileUri)
+          log.gallery('File cleanup skipped (file may not exist)', { fileUri })
         }
       })
     }
@@ -79,18 +80,21 @@ export const PreviewScreen: FC = function PreviewScreen() {
             try {
               // Delete original file (with proper path validation)
               if (originalUri) {
-                console.log('Attempting to delete original file:', originalUri)
+                log.gallery('Attempting to delete original file', { originalUri })
                 try {
                   const fileInfo = await FileSystem.getInfoAsync(originalUri)
-                  console.log('Original file info:', fileInfo)
+                  log.gallery('Original file info', { originalUri, fileInfo })
                   if (fileInfo.exists) {
                     await FileSystem.deleteAsync(originalUri)
-                    console.log('Original file deleted successfully')
+                    log.gallery('Original file deleted successfully', { originalUri })
                   } else {
-                    console.log('Original file does not exist, skipping deletion')
+                    log.gallery('Original file does not exist, skipping deletion', { originalUri })
                   }
                 } catch (error) {
-                  console.log('Error deleting original file (may not exist):', error instanceof Error ? error.message : String(error))
+                  log.gallery('Error deleting original file (may not exist)', { 
+                    originalUri, 
+                    error: error instanceof Error ? error.message : String(error) 
+                  })
                 }
               }
               
@@ -102,18 +106,18 @@ export const PreviewScreen: FC = function PreviewScreen() {
                     await FileSystem.deleteAsync(fileUri)
                   }
                 } catch (error) {
-                  console.log('File cleanup skipped (file may not exist):', fileUri)
+                  log.gallery('File cleanup skipped (file may not exist)', { fileUri })
                 }
               }
               
               
               // Navigate back to camera (even if some files couldn't be deleted)
-              console.log('Photo discard completed, navigating back to camera')
+              log.gallery('Photo discard completed, navigating back to camera')
               navigation.goBack()
             } catch (error) {
-              console.error('Error during discard operation:', error)
+              log.error('Error during discard operation', { error })
               // Still navigate back even if cleanup failed
-              console.log('Cleanup had issues, but navigating back anyway')
+              log.gallery('Cleanup had issues, but navigating back anyway')
               navigation.goBack()
             }
           }
@@ -143,7 +147,7 @@ export const PreviewScreen: FC = function PreviewScreen() {
         Alert.alert("Error", "Failed to save photo. Please try again.")
       }
     } catch (error) {
-      console.error('Error saving photo:', error)
+      log.error('Error saving photo', { error })
       Alert.alert("Error", "Failed to save photo. Please try again.")
     }
   }
@@ -171,8 +175,8 @@ export const PreviewScreen: FC = function PreviewScreen() {
                 source={{ uri: displayUri }}
                 style={$photoImage}
                 resizeMode="contain"
-                onLoad={() => console.log('Image loaded successfully')}
-                onError={(error) => console.log('Image load error:', error)}
+                onLoad={() => log.gallery('Image loaded successfully')}
+                onError={(error) => log.gallery('Image load error', { error })}
               />
             </SnapbackZoom>
           </View>

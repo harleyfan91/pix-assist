@@ -1,6 +1,8 @@
 // Basic storage service for template preferences
 // This is a placeholder implementation - in production you'd use a proper storage solution
 
+import { log } from '@/services/logging'
+
 interface StorageData {
   activeTemplates: string[]
   currentCategory: string
@@ -26,7 +28,7 @@ class TemplateStorage {
     try {
       return await operation()
     } catch (error) {
-      console.warn(`Failed to ${operationName}:`, error)
+      log.storage(`Failed to ${operationName}`, { operation: operationName, error })
       return defaultValue
     }
   }
@@ -41,7 +43,7 @@ class TemplateStorage {
     try {
       return await operation()
     } catch (error) {
-      console.warn(`Failed to ${operationName}:`, error)
+      log.storage(`Failed to ${operationName}`, { operation: operationName, error })
       throw new Error(`Failed to ${operationName}`)
     }
   }
@@ -121,7 +123,7 @@ class TemplateStorage {
   private async saveData(data: StorageData): Promise<void> {
     // Placeholder implementation - in production, use AsyncStorage or MMKV
     // For now, just log the data
-    console.log('Saving template data:', data)
+    log.storage('Saving template data', { data })
   }
 }
 

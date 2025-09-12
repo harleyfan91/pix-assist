@@ -7,6 +7,7 @@ import { Text } from "@/components/Text"
 import { photoLibraryService, PhotoAsset } from "@/services/photoLibrary"
 import { useErrorHandler } from '@/hooks/useErrorHandling'
 import { ErrorCategory, ErrorSeverity } from '@/services/error/types'
+import { log } from '@/services/logging'
 
 export const GalleryScreen: FC = function GalleryScreen() {
   const [photos, setPhotos] = useState<PhotoAsset[]>([])
@@ -46,7 +47,7 @@ export const GalleryScreen: FC = function GalleryScreen() {
 
   const handlePhotoPress = (photo: PhotoAsset) => {
     // TODO: Navigate to photo detail view
-    console.log('Photo pressed:', photo.filename)
+    log.gallery('Photo pressed', { filename: photo.filename, id: photo.id })
   }
 
   const handleRetry = () => {

@@ -10,6 +10,7 @@ import { useAppTheme } from "@/theme/context"
 import { $styles } from "@/theme/styles"
 import type { ThemedStyle } from "@/theme/types"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
+import { log } from '@/services/logging'
 
 const welcomeLogo = require("@assets/images/logo.png")
 const welcomeFace = require("@assets/images/welcome-face.png")
@@ -41,7 +42,7 @@ export const HomeScreen: FC = function HomeScreen() {
 
       <View style={themed([$bottomContainer, $bottomContainerInsets])}>
         <Text tx="welcomeScreen:postscript" size="md" />
-        <Button onPress={() => console.log("Gluestack Button pressed!")} variant="solid" size="lg">
+        <Button onPress={() => log.info("Gluestack Button pressed!")} variant="solid" size="lg">
           <ButtonText>🎉 Gluestack UI Working!</ButtonText>
         </Button>
         <Icon as={Heart} size="xl" color="$red500" />

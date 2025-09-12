@@ -41,6 +41,7 @@ import { TemplateDrawer, TemplateOverlay } from '@/components/TemplateDrawer'
 import { Dimensions } from 'react-native'
 import { useErrorHandler } from '@/hooks/useErrorHandling'
 import { ErrorCategory, ErrorSeverity } from '@/services/error/types'
+import { log } from '@/services/logging'
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window')
 const DRAWER_WIDTH = 390
@@ -188,12 +189,12 @@ export const CameraScreen: FC = function CameraScreen() {
 
   // Camera error recovery function
   const recoverFromCameraError = useCallback(() => {
-    console.log("Attempting camera recovery from zoom error...")
+    log.camera("Attempting camera recovery from zoom error")
     setCameraError("Camera temporarily unavailable")
     setIsActive(false)
     
     setTimeout(() => {
-      console.log("Resuming camera after recovery...")
+      log.camera("Resuming camera after recovery")
       setIsActive(true)
       setCameraError(null)
       // Reset zoom to neutral to prevent further errors
@@ -374,13 +375,13 @@ export const CameraScreen: FC = function CameraScreen() {
           const errorMessage = error.originalError?.message || ''
           if (errorMessage.includes('AVFoundationErrorDomain') || 
               errorMessage.includes('Cannot Complete Action')) {
-            console.log("AVFoundation error detected - attempting camera recovery")
+            log.camera("AVFoundation error detected - attempting camera recovery")
             setCameraError("Camera temporarily unavailable")
             
             // Try to recover by briefly pausing and resuming camera
             setIsActive(false)
             setTimeout(() => {
-              console.log("Attempting camera recovery...")
+              log.camera("Attempting camera recovery")
               setIsActive(true)
               setCameraError(null)
             }, 2000)

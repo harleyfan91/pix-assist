@@ -6,6 +6,7 @@
 import { useCallback } from 'react'
 import { AppError, ErrorCategory, ErrorSeverity } from '@/services/error/types'
 import { useError } from '@/contexts/ErrorContext'
+import { log } from '@/services/logging'
 
 /**
  * Hook for handling async operations with automatic error handling.
@@ -150,19 +151,19 @@ export const useErrorRecovery = () => {
 
   const recoverFromCameraError = useCallback(async () => {
     // Camera-specific recovery logic
-    console.log('Attempting camera recovery...')
+    log.camera('Attempting camera recovery')
     // This would typically involve resetting camera state, etc.
   }, [])
 
   const recoverFromTemplateError = useCallback(async () => {
     // Template-specific recovery logic
-    console.log('Attempting template recovery...')
+    log.template('Attempting template recovery')
     // This would typically involve reloading templates, etc.
   }, [])
 
   const recoverFromNetworkError = useCallback(async () => {
     // Network-specific recovery logic
-    console.log('Attempting network recovery...')
+    log.info('Attempting network recovery')
     // This would typically involve retrying the failed request
   }, [])
 
