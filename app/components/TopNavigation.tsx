@@ -16,11 +16,16 @@ import { AppStackScreenProps } from "@/navigators/AppNavigator"
 import * as styles from "./TopNavigation.styles"
 
 interface TopNavigationProps {
+  isTemplateDrawerOpen?: boolean
   onNavigationStateChange?: (isOpen: boolean) => void
   onProgressChange?: (progress: number) => void
 }
 
-export const TopNavigation: React.FC<TopNavigationProps> = ({ onNavigationStateChange, onProgressChange }) => {
+export const TopNavigation: React.FC<TopNavigationProps> = ({ 
+  isTemplateDrawerOpen = false, 
+  onNavigationStateChange, 
+  onProgressChange 
+}) => {
   const navigation = useNavigation<AppStackScreenProps<"Camera">["navigation"]>()
   const insets = useSafeAreaInsets()
   const [isOpen, setIsOpen] = useState(false)
@@ -33,6 +38,13 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({ onNavigationStateC
     height.value = withSpring(isOpen ? 150 : 80, { damping: 20, stiffness: 300 })
     onNavigationStateChange?.(isOpen)
   }, [isOpen])
+
+  // Close TopNavigation when TemplateDrawer opens
+  useEffect(() => {
+    if (isTemplateDrawerOpen && isOpen) {
+      setIsOpen(false)
+    }
+  }, [isTemplateDrawerOpen, isOpen])
 
   // REVERSIBLE ANIMATION: Notify parent of progress using useDerivedValue (COMMENTED OUT)
   // useDerivedValue(() => {

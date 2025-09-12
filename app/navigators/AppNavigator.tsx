@@ -147,12 +147,29 @@ export interface NavigationProps
 
 export const AppNavigator = (props: NavigationProps) => {
   useBackButtonHandler((routeName) => exitRoutes.includes(routeName))
+  
+  const [isTemplateDrawerOpen, setIsTemplateDrawerOpen] = useState(false)
+  const [isTopNavigationOpen, setIsTopNavigationOpen] = useState(false)
+
+  const handleTemplateDrawerToggle = (isOpen: boolean) => {
+    setIsTemplateDrawerOpen(isOpen)
+  }
+
+  const handleTopNavigationStateChange = (isOpen: boolean) => {
+    setIsTopNavigationOpen(isOpen)
+  }
 
   return (
     <NavigationContainer ref={navigationRef} {...props}>
       <ErrorBoundary catchErrors={Config.catchErrors}>
         <AppStack />
-        <TopNavigation />
+        {/* Only show TopNavigation when TemplateDrawer is not open */}
+        {!isTemplateDrawerOpen && (
+          <TopNavigation 
+            isTemplateDrawerOpen={isTemplateDrawerOpen}
+            onNavigationStateChange={handleTopNavigationStateChange}
+          />
+        )}
       </ErrorBoundary>
     </NavigationContainer>
   )
