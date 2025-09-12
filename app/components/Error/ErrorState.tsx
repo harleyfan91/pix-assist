@@ -30,19 +30,19 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
   const getIconName = () => {
     switch (error.category) {
       case 'network':
-        return 'wifi-off'
+        return 'more'
       case 'permission':
         return 'lock'
       case 'camera':
-        return 'camera-off'
+        return 'view'
       case 'template':
-        return 'grid'
+        return 'menu'
       case 'storage':
-        return 'database'
+        return 'more'
       case 'validation':
-        return 'alert-triangle'
+        return 'check'
       default:
-        return 'alert-circle'
+        return 'ladybug'
     }
   }
 

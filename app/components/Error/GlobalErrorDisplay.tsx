@@ -36,6 +36,9 @@ export const GlobalErrorDisplay: React.FC = () => {
     } else {
       setToastError(null)
     }
+    
+    // Return undefined for no cleanup
+    return undefined
   }, [errorState.currentError, hideError])
 
   const handleToastDismiss = () => {

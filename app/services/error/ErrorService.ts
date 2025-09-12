@@ -34,7 +34,7 @@ class ErrorService {
     context?: Record<string, any>,
     originalError?: Error
   ): AppError {
-    const baseError: AppError = {
+    const baseError = {
       id: this.generateErrorId(),
       category,
       severity,
@@ -45,7 +45,7 @@ class ErrorService {
       originalError,
       isRecoverable: this.isRecoverable(category, severity),
       recoveryAction: this.getRecoveryAction(category, severity),
-    }
+    } as any
 
     return this.enrichErrorByCategory(baseError)
   }
@@ -56,10 +56,10 @@ class ErrorService {
   handleError(error: AppError, config: ErrorHandlerConfig = {}): void {
     const defaultConfig: ErrorHandlerConfig = {
       showToast: true,
-      showModal: severity >= ErrorSeverity.HIGH,
+      showModal: error.severity >= ErrorSeverity.HIGH,
       logToConsole: true,
-      reportToService: severity >= ErrorSeverity.MEDIUM,
-      autoRecover: error.isRecoverable && severity < ErrorSeverity.CRITICAL,
+      reportToService: error.severity >= ErrorSeverity.MEDIUM,
+      autoRecover: error.isRecoverable && error.severity < ErrorSeverity.CRITICAL,
       recoveryDelay: 2000,
     }
 
@@ -177,6 +177,7 @@ class ErrorService {
       case ErrorCategory.NETWORK:
         return {
           ...error,
+          category: ErrorCategory.NETWORK,
           statusCode: error.context?.statusCode,
           isTimeout: error.message.includes('timeout') || error.message.includes('TIMEOUT'),
           isConnectionError: error.message.includes('connection') || error.message.includes('network'),

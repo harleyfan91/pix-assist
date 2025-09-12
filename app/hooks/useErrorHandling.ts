@@ -30,7 +30,7 @@ export const useErrorHandler = () => {
       errorConfig.onSuccess?.(result)
       return result
     } catch (error) {
-      const appError = createAndShowError(
+      createAndShowError(
         errorConfig.category,
         error instanceof Error ? error.message : String(error),
         errorConfig.userMessage,
@@ -39,7 +39,21 @@ export const useErrorHandler = () => {
         error instanceof Error ? error : undefined
       )
       
-      errorConfig.onError?.(appError)
+      // Create a mock error object for the callback
+      const mockError = {
+        id: `error_${Date.now()}`,
+        category: errorConfig.category,
+        severity: errorConfig.severity || ErrorSeverity.MEDIUM,
+        message: error instanceof Error ? error.message : String(error),
+        userMessage: errorConfig.userMessage,
+        timestamp: Date.now(),
+        context: errorConfig.context,
+        originalError: error instanceof Error ? error : undefined,
+        isRecoverable: true,
+        recoveryAction: undefined,
+      }
+      
+      errorConfig.onError?.(mockError as any)
       return null
     }
   }, [createAndShowError])

@@ -39,6 +39,8 @@ import { useTemplates } from '@/templates/hooks/useTemplates'
 import { useTemplateDrawerHandle } from '@/hooks/useTemplateDrawerHandle'
 import { TemplateDrawer, TemplateOverlay } from '@/components/TemplateDrawer'
 import { Dimensions } from 'react-native'
+import { useErrorHandler } from '@/hooks/useErrorHandling'
+import { ErrorCategory, ErrorSeverity } from '@/services/error/types'
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window')
 const DRAWER_WIDTH = 390
@@ -76,6 +78,9 @@ export const CameraScreen: FC = function CameraScreen() {
   // Initialize template system
   const { templates, activateTemplate, deactivateTemplate } = useTemplates()
   
+  // Initialize error handling
+  const { handleAsync } = useErrorHandler()
+  
   // Template drawer handlers
   const handleTemplateDrawerOpen = () => {
     setIsTemplateDrawerVisible(true)
@@ -89,15 +94,21 @@ export const CameraScreen: FC = function CameraScreen() {
   })
   
   // Template selection handler
-  const handleTemplateSelect = async (templateId: string) => {
-    try {
-      setCurrentTemplateId(templateId)
-      await activateTemplate(templateId)
-      setIsTemplateDrawerVisible(false)
-    } catch (error) {
-      console.error('Error selecting template:', error)
-    }
-  }
+  const handleTemplateSelect = useCallback(async (templateId: string) => {
+    await handleAsync(
+      async () => {
+        setCurrentTemplateId(templateId)
+        await activateTemplate(templateId)
+        setIsTemplateDrawerVisible(false)
+      },
+      {
+        category: ErrorCategory.TEMPLATE,
+        userMessage: 'Failed to select template. Please try again.',
+        severity: ErrorSeverity.MEDIUM,
+        context: { operation: 'select', templateId },
+      }
+    )
+  }, [handleAsync, activateTemplate])
 
   const handleTemplateDrawerClose = () => {
     setIsTemplateDrawerVisible(false)

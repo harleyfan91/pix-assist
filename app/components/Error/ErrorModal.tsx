@@ -30,19 +30,19 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
   const getIconName = () => {
     switch (error.category) {
       case 'network':
-        return 'wifi-off'
+        return 'more'
       case 'permission':
         return 'lock'
       case 'camera':
-        return 'camera-off'
+        return 'view'
       case 'template':
-        return 'grid'
+        return 'menu'
       case 'storage':
-        return 'database'
+        return 'more'
       case 'validation':
-        return 'alert-triangle'
+        return 'check'
       default:
-        return 'alert-circle'
+        return 'ladybug'
     }
   }
 
@@ -190,7 +190,7 @@ const $contextContainer: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
   marginTop: spacing.sm,
 })
 
-const $contextTitle: ThemedStyle<TextStyle> = ({ colors }) => ({
+const $contextTitle: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
   color: colors.text,
   fontWeight: '600',
   marginBottom: spacing.xs,
@@ -198,7 +198,7 @@ const $contextTitle: ThemedStyle<TextStyle> = ({ colors }) => ({
 
 const $contextItem: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
   color: colors.textDim,
-  marginBottom: 2,
+  marginBottom: spacing.xs,
 })
 
 const $actions: ThemedStyle<ViewStyle> = ({ spacing }) => ({
