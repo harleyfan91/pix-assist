@@ -13,6 +13,7 @@ import Reanimated, {
 } from "react-native-reanimated"
 import { BlurView } from '@react-native-community/blur'
 import { AppStackScreenProps } from "@/navigators/AppNavigator"
+import * as styles from "./TopNavigation.styles"
 
 interface TopNavigationProps {
   onNavigationStateChange?: (isOpen: boolean) => void
@@ -117,7 +118,7 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({ onNavigationStateC
       {/* Overlay */}
       {isOpen && (
         <TouchableOpacity 
-          style={$overlay}
+          style={styles.$overlay}
           onPress={() => setIsOpen(false)}
           activeOpacity={1}
         />
@@ -125,11 +126,11 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({ onNavigationStateC
       
       {/* Drawer */}
       <GestureDetector gesture={panGesture}>
-        <Reanimated.View style={[$drawer, { paddingTop: insets.top + 4 }, animatedStyle]}>
+        <Reanimated.View style={[styles.$drawer, { paddingTop: insets.top + 4 }, animatedStyle]}>
           {/* Blur background layer - only visible when expanded */}
           {isOpen && (
             <BlurView
-              style={[$blurBackground, { borderBottomLeftRadius: 20, borderBottomRightRadius: 20 }]}
+              style={[styles.$blurBackground, { borderBottomLeftRadius: 20, borderBottomRightRadius: 20 }]}
               blurType="extraDark"
               blurAmount={15}
               reducedTransparencyFallbackColor="rgba(0, 0, 0, 0.95)"
@@ -138,8 +139,8 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({ onNavigationStateC
           
           {/* Icons */}
           <Reanimated.View style={[iconsOpacity]}>
-            <View style={$iconsContainer}>
-              <TouchableOpacity style={$iconButton} onPress={() => handleNavigation("Home")}>
+            <View style={styles.$iconsContainer}>
+              <TouchableOpacity style={styles.$iconButton} onPress={() => handleNavigation("Home")}>
                 <Ionicons 
                   name="home-outline" 
                   size={24} 
@@ -147,7 +148,7 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({ onNavigationStateC
                   style={{}}
                 />
               </TouchableOpacity>
-              <TouchableOpacity style={$iconButton} onPress={() => handleNavigation("Templates")}>
+              <TouchableOpacity style={styles.$iconButton} onPress={() => handleNavigation("Templates")}>
                 <Ionicons 
                   name="grid-outline" 
                   size={24} 
@@ -155,7 +156,7 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({ onNavigationStateC
                   style={{}}
                 />
               </TouchableOpacity>
-              <TouchableOpacity style={$iconButton} onPress={() => handleNavigation("Settings")}>
+              <TouchableOpacity style={styles.$iconButton} onPress={() => handleNavigation("Settings")}>
                 <Ionicons 
                   name="settings-outline" 
                   size={24} 
@@ -167,8 +168,8 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({ onNavigationStateC
           </Reanimated.View>
 
           {/* Handle */}
-          <TouchableOpacity style={$handle} onPress={toggleDrawer}>
-            <View style={$handleBar} />
+          <TouchableOpacity style={styles.$handle} onPress={toggleDrawer}>
+            <View style={styles.$handleBar} />
           </TouchableOpacity>
         </Reanimated.View>
       </GestureDetector>
@@ -176,65 +177,5 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({ onNavigationStateC
   )
 }
 
-// Simple styles
-const $overlay: ViewStyle = {
-  position: "absolute",
-  top: 0, left: 0, right: 0, bottom: 0,
-  backgroundColor: "transparent",
-  zIndex: 999,
-}
-
-const $drawer: ViewStyle = {
-  position: "absolute",
-  top: 0, left: 0, right: 0,
-  backgroundColor: "transparent",
-  paddingHorizontal: 20,
-  paddingBottom: 4,
-  zIndex: 1000,
-  shadowColor: "#000",
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.3,
-  shadowRadius: 8,
-  elevation: 8,
-}
-
-const $iconsContainer: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-around",
-  alignItems: "center",
-  paddingTop: 12,
-  paddingBottom: 12,
-}
-
-const $iconButton: ViewStyle = {
-  padding: 12,
-  alignItems: "center",
-  justifyContent: "center",
-  minWidth: 60,
-}
-
-const $handle: ViewStyle = {
-  position: "absolute",
-  bottom: 0, left: 0, right: 0,
-  paddingVertical: 12,
-  paddingHorizontal: 20,
-  alignItems: "center",
-  justifyContent: "center",
-}
-
-const $handleBar: ViewStyle = {
-  width: 36,
-  height: 4,
-  backgroundColor: "#fff",
-  borderRadius: 2,
-}
-
-const $blurBackground: ViewStyle = {
-  position: "absolute",
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-}
 
 
