@@ -230,7 +230,7 @@ export const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
             borderTopLeftRadius: 12,
             borderBottomLeftRadius: 12,
             overflow: 'hidden',
-            zIndex: isVisible ? 998 : 9999, // Lower z-index when drawer is open
+            zIndex: isVisible ? 1001 : 9999, // Higher z-index when drawer is open
           },
           templateDrawerHandleStyle
         ]}

@@ -59,12 +59,7 @@ export type AppStackScreenProps<T extends keyof AppStackParamList> = NativeStack
 // Documentation: https://reactnavigation.org/docs/native-stack-navigator/
 const Stack = createNativeStackNavigator<AppStackParamList>()
 
-const AppStack = () => {
-  const [isTemplateDrawerOpen, setIsTemplateDrawerOpen] = useState(false)
-
-  const handleTemplateDrawerToggle = (isOpen: boolean) => {
-    setIsTemplateDrawerOpen(isOpen)
-  }
+const AppStack = ({ onTemplateDrawerToggle }: { onTemplateDrawerToggle: (isOpen: boolean) => void }) => {
 
   return (
     <Stack.Navigator
@@ -81,7 +76,7 @@ const AppStack = () => {
         options={{
           animation: "none", // No animation for camera - it stays as the base
         }}
-        initialParams={{ onTemplateDrawerToggle: handleTemplateDrawerToggle }}
+        initialParams={{ onTemplateDrawerToggle }}
       />
       
       {/* Other screens presented as modals */}
@@ -162,7 +157,7 @@ export const AppNavigator = (props: NavigationProps) => {
   return (
     <NavigationContainer ref={navigationRef} {...props}>
       <ErrorBoundary catchErrors={Config.catchErrors}>
-        <AppStack />
+        <AppStack onTemplateDrawerToggle={handleTemplateDrawerToggle} />
         {/* Only show TopNavigation when TemplateDrawer is not open */}
         {!isTemplateDrawerOpen && (
           <TopNavigation 

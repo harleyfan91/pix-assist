@@ -8,7 +8,6 @@ import Reanimated, {
   runOnJS, 
   useSharedValue, 
   useAnimatedStyle, 
-  useDerivedValue,
   withSpring
 } from "react-native-reanimated"
 import { BlurView } from '@react-native-community/blur'
@@ -18,13 +17,11 @@ import * as styles from "./TopNavigation.styles"
 interface TopNavigationProps {
   isTemplateDrawerOpen?: boolean
   onNavigationStateChange?: (isOpen: boolean) => void
-  onProgressChange?: (progress: number) => void
 }
 
 export const TopNavigation: React.FC<TopNavigationProps> = ({ 
   isTemplateDrawerOpen = false, 
-  onNavigationStateChange, 
-  onProgressChange 
+  onNavigationStateChange
 }) => {
   const navigation = useNavigation<AppStackScreenProps<"Camera">["navigation"]>()
   const insets = useSafeAreaInsets()
@@ -45,14 +42,6 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
       setIsOpen(false)
     }
   }, [isTemplateDrawerOpen, isOpen])
-
-  // REVERSIBLE ANIMATION: Notify parent of progress using useDerivedValue (COMMENTED OUT)
-  // useDerivedValue(() => {
-  //   const progress = (height.value - 80) / 80
-  //   if (onProgressChange) {
-  //     runOnJS(onProgressChange)(progress)
-  //   }
-  // })
 
   const handleNavigation = (screenName: "Home" | "Gallery" | "Settings" | "Templates") => {
     navigation.navigate(screenName as any)

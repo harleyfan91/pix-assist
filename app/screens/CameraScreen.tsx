@@ -205,13 +205,6 @@ export const CameraScreen: FC = function CameraScreen() {
   
   
 
-  // REVERSIBLE ANIMATION: Navigation state for camera animation (COMMENTED OUT FOR TESTING)
-  // const [isNavigationOpen, setIsNavigationOpen] = useState(false)
-  // const [navigationProgress, setNavigationProgress] = useState(0) // 0-1 progress
-  // const cameraOffset = useSharedValue(0) // Camera push-up offset
-
-  
-
   // Device orientation for icon rotation (using custom hook)
   const { animatedIconStyle: galleryIconStyle } = useIconRotation({
     damping: 20,
@@ -264,16 +257,6 @@ export const CameraScreen: FC = function CameraScreen() {
   useEffect(() => {
     setCameraPermission(hasPermission)
   }, [hasPermission])
-
-  // REVERSIBLE ANIMATION: Animate camera offset based on navigation progress (COMMENTED OUT)
-  // useEffect(() => {
-  //   const targetOffset = navigationProgress * 80 // 0-80px based on progress
-  //   cameraOffset.value = withTiming(targetOffset, {
-  //     duration: 100, // Very fast for real-time tracking
-  //   })
-  // }, [navigationProgress, cameraOffset])
-
-
 
   // Initialize zoom with device's neutral zoom when device changes
   useEffect(() => {
