@@ -38,6 +38,7 @@ import { useCameraAnimations } from '@/hooks/useCameraAnimations'
 import { useTemplates } from '@/templates/hooks/useTemplates'
 import { TemplateDrawer, TemplateOverlay } from '@/components/TemplateDrawer'
 import { CameraControls } from '@/components/CameraControls'
+import { CameraOverlays } from '@/components/CameraOverlays'
 import { Dimensions } from 'react-native'
 import { useErrorHandler } from '@/hooks/useErrorHandling'
 import { ErrorCategory, ErrorSeverity } from '@/services/error/types'
@@ -503,75 +504,20 @@ export const CameraScreen: FC = function CameraScreen() {
                 <Text style={styles.$noCameraSubtitle}>No camera device available on this device.</Text>
               </View>
 
-              {/* Flash overlay for photo capture feedback */}
-              <Reanimated.View style={[styles.$flashOverlay, animatedFlashStyle]} />
-
-              {/* Focus Ring - Only show when focusing */}
-              {showFocusRing && <Reanimated.View style={[styles.$focusRing, animatedFocusRingStyle]} />}
-
-              {/* Popup Indicator - Shows zoom level or flash status */}
-              {popupState.visible && (
-                <Reanimated.View style={[styles.$popupIndicator, animatedPopupStyle]}>
-                  <View style={styles.$popupBlurBackground}>
-                    <BlurView
-                      style={styles.$popupBlurView}
-                      blurType="light"
-                      blurAmount={7}
-                      reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
-                    />
-                    <View style={styles.$popupTextContent}>
-                      <View style={styles.$popupTextContainer}>
-                        <Reanimated.View style={popupTextStyle}>
-                          <Text style={styles.$popupText}>
-                            {popupState.value || 'No Value'}
-                          </Text>
-                        </Reanimated.View>
-                      </View>
-                    </View>
-                  </View>
-                </Reanimated.View>
-              )}
-
-              {/* Exposure Controls - Gluestack Slider */}
-              {isExposureControlsVisible && (
-                <Reanimated.View style={[styles.$exposureControlsVertical, animatedExposureControlsStyle]}>
-                  <BlurButton
-                    onPress={() => {}} // No press action needed for container
-                    style={styles.$exposureControlsBlur}
-                    blurType="light"
-                    blurAmount={7}
-                    reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
-                    disabled={true}
-                  >
-                    <View style={styles.$exposureSliderContainer}>
-                      <Reanimated.View style={exposureLabelStyle}>
-                        <Text style={styles.$exposureLabel}>+2</Text>
-                      </Reanimated.View>
-                      <View style={styles.$sliderWrapper}>
-                        {/* Neutral position indicator line */}
-                        <View style={styles.$neutralPositionLine} />
-                        <Slider
-                          value={sliderValue}
-                          onChange={handleExposureSliderChange}
-                          minValue={-1}
-                          maxValue={1}
-                          step={0.01}
-                          orientation="vertical"
-                          style={styles.$gluestackSlider}
-                        >
-                          <SliderTrack style={styles.$sliderTrack}>
-                            <SliderFilledTrack style={styles.$sliderFilledTrack} />
-                          </SliderTrack>
-                          <SliderThumb style={styles.$sliderThumb} />
-                        </Slider>
-                      </View>
-                      <Reanimated.View style={exposureLabelStyle}>
-                        <Text style={styles.$exposureLabel}>-2</Text>
-                      </Reanimated.View>
-                    </View>
-                  </BlurButton>
-                </Reanimated.View>
-              )}
+              {/* Camera Overlays - Flash, Focus Ring, Popup, Exposure */}
+              <CameraOverlays
+                animatedFlashStyle={animatedFlashStyle}
+                showFocusRing={showFocusRing}
+                animatedFocusRingStyle={animatedFocusRingStyle}
+                popupState={popupState}
+                animatedPopupStyle={animatedPopupStyle}
+                popupTextStyle={popupTextStyle}
+                isExposureControlsVisible={isExposureControlsVisible}
+                animatedExposureControlsStyle={animatedExposureControlsStyle}
+                exposureLabelStyle={exposureLabelStyle}
+                sliderValue={sliderValue}
+                handleExposureSliderChange={handleExposureSliderChange}
+              />
             </View>
 
             {/* Unified click away overlay for menus */}
@@ -671,8 +617,20 @@ export const CameraScreen: FC = function CameraScreen() {
             <View style={styles.$gradientLayer2} />
             <View style={styles.$gradientLayer1} />
             
-            {/* Flash overlay for photo capture feedback */}
-            <Reanimated.View style={[styles.$flashOverlay, animatedFlashStyle]} />
+            {/* Camera Overlays - Flash, Focus Ring, Popup, Exposure */}
+            <CameraOverlays
+              animatedFlashStyle={animatedFlashStyle}
+              showFocusRing={showFocusRing}
+              animatedFocusRingStyle={animatedFocusRingStyle}
+              popupState={popupState}
+              animatedPopupStyle={animatedPopupStyle}
+              popupTextStyle={popupTextStyle}
+              isExposureControlsVisible={isExposureControlsVisible}
+              animatedExposureControlsStyle={animatedExposureControlsStyle}
+              exposureLabelStyle={exposureLabelStyle}
+              sliderValue={sliderValue}
+              handleExposureSliderChange={handleExposureSliderChange}
+            />
 
             {/* Preview overlay - shows captured photo for 2 seconds */}
             {isPreviewVisible && capturedPhoto && (
@@ -694,83 +652,12 @@ export const CameraScreen: FC = function CameraScreen() {
               </TouchableOpacity>
             )}
 
-
-
             {/* Template Overlay - Render selected template */}
             {currentTemplateId && (
               <TemplateOverlay
                 templateId={currentTemplateId}
                 screenDimensions={{ width: SCREEN_WIDTH, height: SCREEN_HEIGHT }}
               />
-            )}
-
-            {/* Focus Ring - Only show when focusing */}
-            {showFocusRing && <Reanimated.View style={[styles.$focusRing, animatedFocusRingStyle]} />}
-
-            {/* Popup Indicator - Shows zoom level or flash status */}
-            {popupState.visible && (
-              <Reanimated.View style={[styles.$popupIndicator, animatedPopupStyle]}>
-                <View style={styles.$popupBlurBackground}>
-                  <BlurView
-                    style={styles.$popupBlurView}
-                    blurType="light"
-                    blurAmount={7}
-                    reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
-                  />
-                  <View style={styles.$popupTextContent}>
-                    <View style={styles.$popupTextContainer}>
-                      <Reanimated.View style={popupTextStyle}>
-                        <Text style={styles.$popupText}>
-                          {popupState.value || 'No Value'}
-                        </Text>
-                      </Reanimated.View>
-                    </View>
-                  </View>
-                </View>
-              </Reanimated.View>
-            )}
-
-
-
-            {/* Exposure Controls - Gluestack Slider */}
-            {isExposureControlsVisible && (
-              <Reanimated.View style={[styles.$exposureControlsVertical, animatedExposureControlsStyle]}>
-                <BlurButton
-                  onPress={() => {}} // No press action needed for container
-                  style={styles.$exposureControlsBlur}
-                  blurType="light"
-                  blurAmount={7}
-                  reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
-                  disabled={true}
-                >
-                  <View style={styles.$exposureSliderContainer}>
-                    <Reanimated.View style={exposureLabelStyle}>
-                      <Text style={styles.$exposureLabel}>+2</Text>
-                    </Reanimated.View>
-                    <View style={styles.$sliderWrapper}>
-                      {/* Neutral position indicator line */}
-                      <View style={styles.$neutralPositionLine} />
-                      <Slider
-                        value={sliderValue}
-                        onChange={handleExposureSliderChange}
-                        minValue={-1}
-                        maxValue={1}
-                        step={0.01}
-                        orientation="vertical"
-                        style={styles.$gluestackSlider}
-                      >
-                        <SliderTrack style={styles.$sliderTrack}>
-                          <SliderFilledTrack style={styles.$sliderFilledTrack} />
-                        </SliderTrack>
-                        <SliderThumb style={styles.$sliderThumb} />
-                      </Slider>
-                    </View>
-                    <Reanimated.View style={exposureLabelStyle}>
-                      <Text style={styles.$exposureLabel}>-2</Text>
-                    </Reanimated.View>
-                  </View>
-                </BlurButton>
-              </Reanimated.View>
             )}
           </View>
 
