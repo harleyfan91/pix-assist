@@ -152,6 +152,7 @@ export const AppNavigator = (props: NavigationProps) => {
     <NavigationContainer ref={navigationRef} {...props}>
       <ErrorBoundary catchErrors={Config.catchErrors}>
         <AppStack />
+        <TopNavigation />
       </ErrorBoundary>
     </NavigationContainer>
   )
