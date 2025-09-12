@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react'
-import { View, Text, Dimensions, TouchableOpacity, Image } from 'react-native'
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
+import { View, Text, Dimensions, TouchableOpacity, Image, PanResponder } from 'react-native'
 import { PanGestureHandler } from 'react-native-gesture-handler'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { BlurView } from '@react-native-community/blur'
@@ -20,6 +20,10 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window')
 const DRAWER_WIDTH = SCREEN_WIDTH // Cover entire screen width
 const DRAWER_PEEK = 0 // No peek when closed
 
+// Template drawer handle constants
+const EDGE_DETECTION_WIDTH = 25
+const EDGE_DETECTION_HEIGHT = 50
+const EDGE_DETECTION_TOP = (SCREEN_HEIGHT - EDGE_DETECTION_HEIGHT) / 3
 
 interface TemplateDrawerProps {
   isVisible: boolean
@@ -45,6 +49,10 @@ export const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null)
   const insets = useSafeAreaInsets()
   
+  // Template drawer handle drag state
+  const isDraggingHandle = useSharedValue(false)
+  const handleDragOffset = useSharedValue(0)
+  
   // Pass translateX to parent for edge detection area animation
   useEffect(() => {
     if (onTranslateXChange) {
@@ -58,15 +66,15 @@ export const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
   // Camera viewfinder dimensions for BlurView positioning
   // Using useCameraViewfinder hook for precise camera area calculation
 
-  // Debug logging for drawer space
-  console.log('Drawer space:', {
-    screenHeight: SCREEN_HEIGHT,
-    safeAreaTop: insets.top,
-    availableHeight: SCREEN_HEIGHT - insets.top - 10 - 10, // screen - top padding - bottom padding
-    categoryTabsHeight: 40, // estimated
-    carouselMargin: 15,
-    remainingSpace: SCREEN_HEIGHT - insets.top - 10 - 10 - 40 - 15
-  })
+  // Debug logging for drawer space (disabled for performance)
+  // console.log('Drawer space:', {
+  //   screenHeight: SCREEN_HEIGHT,
+  //   safeAreaTop: insets.top,
+  //   availableHeight: SCREEN_HEIGHT - insets.top - 10 - 10, // screen - top padding - bottom padding
+  //   categoryTabsHeight: 40, // estimated
+  //   carouselMargin: 15,
+  //   remainingSpace: SCREEN_HEIGHT - insets.top - 10 - 10 - 40 - 15
+  // })
 
   // REVERSIBLE ANIMATION: Drawer slide in/out animation
   useEffect(() => {
@@ -117,10 +125,79 @@ export const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
     backgroundColor: `rgba(0, 0, 0, ${interpolate(backdropOpacity.value, [0, 1], [0, 0.3])})`,
   }))
 
+  // Animated style for template drawer handle that moves with drawer
+  const templateDrawerHandleStyle = useAnimatedStyle(() => {
+    // If we're dragging the handle, follow the finger directly
+    if (isDraggingHandle.value) {
+      return {
+        transform: [{ translateX: handleDragOffset.value }],
+      }
+    }
+    
+    // Map drawer translateX to template drawer handle movement
+    // When drawer is closed (translateX = SCREEN_WIDTH), handle translateX = 0 (at starting position)
+    // When drawer is open (translateX = 0), handle translateX = -SCREEN_WIDTH (moves left off-screen)
+    const baseTransform = translateX.value - DRAWER_WIDTH
+    // Add extra offset when drawer is open to ensure components are completely hidden
+    const extraOffset = translateX.value < DRAWER_WIDTH * 0.1 ? -20 : 0
+    return {
+      transform: [{ translateX: baseTransform + extraOffset }],
+    }
+  }, [isDraggingHandle, handleDragOffset])
 
-
-
-
+  // PanResponder for template drawer handle (memoized for performance)
+  const templateDrawerHandlePanResponder = useMemo(() => PanResponder.create({
+    onStartShouldSetPanResponder: (evt, gestureState) => {
+      const { pageX, pageY } = evt.nativeEvent
+      // Use absolute screen coordinates to detect touches at the screen edge
+      const isInRightEdge = pageX >= SCREEN_WIDTH - EDGE_DETECTION_WIDTH
+      const isInVerticalRange = pageY >= EDGE_DETECTION_TOP && pageY <= EDGE_DETECTION_TOP + EDGE_DETECTION_HEIGHT
+      const isDrawerClosed = !isVisible
+      
+      // Always capture touches in the edge area - we'll handle taps and drags in onPanResponderRelease
+      return isInRightEdge && isInVerticalRange && isDrawerClosed
+    },
+    onMoveShouldSetPanResponder: (evt, gestureState) => {
+      // Always return false - we'll handle movement in onPanResponderMove if we've been granted
+      return false
+    },
+    onPanResponderGrant: () => {
+      // Reset drag state
+      isDraggingHandle.value = false
+      handleDragOffset.value = 0
+    },
+    onPanResponderMove: (evt, gestureState) => {
+      // Only handle drag if there's significant movement
+      if (Math.abs(gestureState.dx) > 10) {
+        // Template drawer handle drag gesture in progress - synchronize with drawer
+        isDraggingHandle.value = true
+        handleDragOffset.value = gestureState.dx
+        
+        // Update drawer's translateX to keep them in sync - use runOnJS for safety
+        const newTranslateX = Math.max(0, Math.min(DRAWER_WIDTH, DRAWER_WIDTH + gestureState.dx))
+        translateX.value = newTranslateX
+      }
+    },
+    onPanResponderRelease: (evt, gestureState) => {
+      const isTap = Math.abs(gestureState.dx) < 10 && Math.abs(gestureState.dy) < 10
+      const shouldOpen = gestureState.dx < -DRAWER_WIDTH * 0.3 || gestureState.vx < -500
+      
+      // Stop dragging
+      isDraggingHandle.value = false
+      handleDragOffset.value = 0
+      
+      if (isTap) {
+        // Handle tap - open drawer
+        if (onOpen) onOpen()
+      } else if (shouldOpen) {
+        // Handle drag - open drawer if dragged far enough
+        if (onOpen) onOpen()
+      } else {
+        // Snap back to closed position
+        translateX.value = DRAWER_WIDTH
+      }
+    },
+  }), [isVisible, onOpen])
 
   const handleTemplateSelect = async (templateId: string) => {
     setSelectedTemplateId(templateId)
@@ -141,6 +218,66 @@ export const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
 
   return (
     <>
+      {/* Template Drawer Handle */}
+      <Animated.View
+        style={[
+          {
+            position: 'absolute',
+            top: EDGE_DETECTION_TOP,
+            left: SCREEN_WIDTH - 38, // Start 20px from right edge (partially visible)
+            width: 40, // EDGE_DETECTION_WIDTH
+            height: EDGE_DETECTION_HEIGHT,
+            borderTopLeftRadius: 12,
+            borderBottomLeftRadius: 12,
+            overflow: 'hidden',
+            zIndex: isVisible ? 998 : 9999, // Lower z-index when drawer is open
+          },
+          templateDrawerHandleStyle
+        ]}
+        {...templateDrawerHandlePanResponder.panHandlers}
+      >
+        <BlurView
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+          }}
+          blurType="light"
+          blurAmount={7}
+          reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
+        />
+      </Animated.View>
+      
+      {/* Vertical Line */}
+      <Animated.View
+        style={[
+          {
+            position: 'absolute',
+            top: 0,
+            left: SCREEN_WIDTH + 2, // Start 2px off-screen to the right
+            width: 1,
+            height: SCREEN_HEIGHT,
+            zIndex: 9998, // Just below edge detection area
+          },
+          templateDrawerHandleStyle // Same transform as template drawer handle
+        ]}
+      >
+        <BlurView
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+          }}
+          blurType="light"
+          blurAmount={7}
+          reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
+        />
+      </Animated.View>
+
       {/* Backdrop */}
       <Animated.View
         style={[

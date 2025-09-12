@@ -36,6 +36,7 @@ import { useCameraControls } from '@/hooks/useCameraControls'
 import { useCameraGestures } from '@/hooks/useCameraGestures'
 import { useCameraAnimations } from '@/hooks/useCameraAnimations'
 import { useTemplates } from '@/templates/hooks/useTemplates'
+import { useTemplateDrawerHandle } from '@/hooks/useTemplateDrawerHandle'
 import { TemplateDrawer, TemplateOverlay } from '@/components/TemplateDrawer'
 import { Dimensions } from 'react-native'
 import { useErrorHandler } from '@/hooks/useErrorHandling'
@@ -72,6 +73,8 @@ export const CameraScreen: FC = function CameraScreen() {
   
   // Template system state
   const [isTemplateDrawerVisible, setIsTemplateDrawerVisible] = useState(false)
+  
+  
   const [currentTemplateId, setCurrentTemplateId] = useState<string | null>(null)
   const cameraViewRef = useRef<View | null>(null)
   
@@ -87,6 +90,11 @@ export const CameraScreen: FC = function CameraScreen() {
     route.params?.onTemplateDrawerToggle?.(true)
   }
   
+  // Template drawer handle hook
+  const { templateDrawerHandleStyle, templateDrawerHandlePanResponder, handleTranslateXChange } = useTemplateDrawerHandle({
+    isTemplateDrawerVisible,
+    onTemplateDrawerOpen: handleTemplateDrawerOpen
+  })
   
   // Template selection handler
   const handleTemplateSelect = useCallback(async (templateId: string) => {
@@ -719,15 +727,73 @@ export const CameraScreen: FC = function CameraScreen() {
           </Reanimated.View>
         </GestureDetector>
         
+        {/* Template Drawer Handle #1 - COMMENTED OUT FOR TESTING */}
+        {/* <Reanimated.View
+          style={[
+            {
+              position: 'absolute',
+              top: (SCREEN_HEIGHT - 50) / 3, // EDGE_DETECTION_TOP
+              right: -5, // Start at right edge
+              width: 25, // EDGE_DETECTION_WIDTH
+              height: 50, // EDGE_DETECTION_HEIGHT
+              borderTopLeftRadius: 12,
+              borderBottomLeftRadius: 12,
+              overflow: 'hidden',
+              zIndex: isTemplateDrawerVisible ? 998 : 9999, // Lower z-index when drawer is open
+            },
+            templateDrawerHandleStyle
+          ]}
+          {...templateDrawerHandlePanResponder.panHandlers}
+        >
+          <BlurView
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+            }}
+            blurType="light"
+            blurAmount={7}
+            reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
+          />
+        </Reanimated.View> */}
+        
+        <Reanimated.View
+          style={[
+            {
+              position: 'absolute',
+              top: 0,
+              left: SCREEN_WIDTH + 1, // Start 2px off-screen to the right
+              width: 1,
+              height: SCREEN_HEIGHT,
+              zIndex: 9998, // Just below template drawer handle
+            },
+            templateDrawerHandleStyle // Same transform as template drawer handle
+          ]}
+        >
+          <BlurView
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+            }}
+            blurType="light"
+            blurAmount={7}
+            reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
+          />
+        </Reanimated.View>
         
         
-        
-        {/* Template Drawer */}
+        {/* Template Drawer #1 */}
         <TemplateDrawer
           isVisible={isTemplateDrawerVisible}
           onClose={handleTemplateDrawerClose}
           onOpen={handleTemplateDrawerOpen}
           onTemplateSelect={handleTemplateSelect}
+          onTranslateXChange={handleTranslateXChange}
         />
       </Screen>
     )
@@ -1019,14 +1085,74 @@ export const CameraScreen: FC = function CameraScreen() {
           </Reanimated.View>
         </GestureDetector>
         
+        {/* Template Drawer Handle #2 */}
+        <Reanimated.View
+          style={[
+            {
+              position: 'absolute',
+              top: (SCREEN_HEIGHT - 50) / 3, // EDGE_DETECTION_TOP
+              left: SCREEN_WIDTH - 38, // Start 20px from right edge (partially visible)
+              width: 40, // EDGE_DETECTION_WIDTH
+              height: 50, // EDGE_DETECTION_HEIGHT
+              borderTopLeftRadius: 12,
+              borderBottomLeftRadius: 12,
+              overflow: 'hidden',
+              zIndex: isTemplateDrawerVisible ? 998 : 9999, // Lower z-index when drawer is open
+            },
+            templateDrawerHandleStyle
+          ]}
+          {...templateDrawerHandlePanResponder.panHandlers}
+        >
+          <BlurView
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+            }}
+            blurType="light"
+            blurAmount={7}
+            reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
+          />
+        </Reanimated.View>
         
-        {/* Template Drawer */}
-        <TemplateDrawer
+        {/* BLOCKING ELEMENT - COMMENTED OUT FOR TESTING */}
+        {/* <Reanimated.View
+          style={[
+            {
+              position: 'absolute',
+              top: 0,
+              left: SCREEN_WIDTH + 2, // Start 2px off-screen to the right
+              width: 1,
+              height: SCREEN_HEIGHT,
+              zIndex: 9998, // Just below edge detection area
+            },
+            templateDrawerHandleStyle // Same transform as template drawer handle
+          ]}
+        >
+          <BlurView
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+            }}
+            blurType="light"
+            blurAmount={7}
+            reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
+          />
+        </Reanimated.View> */}
+        
+        {/* Template Drawer #2 - COMMENTED OUT FOR TESTING */}
+        {/* <TemplateDrawer
           isVisible={isTemplateDrawerVisible}
           onClose={handleTemplateDrawerClose}
           onOpen={handleTemplateDrawerOpen}
           onTemplateSelect={handleTemplateSelect}
-        />
+          onTranslateXChange={handleTranslateXChange}
+        /> */}
       </Screen>
     )
   }
