@@ -37,6 +37,7 @@ import { useCameraGestures } from '@/hooks/useCameraGestures'
 import { useCameraAnimations } from '@/hooks/useCameraAnimations'
 import { useTemplates } from '@/templates/hooks/useTemplates'
 import { TemplateDrawer, TemplateOverlay } from '@/components/TemplateDrawer'
+import { CameraControls } from '@/components/CameraControls'
 import { Dimensions } from 'react-native'
 import { useErrorHandler } from '@/hooks/useErrorHandling'
 import { ErrorCategory, ErrorSeverity } from '@/services/error/types'
@@ -583,123 +584,23 @@ export const CameraScreen: FC = function CameraScreen() {
             )}
 
             {/* Bottom Controls - iPhone-style layout */}
-            <View style={styles.$bottomControls}>
-              {/* Left Container: Gallery Button */}
-              <View style={styles.$leftControlsContainer}>
-                <BlurButton
-                  onPress={navigateToGallery}
-                  icon={Ionicons}
-                  iconProps={{
-                    name: "images-outline",
-                    size: 24,
-                    color: "#fff"
-                  }}
-                  style={styles.$galleryButton}
-                  blurType="light"
-                  blurAmount={7}
-                  reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
-                >
-                  <Reanimated.View style={galleryIconStyle}>
-                    <Ionicons 
-                      name="images-outline" 
-                      size={24} 
-                      color="#fff" 
-                    />
-                  </Reanimated.View>
-                </BlurButton>
-              </View>
-
-              {/* Center Container: Shutter Button */}
-              <View style={styles.$centerControlsContainer}>
-                <GestureDetector gesture={shutterButtonGesture}>
-                  <View style={[
-                    styles.$shutterButton,
-                    (shutterPressed || isCapturing) && { opacity: 0.6 }
-                  ]}>
-                    <View style={styles.$shutterButtonInner} />
-                  </View>
-                </GestureDetector>
-              </View>
-
-              {/* Right Container: Camera Mode Button */}
-              <View style={styles.$rightControlsContainer}>
-                <Reanimated.View style={[animatedCameraModeStyle, styles.$cameraModeContainer]}>
-                  {/* Main expanding background with blur */}
-                  <BlurView
-                    style={styles.$cameraModeBlurBackground}
-                    blurType="light"
-                    blurAmount={7}
-                    reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
-                  />
-                  
-                  {/* Camera control buttons - only visible when expanded */}
-                  <Reanimated.View style={[styles.$controlsContainer, animatedCameraControlsOpacity]}>
-                    <BlurButton
-                      onPress={handleFlashToggle}
-                      style={styles.$controlButton}
-                      blurType="light"
-                      blurAmount={5}
-                      reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.1)"
-                    >
-                      <Reanimated.View style={flashIconStyle}>
-                        <Ionicons 
-                          name={
-                            flashMode === 'auto' ? 'flash-outline' :
-                            flashMode === 'on' ? 'flash' :
-                            'flash-off-outline'
-                          }
-                          size={20} 
-                          color="#fff" 
-                        />
-                      </Reanimated.View>
-                    </BlurButton>
-                    
-                    <BlurButton
-                      onPress={toggleExposureControls}
-                      style={styles.$controlButton}
-                      blurType="light"
-                      blurAmount={5}
-                      reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.1)"
-                    >
-                      <Reanimated.View style={exposureIconStyle}>
-                        <Ionicons 
-                          name="contrast-outline" 
-                          size={20} 
-                          color="#fff" 
-                        />
-                      </Reanimated.View>
-                    </BlurButton>
-                    
-                    <BlurButton
-                      onPress={() => {}} // TODO: Add crop functionality
-                      style={styles.$controlButton}
-                      blurType="light"
-                      blurAmount={5}
-                      reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.1)"
-                    >
-                      <Reanimated.View style={cropIconStyle}>
-                        <Ionicons 
-                          name="crop-outline" 
-                          size={20} 
-                          color="#fff" 
-                        />
-                      </Reanimated.View>
-                    </BlurButton>
-                  </Reanimated.View>
-                  
-                  {/* Main chevron button - always visible at bottom */}
-                  <TouchableOpacity
-                    onPress={toggleCameraModeExpansion}
-                    style={styles.$chevronButtonContainer}
-                    activeOpacity={0.6}
-                  >
-                    <Reanimated.View style={animatedChevronStyle}>
-                      <Ionicons name="chevron-up-sharp" size={24} color="#fff" />
-                    </Reanimated.View>
-                  </TouchableOpacity>
-                </Reanimated.View>
-              </View>
-            </View>
+            <CameraControls
+              onNavigateToGallery={navigateToGallery}
+              shutterButtonGesture={shutterButtonGesture}
+              shutterPressed={shutterPressed}
+              isCapturing={isCapturing}
+              animatedCameraModeStyle={animatedCameraModeStyle}
+              animatedCameraControlsOpacity={animatedCameraControlsOpacity}
+              animatedChevronStyle={animatedChevronStyle}
+              onToggleCameraModeExpansion={toggleCameraModeExpansion}
+              onFlashToggle={handleFlashToggle}
+              flashMode={flashMode}
+              flashIconStyle={flashIconStyle}
+              onToggleExposureControls={toggleExposureControls}
+              exposureIconStyle={exposureIconStyle}
+              cropIconStyle={cropIconStyle}
+              galleryIconStyle={galleryIconStyle}
+            />
           </Reanimated.View>
         </GestureDetector>
         
@@ -883,123 +784,23 @@ export const CameraScreen: FC = function CameraScreen() {
           )}
 
           {/* Bottom Controls - iPhone-style layout */}
-          <View style={styles.$bottomControls}>
-            {/* Left Container: Gallery Button */}
-            <View style={styles.$leftControlsContainer}>
-              <BlurButton
-                onPress={navigateToGallery}
-                icon={Ionicons}
-                iconProps={{
-                  name: "images-outline",
-                  size: 24,
-                  color: "#fff"
-                }}
-                style={styles.$galleryButton}
-                blurType="light"
-                blurAmount={7}
-                reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
-              >
-                <Reanimated.View style={galleryIconStyle}>
-                  <Ionicons 
-                    name="images-outline" 
-                    size={24} 
-                    color="#fff" 
-                  />
-                </Reanimated.View>
-              </BlurButton>
-            </View>
-
-            {/* Center Container: Shutter Button */}
-            <View style={styles.$centerControlsContainer}>
-              <GestureDetector gesture={shutterButtonGesture}>
-                <View style={[
-                  styles.$shutterButton,
-                  (shutterPressed || isCapturing) && { opacity: 0.6 }
-                ]}>
-                  <View style={styles.$shutterButtonInner} />
-                </View>
-              </GestureDetector>
-            </View>
-
-            {/* Right Container: Camera Mode Button */}
-            <View style={styles.$rightControlsContainer}>
-              <Reanimated.View style={[animatedCameraModeStyle, styles.$cameraModeContainer]}>
-                {/* Main expanding background with blur */}
-                <BlurView
-                  style={styles.$cameraModeBlurBackground}
-                  blurType="light"
-                  blurAmount={7}
-                  reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
-                />
-                
-                {/* Camera control buttons - only visible when expanded */}
-                <Reanimated.View style={[styles.$controlsContainer, animatedCameraControlsOpacity]}>
-                  <BlurButton
-                    onPress={handleFlashToggle}
-                    style={styles.$controlButton}
-                    blurType="light"
-                    blurAmount={5}
-                    reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.1)"
-                  >
-                    <Reanimated.View style={flashIconStyle}>
-                      <Ionicons 
-                        name={
-                          flashMode === 'auto' ? 'flash-outline' :
-                          flashMode === 'on' ? 'flash' :
-                          'flash-off-outline'
-                        }
-                        size={20} 
-                        color="#fff" 
-                      />
-                    </Reanimated.View>
-                  </BlurButton>
-                  
-                  <BlurButton
-                    onPress={toggleExposureControls}
-                    style={styles.$controlButton}
-                    blurType="light"
-                    blurAmount={5}
-                    reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.1)"
-                  >
-                    <Reanimated.View style={exposureIconStyle}>
-                      <Ionicons 
-                        name="contrast-outline" 
-                        size={20} 
-                        color="#fff" 
-                      />
-                    </Reanimated.View>
-                  </BlurButton>
-                  
-                  <BlurButton
-                    onPress={() => {}} // TODO: Add crop functionality
-                    style={styles.$controlButton}
-                    blurType="light"
-                    blurAmount={5}
-                    reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.1)"
-                  >
-                    <Reanimated.View style={cropIconStyle}>
-                      <Ionicons 
-                        name="crop-outline" 
-                        size={20} 
-                        color="#fff" 
-                      />
-                    </Reanimated.View>
-                  </BlurButton>
-                </Reanimated.View>
-                
-                {/* Main chevron button - always visible at bottom */}
-                <TouchableOpacity
-                  onPress={toggleCameraModeExpansion}
-                  style={styles.$chevronButtonContainer}
-                  activeOpacity={0.6}
-                >
-                  <Reanimated.View style={animatedChevronStyle}>
-                    <Ionicons name="chevron-up-sharp" size={24} color="#fff" />
-                  </Reanimated.View>
-                </TouchableOpacity>
-              </Reanimated.View>
-            </View>
-            </View>
+          <CameraControls
+            onNavigateToGallery={navigateToGallery}
+            shutterButtonGesture={shutterButtonGesture}
+            shutterPressed={shutterPressed}
+            isCapturing={isCapturing}
+            animatedCameraModeStyle={animatedCameraModeStyle}
+            animatedCameraControlsOpacity={animatedCameraControlsOpacity}
+            animatedChevronStyle={animatedChevronStyle}
+            onToggleCameraModeExpansion={toggleCameraModeExpansion}
+            onFlashToggle={handleFlashToggle}
+            flashMode={flashMode}
+            flashIconStyle={flashIconStyle}
+            onToggleExposureControls={toggleExposureControls}
+            exposureIconStyle={exposureIconStyle}
+            cropIconStyle={cropIconStyle}
+            galleryIconStyle={galleryIconStyle}
+          />
           </Reanimated.View>
         </GestureDetector>
         
