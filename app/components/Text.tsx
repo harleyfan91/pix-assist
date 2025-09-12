@@ -58,7 +58,21 @@ export interface TextProps extends RNTextProps {
  */
 export const Text = forwardRef(function Text(props: TextProps, ref: ForwardedRef<RNText>) {
   const { weight, size, tx, txOptions, text, children, style: $styleOverride, ...rest } = props
-  const { themed } = useAppTheme()
+  
+  // Try to use theme, but fallback to safe defaults if it fails
+  let themed: any
+  try {
+    const themeResult = useAppTheme()
+    themed = themeResult.themed
+  } catch (error) {
+    // Theme provider not available, use fallback
+    themed = (styles: any) => {
+      if (Array.isArray(styles)) {
+        return Object.assign({}, ...styles.map(s => typeof s === 'function' ? s({ colors: { text: '#000000' } }) : s))
+      }
+      return typeof styles === 'function' ? styles({ colors: { text: '#000000' } }) : styles
+    }
+  }
 
   const i18nText = tx && translate(tx, txOptions)
   const content = i18nText || text || children
@@ -80,13 +94,13 @@ export const Text = forwardRef(function Text(props: TextProps, ref: ForwardedRef
 })
 
 const $sizeStyles = {
-  xxl: { fontSize: 36, lineHeight: 44 } satisfies TextStyle,
-  xl: { fontSize: 24, lineHeight: 34 } satisfies TextStyle,
+  xxl: { fontSize: 36, lineHeight: 48 } satisfies TextStyle,
+  xl: { fontSize: 24, lineHeight: 36 } satisfies TextStyle,
   lg: { fontSize: 20, lineHeight: 32 } satisfies TextStyle,
-  md: { fontSize: 18, lineHeight: 26 } satisfies TextStyle,
-  sm: { fontSize: 16, lineHeight: 24 } satisfies TextStyle,
-  xs: { fontSize: 14, lineHeight: 21 } satisfies TextStyle,
-  xxs: { fontSize: 12, lineHeight: 18 } satisfies TextStyle,
+  md: { fontSize: 18, lineHeight: 28 } satisfies TextStyle,
+  sm: { fontSize: 16, lineHeight: 28 } satisfies TextStyle,
+  xs: { fontSize: 14, lineHeight: 24 } satisfies TextStyle,
+  xxs: { fontSize: 12, lineHeight: 20 } satisfies TextStyle,
 }
 
 const $fontWeightStyles = Object.entries(typography.primary).reduce((acc, [weight, fontFamily]) => {
@@ -94,9 +108,13 @@ const $fontWeightStyles = Object.entries(typography.primary).reduce((acc, [weigh
 }, {}) as Record<Weights, TextStyle>
 
 const $baseStyle: ThemedStyle<TextStyle> = (theme) => ({
-  ...$sizeStyles.sm,
+  fontSize: 16,
+  lineHeight: 24,
   ...$fontWeightStyles.normal,
   color: theme.colors.text,
+  // FIX: Ensure text is not cut off
+  textAlignVertical: 'center',
+  includeFontPadding: false, // Android fix
 })
 
 const $presets: Record<Presets, ThemedStyleArray<TextStyle>> = {
