@@ -2,6 +2,8 @@ import { CoreTemplate } from '../core/types'
 import { Template, TemplateCategory, TemplateType } from '../types'
 import { templateStorage } from './TemplateStorage'
 import { RuleOfThirds } from '../core'
+import { errorService } from '@/services/error/ErrorService'
+import { ErrorCategory, ErrorSeverity } from '@/services/error/types'
 
 class TemplateManager {
   private templates: Template[] = []
@@ -37,7 +39,18 @@ class TemplateManager {
       this.currentCategory = (await templateStorage.loadCurrentCategory()) as TemplateCategory
       this.currentTemplateIndex = await templateStorage.loadCurrentTemplateIndex()
     } catch (error) {
-      console.warn('Failed to initialize template manager:', error)
+      // Use centralized error handling for initialization errors
+      const appError = errorService.createError(
+        ErrorCategory.TEMPLATE,
+        'Failed to initialize template manager',
+        'Template system initialization failed. Using default settings.',
+        ErrorSeverity.MEDIUM,
+        { operation: 'initialize' },
+        error as Error
+      )
+      
+      errorService.handleError(appError)
+      
       // Use defaults
       this.activeTemplates = ['rule_of_thirds']
       this.currentCategory = 'grid'
@@ -64,7 +77,16 @@ class TemplateManager {
   async activateTemplate(templateId: string): Promise<void> {
     const template = this.templates.find(t => t.id === templateId)
     if (!template) {
-      throw new Error(`Template with id ${templateId} not found`)
+      const appError = errorService.createError(
+        ErrorCategory.TEMPLATE,
+        `Template with id ${templateId} not found`,
+        'Template not found. Please try selecting a different template.',
+        ErrorSeverity.MEDIUM,
+        { operation: 'activate', templateId }
+      )
+      
+      errorService.handleError(appError)
+      throw appError
     }
 
     if (!this.activeTemplates.includes(templateId)) {

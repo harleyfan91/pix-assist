@@ -1,5 +1,7 @@
 import { readAsync, writeAsync, ExifTags } from '@lodev09/react-native-exify'
 import * as FileSystem from 'expo-file-system'
+import { ErrorService } from '@/services/error/ErrorService'
+import { ErrorCategory, ErrorSeverity } from '@/services/error/types'
 
 export interface ExifService {
   readExifData: (uri: string) => Promise<ExifTags | null>
@@ -21,7 +23,16 @@ class ExifServiceImpl implements ExifService {
       console.log('EXIF data read successfully:', exifData)
       return exifData || null
     } catch (error) {
-      console.error('Error reading EXIF data:', error)
+      // Use centralized error handling for EXIF read errors
+      const appError = ErrorService.createError({
+        originalError: error as Error,
+        category: ErrorCategory.STORAGE,
+        userMessage: 'Failed to read photo metadata. The photo may be corrupted.',
+        severity: ErrorSeverity.LOW,
+        context: { operation: 'read_exif', uri }
+      })
+      
+      ErrorService.handleError(appError)
       return null
     }
   }
@@ -57,7 +68,16 @@ class ExifServiceImpl implements ExifService {
         return uri
       }
     } catch (error) {
-      console.error('Error writing EXIF data:', error)
+      // Use centralized error handling for EXIF write errors
+      const appError = ErrorService.createError({
+        originalError: error as Error,
+        category: ErrorCategory.STORAGE,
+        userMessage: 'Failed to write photo metadata. The photo may be corrupted or read-only.',
+        severity: ErrorSeverity.MEDIUM,
+        context: { operation: 'write_exif', uri, tagCount: Object.keys(tags).length }
+      })
+      
+      ErrorService.handleError(appError)
       return null
     }
   }
@@ -96,7 +116,16 @@ class ExifServiceImpl implements ExifService {
       // and the display layer should handle the rotation
       return inputUri
     } catch (error) {
-      console.error('Error correcting orientation:', error)
+      // Use centralized error handling for orientation correction errors
+      const appError = ErrorService.createError({
+        originalError: error as Error,
+        category: ErrorCategory.STORAGE,
+        userMessage: 'Failed to correct photo orientation. Using original image.',
+        severity: ErrorSeverity.LOW,
+        context: { operation: 'correct_orientation', inputUri }
+      })
+      
+      ErrorService.handleError(appError)
       return inputUri // Return original on error
     }
   }
@@ -168,7 +197,16 @@ class ExifServiceImpl implements ExifService {
         return processedUri
       }
     } catch (error) {
-      console.error('Error preserving metadata:', error)
+      // Use centralized error handling for metadata preservation errors
+      const appError = ErrorService.createError({
+        originalError: error as Error,
+        category: ErrorCategory.STORAGE,
+        userMessage: 'Failed to preserve photo metadata. Using processed image without metadata.',
+        severity: ErrorSeverity.MEDIUM,
+        context: { operation: 'preserve_metadata', originalUri, processedUri }
+      })
+      
+      ErrorService.handleError(appError)
       return processedUri // Return processed on error
     }
   }

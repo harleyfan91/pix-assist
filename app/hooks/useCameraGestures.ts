@@ -3,6 +3,9 @@ import { Gesture, GestureDetector } from "react-native-gesture-handler"
 import { useSharedValue, runOnJS, withSpring } from "react-native-reanimated"
 import { Camera } from "react-native-vision-camera"
 import { PopupState } from "./useCameraControls"
+import { useErrorHandler } from '@/hooks/useErrorHandling'
+import { ErrorCategory, ErrorSeverity } from '@/services/error/types'
+import { errorService } from '@/services/error/ErrorService'
 
 export interface UseCameraGesturesProps {
   device: any // Camera device from react-native-vision-camera
@@ -37,6 +40,9 @@ export const useCameraGestures = ({
   // Camera ref
   const _cameraRef = useRef<Camera>(null)
   
+  // Initialize error handling
+  const { handleAsync } = useErrorHandler()
+  
   // Callback ref to get camera instance
   const setCameraRef = useCallback((camera: Camera | null) => {
     _cameraRef.current = camera
@@ -47,29 +53,35 @@ export const useCameraGestures = ({
     async (x: number, y: number) => {
       if (!device || !_cameraRef.current || !device.supportsFocus) return
 
-      try {
-        // Reset exposure to neutral when focusing
-        resetExposure()
+      await handleAsync(
+        async () => {
+          // Reset exposure to neutral when focusing
+          resetExposure()
 
-        // Use Vision Camera's focus method with screen coordinates directly
-        // The focus function expects coordinates relative to the Camera view (in points)
-        await _cameraRef.current.focus({ x, y })
+          // Use Vision Camera's focus method with screen coordinates directly
+          // The focus function expects coordinates relative to the Camera view (in points)
+          await _cameraRef.current!.focus({ x, y })
 
-        // Show focus ring animation
-        focusRingPosition.value = { x, y }
-        focusRingOpacity.value = 1
-        setShowFocusRing(true)
+          // Show focus ring animation
+          focusRingPosition.value = { x, y }
+          focusRingOpacity.value = 1
+          setShowFocusRing(true)
 
-        // Hide focus ring after 2 seconds
-        setTimeout(() => {
-          focusRingOpacity.value = 0
-          setShowFocusRing(false)
-        }, 2000)
-      } catch (error) {
-        console.error("Focus error:", error)
-      }
+          // Hide focus ring after 2 seconds
+          setTimeout(() => {
+            focusRingOpacity.value = 0
+            setShowFocusRing(false)
+          }, 2000)
+        },
+        {
+          category: ErrorCategory.CAMERA,
+          userMessage: 'Failed to focus camera. Please try tapping again.',
+          severity: ErrorSeverity.LOW,
+          context: { operation: 'focus_tap', x, y }
+        }
+      )
     },
-    [device, focusRingPosition, focusRingOpacity, resetExposure],
+    [device, focusRingPosition, focusRingOpacity, resetExposure, handleAsync],
   )
 
   // Helper functions for popup management
@@ -239,7 +251,17 @@ export const useCameraGestures = ({
           runOnJS(handleZoomUpdate)(logicalZoom)
         }
       } catch (error) {
-        console.log('Zoom update error:', error)
+        // Use centralized error handling for zoom update errors
+        const appError = errorService.createError(
+          ErrorCategory.CAMERA,
+          'Camera zoom error during update',
+          'Camera zoom error. Please try again.',
+          ErrorSeverity.MEDIUM,
+          { operation: 'zoom_update', scaleFactor: event.scale },
+          error as Error
+        )
+        
+        errorService.handleError(appError)
         // Don't update zoom on error to prevent further issues
       }
     })
@@ -267,7 +289,17 @@ export const useCameraGestures = ({
         
         runOnJS(onZoomEnd)()
       } catch (error) {
-        console.log('Zoom end error:', error)
+        // Use centralized error handling for zoom end errors
+        const appError = errorService.createError(
+          ErrorCategory.CAMERA,
+          'Camera zoom error during end',
+          'Camera zoom error. Attempting to recover...',
+          ErrorSeverity.HIGH,
+          { operation: 'zoom_end', currentZoom: zoom.value },
+          error as Error
+        )
+        
+        errorService.handleError(appError)
         // Trigger camera recovery on zoom error
         runOnJS(recoverFromCameraError)()
       }

@@ -2,6 +2,8 @@ import * as MediaLibrary from 'expo-media-library'
 import { Alert, Platform } from 'react-native'
 import * as FileSystem from 'expo-file-system'
 import { exifService } from './exifService'
+import { ErrorService } from '@/services/error/ErrorService'
+import { ErrorCategory, ErrorSeverity } from '@/services/error/types'
 
 export interface PhotoAsset {
   id: string
@@ -66,7 +68,16 @@ class PhotoLibraryServiceImpl implements PhotoLibraryService {
 
       return false
     } catch (error) {
-      console.error('Error requesting photo library permissions:', error)
+      // Use centralized error handling for permission errors
+      const appError = ErrorService.createError({
+        originalError: error as Error,
+        category: ErrorCategory.PERMISSION,
+        userMessage: 'Failed to request photo library permissions. Please check your device settings.',
+        severity: ErrorSeverity.MEDIUM,
+        context: { operation: 'request_permissions', permissionType: 'photo_library' }
+      })
+      
+      ErrorService.handleError(appError)
       return false
     }
   }
@@ -105,8 +116,17 @@ class PhotoLibraryServiceImpl implements PhotoLibraryService {
 
       return photos
     } catch (error) {
-      console.error('Error fetching photos:', error)
-      throw error
+      // Use centralized error handling for gallery errors
+      const appError = ErrorService.createError({
+        originalError: error as Error,
+        category: ErrorCategory.GALLERY,
+        userMessage: 'Failed to load photos from your library. Please check your permissions and try again.',
+        severity: ErrorSeverity.MEDIUM,
+        context: { operation: 'get_photos', count: first }
+      })
+      
+      ErrorService.handleError(appError)
+      throw appError
     }
   }
 
@@ -216,7 +236,16 @@ class PhotoLibraryServiceImpl implements PhotoLibraryService {
       console.log('Photo saved to library successfully with EXIF metadata')
       return true
     } catch (error) {
-      console.error('Error saving photo:', error)
+      // Use centralized error handling for photo save errors
+      const appError = ErrorService.createError({
+        originalError: error as Error,
+        category: ErrorCategory.GALLERY,
+        userMessage: 'Failed to save photo to your library. Please check your permissions and try again.',
+        severity: ErrorSeverity.HIGH,
+        context: { operation: 'save_photo', uri, originalUri }
+      })
+      
+      ErrorService.handleError(appError)
       return false
     }
   }

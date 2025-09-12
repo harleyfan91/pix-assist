@@ -15,67 +15,101 @@ class TemplateStorage {
     currentTemplateIndex: 0
   }
 
-  async saveActiveTemplates(activeTemplates: string[]): Promise<void> {
+  /**
+   * Helper method to handle storage operations with consistent error handling
+   */
+  private async handleStorageOperation<T>(
+    operation: () => Promise<T>,
+    operationName: string,
+    defaultValue: T
+  ): Promise<T> {
     try {
-      const data = await this.getStoredData()
-      data.activeTemplates = activeTemplates
-      await this.saveData(data)
+      return await operation()
     } catch (error) {
-      console.warn('Failed to save active templates:', error)
-      throw new Error('Failed to save active templates')
+      console.warn(`Failed to ${operationName}:`, error)
+      return defaultValue
     }
+  }
+
+  /**
+   * Helper method for operations that should throw on error
+   */
+  private async handleStorageOperationWithThrow<T>(
+    operation: () => Promise<T>,
+    operationName: string
+  ): Promise<T> {
+    try {
+      return await operation()
+    } catch (error) {
+      console.warn(`Failed to ${operationName}:`, error)
+      throw new Error(`Failed to ${operationName}`)
+    }
+  }
+
+  async saveActiveTemplates(activeTemplates: string[]): Promise<void> {
+    return this.handleStorageOperationWithThrow(
+      async () => {
+        const data = await this.getStoredData()
+        data.activeTemplates = activeTemplates
+        await this.saveData(data)
+      },
+      'save active templates'
+    )
   }
 
   async loadActiveTemplates(): Promise<string[]> {
-    try {
-      const data = await this.getStoredData()
-      return data.activeTemplates
-    } catch (error) {
-      console.warn('Failed to load active templates:', error)
-      return this.defaultData.activeTemplates
-    }
+    return this.handleStorageOperation(
+      async () => {
+        const data = await this.getStoredData()
+        return data.activeTemplates
+      },
+      'load active templates',
+      this.defaultData.activeTemplates
+    )
   }
 
   async saveCurrentCategory(category: string): Promise<void> {
-    try {
-      const data = await this.getStoredData()
-      data.currentCategory = category
-      await this.saveData(data)
-    } catch (error) {
-      console.warn('Failed to save current category:', error)
-      throw new Error('Failed to save current category')
-    }
+    return this.handleStorageOperationWithThrow(
+      async () => {
+        const data = await this.getStoredData()
+        data.currentCategory = category
+        await this.saveData(data)
+      },
+      'save current category'
+    )
   }
 
   async loadCurrentCategory(): Promise<string> {
-    try {
-      const data = await this.getStoredData()
-      return data.currentCategory
-    } catch (error) {
-      console.warn('Failed to load current category:', error)
-      return this.defaultData.currentCategory
-    }
+    return this.handleStorageOperation(
+      async () => {
+        const data = await this.getStoredData()
+        return data.currentCategory
+      },
+      'load current category',
+      this.defaultData.currentCategory
+    )
   }
 
   async saveCurrentTemplateIndex(index: number): Promise<void> {
-    try {
-      const data = await this.getStoredData()
-      data.currentTemplateIndex = index
-      await this.saveData(data)
-    } catch (error) {
-      console.warn('Failed to save current template index:', error)
-      throw new Error('Failed to save current template index')
-    }
+    return this.handleStorageOperationWithThrow(
+      async () => {
+        const data = await this.getStoredData()
+        data.currentTemplateIndex = index
+        await this.saveData(data)
+      },
+      'save current template index'
+    )
   }
 
   async loadCurrentTemplateIndex(): Promise<number> {
-    try {
-      const data = await this.getStoredData()
-      return data.currentTemplateIndex
-    } catch (error) {
-      console.warn('Failed to load current template index:', error)
-      return this.defaultData.currentTemplateIndex
-    }
+    return this.handleStorageOperation(
+      async () => {
+        const data = await this.getStoredData()
+        return data.currentTemplateIndex
+      },
+      'load current template index',
+      this.defaultData.currentTemplateIndex
+    )
   }
 
   private async getStoredData(): Promise<StorageData> {
