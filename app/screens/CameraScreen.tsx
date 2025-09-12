@@ -25,6 +25,7 @@ import Reanimated, {
   interpolate,
   withTiming,
   withSpring,
+  SharedValue,
 } from "react-native-reanimated"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Camera, useCameraDevice, useCameraPermission } from "react-native-vision-camera"
@@ -35,10 +36,13 @@ import { useCameraControls } from '@/hooks/useCameraControls'
 import { useCameraGestures } from '@/hooks/useCameraGestures'
 import { useCameraAnimations } from '@/hooks/useCameraAnimations'
 import { useTemplates } from '@/templates/hooks/useTemplates'
+import { useEdgeDetection } from '@/hooks/useEdgeDetection'
 import { TemplateDrawer, TemplateOverlay } from '@/components/TemplateDrawer'
 import { Dimensions } from 'react-native'
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window')
+const DRAWER_WIDTH = 390
+
 
 // Create Reanimated Camera component for animated exposure
 const ReanimatedCamera = Reanimated.createAnimatedComponent(Camera)
@@ -72,6 +76,18 @@ export const CameraScreen: FC = function CameraScreen() {
   // Initialize template system
   const { templates, activateTemplate, deactivateTemplate } = useTemplates()
   
+  // Template drawer handlers
+  const handleTemplateDrawerOpen = () => {
+    setIsTemplateDrawerVisible(true)
+    route.params?.onTemplateDrawerToggle?.(true)
+  }
+  
+  // Edge detection hook
+  const { edgeDetectionStyle, edgeDetectionPanResponder, handleTranslateXChange } = useEdgeDetection({
+    isTemplateDrawerVisible,
+    onTemplateDrawerOpen: handleTemplateDrawerOpen
+  })
+  
   // Template selection handler
   const handleTemplateSelect = async (templateId: string) => {
     try {
@@ -81,12 +97,6 @@ export const CameraScreen: FC = function CameraScreen() {
     } catch (error) {
       console.error('Error selecting template:', error)
     }
-  }
-  
-  // Template drawer handlers
-  const handleTemplateDrawerOpen = () => {
-    setIsTemplateDrawerVisible(true)
-    route.params?.onTemplateDrawerToggle?.(true)
   }
 
   const handleTemplateDrawerClose = () => {
@@ -489,7 +499,7 @@ export const CameraScreen: FC = function CameraScreen() {
 
   if (!device) {
     return (
-      <Screen preset="fixed" style={$container} cameraMode={true} systemBarStyle="light">
+      <Screen preset="fixed" style={[$container, { overflow: 'visible' }]} cameraMode={true} systemBarStyle="light">
         {/* Camera Content - Show black viewfinder with controls */}
         <GestureDetector gesture={cameraGestures}>
           <Reanimated.View style={$cameraContainer}>
@@ -705,11 +715,73 @@ export const CameraScreen: FC = function CameraScreen() {
           </Reanimated.View>
         </GestureDetector>
         
+        {/* Edge Detection Area and Vertical Line */}
+        <Reanimated.View
+          style={[
+            {
+              position: 'absolute',
+              top: (SCREEN_HEIGHT - 50) / 3, // EDGE_DETECTION_TOP
+              right: -5, // Start at right edge
+              width: 25, // EDGE_DETECTION_WIDTH
+              height: 50, // EDGE_DETECTION_HEIGHT
+              borderTopLeftRadius: 12,
+              borderBottomLeftRadius: 12,
+              overflow: 'hidden',
+              zIndex: isTemplateDrawerVisible ? 998 : 9999, // Lower z-index when drawer is open
+            },
+            edgeDetectionStyle
+          ]}
+          {...edgeDetectionPanResponder.panHandlers}
+        >
+          <BlurView
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+            }}
+            blurType="light"
+            blurAmount={7}
+            reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
+          />
+        </Reanimated.View>
+        
+        <Reanimated.View
+          style={[
+            {
+              position: 'absolute',
+              top: 0,
+              left: SCREEN_WIDTH + 1, // Start 2px off-screen to the right
+              width: 1,
+              height: SCREEN_HEIGHT,
+              zIndex: 9998, // Just below edge detection area
+            },
+            edgeDetectionStyle // Same transform as edge detection area
+          ]}
+        >
+          <BlurView
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+            }}
+            blurType="light"
+            blurAmount={7}
+            reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
+          />
+        </Reanimated.View>
+        
+        
         {/* Template Drawer */}
         <TemplateDrawer
           isVisible={isTemplateDrawerVisible}
           onClose={handleTemplateDrawerClose}
+          onOpen={handleTemplateDrawerOpen}
           onTemplateSelect={handleTemplateSelect}
+          onTranslateXChange={handleTranslateXChange}
         />
       </Screen>
     )
@@ -1002,11 +1074,72 @@ export const CameraScreen: FC = function CameraScreen() {
           </Reanimated.View>
         </GestureDetector>
         
+        {/* Edge Detection Area and Vertical Line */}
+        <Reanimated.View
+          style={[
+            {
+              position: 'absolute',
+              top: (SCREEN_HEIGHT - 50) / 3, // EDGE_DETECTION_TOP
+              left: SCREEN_WIDTH - 23, // Start 20px from right edge (partially visible)
+              width: 25, // EDGE_DETECTION_WIDTH
+              height: 50, // EDGE_DETECTION_HEIGHT
+              borderTopLeftRadius: 12,
+              borderBottomLeftRadius: 12,
+              overflow: 'hidden',
+              zIndex: isTemplateDrawerVisible ? 998 : 9999, // Lower z-index when drawer is open
+            },
+            edgeDetectionStyle
+          ]}
+          {...edgeDetectionPanResponder.panHandlers}
+        >
+          <BlurView
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+            }}
+            blurType="light"
+            blurAmount={7}
+            reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
+          />
+        </Reanimated.View>
+        
+        <Reanimated.View
+          style={[
+            {
+              position: 'absolute',
+              top: 0,
+              left: SCREEN_WIDTH + 2, // Start 2px off-screen to the right
+              width: 1,
+              height: SCREEN_HEIGHT,
+              zIndex: 9998, // Just below edge detection area
+            },
+            edgeDetectionStyle // Same transform as edge detection area
+          ]}
+        >
+          <BlurView
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+            }}
+            blurType="light"
+            blurAmount={7}
+            reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
+          />
+        </Reanimated.View>
+        
         {/* Template Drawer */}
         <TemplateDrawer
           isVisible={isTemplateDrawerVisible}
           onClose={handleTemplateDrawerClose}
+          onOpen={handleTemplateDrawerOpen}
           onTemplateSelect={handleTemplateSelect}
+          onTranslateXChange={handleTranslateXChange}
         />
       </Screen>
     )

@@ -11,6 +11,7 @@ import Animated, {
   withTiming,
   runOnJS,
   interpolate,
+  SharedValue,
 } from 'react-native-reanimated'
 import { TemplateCarousel } from './TemplateCarousel'
 import { useCameraViewfinder } from '../../hooks/useCameraViewfinder'
@@ -19,24 +20,36 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window')
 const DRAWER_WIDTH = SCREEN_WIDTH // Cover entire screen width
 const DRAWER_PEEK = 0 // No peek when closed
 
+
 interface TemplateDrawerProps {
   isVisible: boolean
   onClose: () => void
+  onOpen?: () => void
   onTemplateSelect: (templateId: string) => void
   cameraViewRef?: React.RefObject<View | null>
+  onTranslateXChange?: (translateX: SharedValue<number>) => void
 }
 
 export const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
   isVisible,
   onClose,
+  onOpen,
   onTemplateSelect,
-  cameraViewRef
+  cameraViewRef,
+  onTranslateXChange
 }) => {
   const translateX = useSharedValue(DRAWER_WIDTH)
   const backdropOpacity = useSharedValue(0)
   const [selectedCategory, setSelectedCategory] = useState<'core' | 'pro'>('core')
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null)
   const insets = useSafeAreaInsets()
+  
+  // Pass translateX to parent for edge detection area animation
+  useEffect(() => {
+    if (onTranslateXChange) {
+      onTranslateXChange(translateX)
+    }
+  }, [translateX, onTranslateXChange])
   
   // Get camera viewfinder dimensions for visualization
   const cameraViewfinder = useCameraViewfinder()
@@ -64,6 +77,7 @@ export const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
       backdropOpacity.value = withTiming(0, { duration: 300 })
     }
   }, [isVisible])
+
 
   // Gesture handler for closing drawer
   const gestureHandler = useAnimatedGestureHandler({
@@ -102,6 +116,11 @@ export const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
     backgroundColor: `rgba(0, 0, 0, ${interpolate(backdropOpacity.value, [0, 1], [0, 0.3])})`,
   }))
 
+
+
+
+
+
   const handleTemplateSelect = async (templateId: string) => {
     setSelectedTemplateId(templateId)
     
@@ -136,6 +155,7 @@ export const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
         ]}
         pointerEvents={isVisible ? 'auto' : 'none'}
       />
+
 
       {/* Drawer with VibrancyView Background */}
       <PanGestureHandler onGestureEvent={gestureHandler}>
