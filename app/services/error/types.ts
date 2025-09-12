@@ -8,6 +8,7 @@ export enum ErrorCategory {
   PERMISSION = 'permission',
   CAMERA = 'camera',
   TEMPLATE = 'template',
+  GALLERY = 'gallery',
   STORAGE = 'storage',
   VALIDATION = 'validation',
   UNKNOWN = 'unknown',

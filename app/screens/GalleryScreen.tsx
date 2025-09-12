@@ -5,29 +5,43 @@ import { Ionicons } from "@expo/vector-icons"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { photoLibraryService, PhotoAsset } from "@/services/photoLibrary"
+import { useErrorHandler } from '@/hooks/useErrorHandling'
+import { ErrorCategory, ErrorSeverity } from '@/services/error/types'
 
 export const GalleryScreen: FC = function GalleryScreen() {
   const [photos, setPhotos] = useState<PhotoAsset[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  
+  // Initialize error handling
+  const { handleAsync } = useErrorHandler()
 
   useEffect(() => {
     loadPhotos()
   }, [])
 
   const loadPhotos = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      
-      const photoAssets = await photoLibraryService.getPhotos(50)
-      setPhotos(photoAssets)
-    } catch (err) {
-      console.error('Error loading photos:', err)
-      setError('Failed to load photos. Please check your permissions.')
-    } finally {
+    setLoading(true)
+    setError(null)
+    
+    await handleAsync(
+      async () => {
+        const photoAssets = await photoLibraryService.getPhotos(50)
+        setPhotos(photoAssets)
+      },
+      {
+        category: ErrorCategory.GALLERY,
+        userMessage: 'Failed to load photos. Please check your permissions and try again.',
+        severity: ErrorSeverity.MEDIUM,
+        context: { operation: 'load_photos', count: 50 },
+        onError: (appError) => {
+          const errorMessage = appError.originalError?.message || 'Failed to load photos. Please check your permissions.'
+          setError(errorMessage)
+        }
+      }
+    ).finally(() => {
       setLoading(false)
-    }
+    })
   }
 
   const handlePhotoPress = (photo: PhotoAsset) => {

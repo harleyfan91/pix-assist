@@ -312,90 +312,88 @@ export const CameraScreen: FC = function CameraScreen() {
       return
     }
 
-    try {
-      setIsCapturing(true)
+    await handleAsync(
+      async () => {
+        setIsCapturing(true)
 
-
-      // Trigger flash animation - fast and responsive (only if flash is on)
-      if (flashMode === 'on') {
-        setCaptureFlash(true)
-        flashAnimation.value = withTiming(1, { duration: 50 }, () => {
-          flashAnimation.value = withTiming(0, { duration: 100 })
-        })
-      } else if (flashMode === 'auto') {
-        // For auto mode, show a brief flash animation to indicate flash might fire
-        setCaptureFlash(true)
-        flashAnimation.value = withTiming(0.3, { duration: 30 }, () => {
-          flashAnimation.value = withTiming(0, { duration: 50 })
-        })
-      }
-
-      // Use ref to get the most current flash mode to avoid race conditions
-      const currentFlashMode = flashModeRef.current
-      
-      // Try different approaches based on flash mode
-      let photoOptions: any = {}
-      
-      if (currentFlashMode === 'on') {
-        // For 'on' mode, be more explicit
-        photoOptions = { 
-          flash: 'on',
-          enableAutoStabilization: false // Sometimes helps with flash issues
+        // Trigger flash animation - fast and responsive (only if flash is on)
+        if (flashMode === 'on') {
+          setCaptureFlash(true)
+          flashAnimation.value = withTiming(1, { duration: 50 }, () => {
+            flashAnimation.value = withTiming(0, { duration: 100 })
+          })
+        } else if (flashMode === 'auto') {
+          // For auto mode, show a brief flash animation to indicate flash might fire
+          setCaptureFlash(true)
+          flashAnimation.value = withTiming(0.3, { duration: 30 }, () => {
+            flashAnimation.value = withTiming(0, { duration: 50 })
+          })
         }
-      } else if (currentFlashMode === 'off') {
-        photoOptions = { flash: 'off' }
-      } else {
-        // Auto mode
-        photoOptions = { flash: 'auto' }
-      }
-      
-      const photoPromise = _cameraRef.current.takePhoto(photoOptions)
-      const timeoutPromise = new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('Photo capture timeout')), 5000)
-      )
-      
-      const photo = await Promise.race([photoPromise, timeoutPromise])
 
-      // Navigate to preview screen (don't save yet - let user decide)
-      const photoPath = photo.path.startsWith('file://') ? photo.path : `file://${photo.path}`
-      
-      // Navigate to PreviewScreen
-      navigation.navigate('Preview', { 
-        photoPath
-      })
-
-    } catch (error) {
-      console.error("Error taking photo:", error)
-      
-      // Handle specific AVFoundation errors
-      const errorMessage = error instanceof Error ? error.message : String(error)
-      if (errorMessage.includes('AVFoundationErrorDomain') || 
-          errorMessage.includes('Cannot Complete Action')) {
-        console.log("AVFoundation error detected - attempting camera recovery")
-        setCameraError("Camera temporarily unavailable")
+        // Use ref to get the most current flash mode to avoid race conditions
+        const currentFlashMode = flashModeRef.current
         
-        // Try to recover by briefly pausing and resuming camera
-        setIsActive(false)
-        setTimeout(() => {
-          console.log("Attempting camera recovery...")
-          setIsActive(true)
-          setCameraError(null)
-        }, 2000)
+        // Try different approaches based on flash mode
+        let photoOptions: any = {}
+        
+        if (currentFlashMode === 'on') {
+          // For 'on' mode, be more explicit
+          photoOptions = { 
+            flash: 'on',
+            enableAutoStabilization: false // Sometimes helps with flash issues
+          }
+        } else if (currentFlashMode === 'off') {
+          photoOptions = { flash: 'off' }
+        } else {
+          // Auto mode
+          photoOptions = { flash: 'auto' }
+        }
+        
+        const photoPromise = _cameraRef.current!.takePhoto(photoOptions)
+        const timeoutPromise = new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Photo capture timeout')), 5000)
+        )
+        
+        const photo = await Promise.race([photoPromise, timeoutPromise])
+
+        // Navigate to preview screen (don't save yet - let user decide)
+        const photoPath = photo.path.startsWith('file://') ? photo.path : `file://${photo.path}`
+        
+        // Navigate to PreviewScreen
+        navigation.navigate('Preview', { 
+          photoPath
+        })
+      },
+      {
+        category: ErrorCategory.CAMERA,
+        userMessage: 'Unable to take photo. Please try again.',
+        severity: ErrorSeverity.HIGH,
+        context: { operation: 'capture', flashMode: flashModeRef.current },
+        onError: (error) => {
+          // Handle specific AVFoundation errors with camera recovery
+          const errorMessage = error.originalError?.message || ''
+          if (errorMessage.includes('AVFoundationErrorDomain') || 
+              errorMessage.includes('Cannot Complete Action')) {
+            console.log("AVFoundation error detected - attempting camera recovery")
+            setCameraError("Camera temporarily unavailable")
+            
+            // Try to recover by briefly pausing and resuming camera
+            setIsActive(false)
+            setTimeout(() => {
+              console.log("Attempting camera recovery...")
+              setIsActive(true)
+              setCameraError(null)
+            }, 2000)
+          }
+        }
       }
-      
-      // Show user-friendly error message
-      Alert.alert(
-        "Camera Error",
-        "Unable to take photo. Please try again.",
-        [{ text: "OK" }]
-      )
-    } finally {
+    ).finally(() => {
       setIsCapturing(false)
       setCaptureFlash(false)
       // Ensure flash animation is reset
       flashAnimation.value = 0
-    }
-  }, [isCapturing, flashAnimation])
+    })
+  }, [isCapturing, flashAnimation, handleAsync, navigation, flashModeRef, setCaptureFlash, flashAnimation, setIsCapturing, setCameraError, setIsActive])
 
   // Use camera gestures hook
   const {
@@ -817,11 +815,25 @@ export const CameraScreen: FC = function CameraScreen() {
               flash={flashMode} // Set flash mode on camera component
               animatedProps={animatedCameraProps}
               onError={(error) => {
-                console.error('Camera error:', error)
-                if (error.message?.includes('AVFoundationErrorDomain') || 
-                    error.message?.includes('Cannot Complete Action')) {
-                  recoverFromCameraError()
-                }
+                // Use centralized error handling for camera errors
+                handleAsync(
+                  async () => {
+                    throw error
+                  },
+                  {
+                    category: ErrorCategory.CAMERA,
+                    userMessage: 'Camera encountered an error. Attempting to recover...',
+                    severity: ErrorSeverity.HIGH,
+                    context: { operation: 'camera_init', errorType: 'camera_error' },
+                    onError: (appError) => {
+                      const errorMessage = appError.originalError?.message || ''
+                      if (errorMessage.includes('AVFoundationErrorDomain') || 
+                          errorMessage.includes('Cannot Complete Action')) {
+                        recoverFromCameraError()
+                      }
+                    }
+                  }
+                )
               }}
               resizeMode="contain" // Change from "cover" to "contain"
             />
