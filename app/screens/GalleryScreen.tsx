@@ -8,6 +8,7 @@ import { photoLibraryService, PhotoAsset } from "@/services/photoLibrary"
 import { useErrorHandler } from '@/hooks/useErrorHandling'
 import { ErrorCategory, ErrorSeverity } from '@/services/error/types'
 import { log } from '@/services/logging'
+import * as styles from "./GalleryScreen.styles"
 
 export const GalleryScreen: FC = function GalleryScreen() {
   const [photos, setPhotos] = useState<PhotoAsset[]>([])
@@ -56,54 +57,54 @@ export const GalleryScreen: FC = function GalleryScreen() {
 
   const renderPhoto = ({ item }: { item: PhotoAsset }) => (
     <TouchableOpacity
-      style={$photoContainer}
+      style={styles.$photoContainer}
       onPress={() => handlePhotoPress(item)}
       activeOpacity={0.8}
     >
       <Image
         source={{ uri: item.uri }}
-        style={$photoImage}
+        style={styles.$photoImage}
         resizeMode="cover"
       />
     </TouchableOpacity>
   )
 
   const renderEmptyState = () => (
-    <View style={$emptyState}>
+    <View style={styles.$emptyState}>
       <Ionicons name="images-outline" size={64} color="#666" />
-      <Text preset="subheading" text="No photos found" style={$emptyText} />
-      <Text text="Make sure you have photos in your library and permissions are granted." style={$emptySubtext} />
+      <Text preset="subheading" text="No photos found" style={styles.$emptyText} />
+      <Text text="Make sure you have photos in your library and permissions are granted." style={styles.$emptySubtext} />
     </View>
   )
 
   const renderErrorState = () => (
-    <View style={$errorState}>
+    <View style={styles.$errorState}>
       <Ionicons name="alert-circle-outline" size={64} color="#ff6b6b" />
-      <Text preset="subheading" text="Error loading photos" style={$errorText} />
-      <Text text={error || "Something went wrong"} style={$errorSubtext} />
-      <TouchableOpacity style={$retryButton} onPress={handleRetry}>
-        <Text text="Retry" style={$retryButtonText} />
+      <Text preset="subheading" text="Error loading photos" style={styles.$errorText} />
+      <Text text={error || "Something went wrong"} style={styles.$errorSubtext} />
+      <TouchableOpacity style={styles.$retryButton} onPress={handleRetry}>
+        <Text text="Retry" style={styles.$retryButtonText} />
       </TouchableOpacity>
     </View>
   )
 
   const renderLoadingState = () => (
-    <View style={$loadingState}>
+    <View style={styles.$loadingState}>
       <ActivityIndicator size="large" color="#007AFF" />
-      <Text text="Loading photos..." style={$loadingText} />
+      <Text text="Loading photos..." style={styles.$loadingText} />
     </View>
   )
 
   return (
-    <Screen preset="fixed" contentContainerStyle={$container}>
-      <View style={$header}>
+    <Screen preset="fixed" contentContainerStyle={styles.$container}>
+      <View style={styles.$header}>
         <Text preset="heading" text="Gallery" />
-        <TouchableOpacity onPress={loadPhotos} style={$refreshButton}>
+        <TouchableOpacity onPress={loadPhotos} style={styles.$refreshButton}>
           <Ionicons name="refresh-outline" size={24} color="#007AFF" />
         </TouchableOpacity>
       </View>
       
-      <View style={$content}>
+      <View style={styles.$content}>
         {loading ? (
           renderLoadingState()
         ) : error ? (
@@ -116,8 +117,8 @@ export const GalleryScreen: FC = function GalleryScreen() {
             renderItem={renderPhoto}
             keyExtractor={(item) => item.id}
             numColumns={3}
-            columnWrapperStyle={$row}
-            contentContainerStyle={$photoGrid}
+            columnWrapperStyle={styles.$row}
+            contentContainerStyle={styles.$photoGrid}
             showsVerticalScrollIndicator={false}
           />
         )}
@@ -126,111 +127,3 @@ export const GalleryScreen: FC = function GalleryScreen() {
   )
 }
 
-const $container: ViewStyle = {
-  flex: 1,
-  backgroundColor: 'rgba(255, 255, 255, 0.2)',
-}
-
-const $header: ViewStyle = {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  paddingHorizontal: 20,
-  paddingTop: 20,
-  paddingBottom: 10,
-}
-
-const $refreshButton: ViewStyle = {
-  padding: 8,
-}
-
-const $content: ViewStyle = {
-  flex: 1,
-  paddingHorizontal: 20,
-}
-
-const $photoGrid: ViewStyle = {
-  paddingBottom: 20,
-}
-
-const $row: ViewStyle = {
-  justifyContent: 'space-between',
-  marginBottom: 4,
-}
-
-const $photoContainer: ViewStyle = {
-  width: '31.5%',
-  aspectRatio: 0.8,
-  borderRadius: 4,
-  overflow: 'hidden',
-  backgroundColor: '#f0f0f0',
-  marginBottom: 4,
-}
-
-const $photoImage: ImageStyle = {
-  width: '100%',
-  height: '100%',
-}
-
-const $emptyState: ViewStyle = {
-  flex: 1,
-  justifyContent: 'center',
-  alignItems: 'center',
-  paddingHorizontal: 40,
-}
-
-const $emptyText: TextStyle = {
-  marginTop: 16,
-  textAlign: 'center',
-}
-
-const $emptySubtext: TextStyle = {
-  marginTop: 8,
-  textAlign: 'center',
-  color: '#666',
-  fontSize: 14,
-}
-
-const $errorState: ViewStyle = {
-  flex: 1,
-  justifyContent: 'center',
-  alignItems: 'center',
-  paddingHorizontal: 40,
-}
-
-const $errorText: TextStyle = {
-  marginTop: 16,
-  textAlign: 'center',
-  color: '#ff6b6b',
-}
-
-const $errorSubtext: TextStyle = {
-  marginTop: 8,
-  textAlign: 'center',
-  color: '#666',
-  fontSize: 14,
-}
-
-const $retryButton: ViewStyle = {
-  marginTop: 20,
-  paddingHorizontal: 20,
-  paddingVertical: 10,
-  backgroundColor: '#007AFF',
-  borderRadius: 8,
-}
-
-const $retryButtonText: TextStyle = {
-  color: '#fff',
-  fontWeight: '600',
-}
-
-const $loadingState: ViewStyle = {
-  flex: 1,
-  justifyContent: 'center',
-  alignItems: 'center',
-}
-
-const $loadingText: TextStyle = {
-  marginTop: 16,
-  color: '#666',
-}
