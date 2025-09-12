@@ -55,6 +55,7 @@ import { BlurButton } from "@/components/BlurButton"
 import { useNavigation, useRoute } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { photoLibraryService } from "@/services/photoLibrary"
+import * as styles from "./CameraScreen.styles"
 
 
 // Enable zoom animation for Reanimated (as per Vision Camera docs)
@@ -479,8 +480,8 @@ export const CameraScreen: FC = function CameraScreen() {
   if (cameraPermission == null) {
     // still loading
     return (
-      <Screen preset="fixed" contentContainerStyle={$container}>
-        <View style={$content}>
+      <Screen preset="fixed" contentContainerStyle={styles.$container}>
+        <View style={styles.$content}>
           <Text preset="heading" text="📷 TESTING RELOAD..." />
         </View>
       </Screen>
@@ -489,8 +490,8 @@ export const CameraScreen: FC = function CameraScreen() {
 
   if (!cameraPermission) {
     return (
-      <Screen preset="fixed" contentContainerStyle={$container}>
-        <View style={$content}>
+      <Screen preset="fixed" contentContainerStyle={styles.$container}>
+        <View style={styles.$content}>
           <Text preset="heading" text="📷 Camera Permission Required" />
           <Text preset="subheading" text="Please grant camera permission to use this feature." />
           <Button onPress={promptForCameraPermissions} variant="solid" size="lg">
@@ -503,41 +504,41 @@ export const CameraScreen: FC = function CameraScreen() {
 
   if (!device) {
     return (
-      <Screen preset="fixed" style={[$container, { overflow: 'visible' }]} cameraMode={true} systemBarStyle="light">
+      <Screen preset="fixed" style={[styles.$container, { overflow: 'visible' }]} cameraMode={true} systemBarStyle="light">
         {/* Camera Content - Show black viewfinder with controls */}
         <GestureDetector gesture={cameraGestures}>
-          <Reanimated.View style={$cameraContainer}>
+          <Reanimated.View style={styles.$cameraContainer}>
             <View style={StyleSheet.absoluteFill}>
               {/* Black viewfinder when no camera available */}
               <View style={[StyleSheet.absoluteFill, { backgroundColor: '#000000' }]} />
               
               {/* Error message overlay */}
-              <View style={$noCameraOverlay}>
+              <View style={styles.$noCameraOverlay}>
                 <Ionicons name="camera-outline" size={48} color="#ff6b6b" />
-                <Text style={$noCameraTitle}>No Camera Found</Text>
-                <Text style={$noCameraSubtitle}>No camera device available on this device.</Text>
+                <Text style={styles.$noCameraTitle}>No Camera Found</Text>
+                <Text style={styles.$noCameraSubtitle}>No camera device available on this device.</Text>
               </View>
 
               {/* Flash overlay for photo capture feedback */}
-              <Reanimated.View style={[$flashOverlay, animatedFlashStyle]} />
+              <Reanimated.View style={[styles.$flashOverlay, animatedFlashStyle]} />
 
               {/* Focus Ring - Only show when focusing */}
-              {showFocusRing && <Reanimated.View style={[$focusRing, animatedFocusRingStyle]} />}
+              {showFocusRing && <Reanimated.View style={[styles.$focusRing, animatedFocusRingStyle]} />}
 
               {/* Popup Indicator - Shows zoom level or flash status */}
               {popupState.visible && (
-                <Reanimated.View style={[$popupIndicator, animatedPopupStyle]}>
-                  <View style={$popupBlurBackground}>
+                <Reanimated.View style={[styles.$popupIndicator, animatedPopupStyle]}>
+                  <View style={styles.$popupBlurBackground}>
                     <BlurView
-                      style={$popupBlurView}
+                      style={styles.$popupBlurView}
                       blurType="light"
                       blurAmount={7}
                       reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
                     />
-                    <View style={$popupTextContent}>
-                      <View style={$popupTextContainer}>
+                    <View style={styles.$popupTextContent}>
+                      <View style={styles.$popupTextContainer}>
                         <Reanimated.View style={popupTextStyle}>
-                          <Text style={$popupText}>
+                          <Text style={styles.$popupText}>
                             {popupState.value || 'No Value'}
                           </Text>
                         </Reanimated.View>
@@ -549,22 +550,22 @@ export const CameraScreen: FC = function CameraScreen() {
 
               {/* Exposure Controls - Gluestack Slider */}
               {isExposureControlsVisible && (
-                <Reanimated.View style={[$exposureControlsVertical, animatedExposureControlsStyle]}>
+                <Reanimated.View style={[styles.$exposureControlsVertical, animatedExposureControlsStyle]}>
                   <BlurButton
                     onPress={() => {}} // No press action needed for container
-                    style={$exposureControlsBlur}
+                    style={styles.$exposureControlsBlur}
                     blurType="light"
                     blurAmount={7}
                     reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
                     disabled={true}
                   >
-                    <View style={$exposureSliderContainer}>
+                    <View style={styles.$exposureSliderContainer}>
                       <Reanimated.View style={exposureLabelStyle}>
-                        <Text style={$exposureLabel}>+2</Text>
+                        <Text style={styles.$exposureLabel}>+2</Text>
                       </Reanimated.View>
-                      <View style={$sliderWrapper}>
+                      <View style={styles.$sliderWrapper}>
                         {/* Neutral position indicator line */}
-                        <View style={$neutralPositionLine} />
+                        <View style={styles.$neutralPositionLine} />
                         <Slider
                           value={sliderValue}
                           onChange={handleExposureSliderChange}
@@ -572,16 +573,16 @@ export const CameraScreen: FC = function CameraScreen() {
                           maxValue={1}
                           step={0.01}
                           orientation="vertical"
-                          style={$gluestackSlider}
+                          style={styles.$gluestackSlider}
                         >
-                          <SliderTrack style={$sliderTrack}>
-                            <SliderFilledTrack style={$sliderFilledTrack} />
+                          <SliderTrack style={styles.$sliderTrack}>
+                            <SliderFilledTrack style={styles.$sliderFilledTrack} />
                           </SliderTrack>
-                          <SliderThumb style={$sliderThumb} />
+                          <SliderThumb style={styles.$sliderThumb} />
                         </Slider>
                       </View>
                       <Reanimated.View style={exposureLabelStyle}>
-                        <Text style={$exposureLabel}>-2</Text>
+                        <Text style={styles.$exposureLabel}>-2</Text>
                       </Reanimated.View>
                     </View>
                   </BlurButton>
@@ -592,16 +593,16 @@ export const CameraScreen: FC = function CameraScreen() {
             {/* Unified click away overlay for menus */}
             {(isCameraModeExpanded || showExposureControls) && (
               <TouchableOpacity 
-                style={$unifiedOverlay}
+                style={styles.$unifiedOverlay}
                 onPress={closeAllControls}
                 activeOpacity={1}
               />
             )}
 
             {/* Bottom Controls - iPhone-style layout */}
-            <View style={$bottomControls}>
+            <View style={styles.$bottomControls}>
               {/* Left Container: Gallery Button */}
-              <View style={$leftControlsContainer}>
+              <View style={styles.$leftControlsContainer}>
                 <BlurButton
                   onPress={navigateToGallery}
                   icon={Ionicons}
@@ -610,7 +611,7 @@ export const CameraScreen: FC = function CameraScreen() {
                     size: 24,
                     color: "#fff"
                   }}
-                  style={$galleryButton}
+                  style={styles.$galleryButton}
                   blurType="light"
                   blurAmount={7}
                   reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
@@ -626,33 +627,33 @@ export const CameraScreen: FC = function CameraScreen() {
               </View>
 
               {/* Center Container: Shutter Button */}
-              <View style={$centerControlsContainer}>
+              <View style={styles.$centerControlsContainer}>
                 <GestureDetector gesture={shutterButtonGesture}>
                   <View style={[
-                    $shutterButton,
+                    styles.$shutterButton,
                     (shutterPressed || isCapturing) && { opacity: 0.6 }
                   ]}>
-                    <View style={$shutterButtonInner} />
+                    <View style={styles.$shutterButtonInner} />
                   </View>
                 </GestureDetector>
               </View>
 
               {/* Right Container: Camera Mode Button */}
-              <View style={$rightControlsContainer}>
-                <Reanimated.View style={[animatedCameraModeStyle, $cameraModeContainer]}>
+              <View style={styles.$rightControlsContainer}>
+                <Reanimated.View style={[animatedCameraModeStyle, styles.$cameraModeContainer]}>
                   {/* Main expanding background with blur */}
                   <BlurView
-                    style={$cameraModeBlurBackground}
+                    style={styles.$cameraModeBlurBackground}
                     blurType="light"
                     blurAmount={7}
                     reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
                   />
                   
                   {/* Camera control buttons - only visible when expanded */}
-                  <Reanimated.View style={[$controlsContainer, animatedCameraControlsOpacity]}>
+                  <Reanimated.View style={[styles.$controlsContainer, animatedCameraControlsOpacity]}>
                     <BlurButton
                       onPress={handleFlashToggle}
-                      style={$controlButton}
+                      style={styles.$controlButton}
                       blurType="light"
                       blurAmount={5}
                       reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.1)"
@@ -672,7 +673,7 @@ export const CameraScreen: FC = function CameraScreen() {
                     
                     <BlurButton
                       onPress={toggleExposureControls}
-                      style={$controlButton}
+                      style={styles.$controlButton}
                       blurType="light"
                       blurAmount={5}
                       reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.1)"
@@ -688,7 +689,7 @@ export const CameraScreen: FC = function CameraScreen() {
                     
                     <BlurButton
                       onPress={() => {}} // TODO: Add crop functionality
-                      style={$controlButton}
+                      style={styles.$controlButton}
                       blurType="light"
                       blurAmount={5}
                       reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.1)"
@@ -706,7 +707,7 @@ export const CameraScreen: FC = function CameraScreen() {
                   {/* Main chevron button - always visible at bottom */}
                   <TouchableOpacity
                     onPress={toggleCameraModeExpansion}
-                    style={$chevronButtonContainer}
+                    style={styles.$chevronButtonContainer}
                     activeOpacity={0.6}
                   >
                     <Reanimated.View style={animatedChevronStyle}>
@@ -734,10 +735,10 @@ export const CameraScreen: FC = function CameraScreen() {
   }
 
   return (
-    <Screen preset="fixed" style={$container} cameraMode={true} systemBarStyle="light">
+    <Screen preset="fixed" style={styles.$container} cameraMode={true} systemBarStyle="light">
       {/* Camera Content - Static positioning (animation disabled for testing) */}
       <GestureDetector gesture={cameraGestures}>
-        <Reanimated.View style={$cameraContainer}>
+        <Reanimated.View style={styles.$cameraContainer}>
           <View style={StyleSheet.absoluteFill}>
             <ReanimatedCamera
               {...({ ref: _cameraRef } as any)}
@@ -777,32 +778,32 @@ export const CameraScreen: FC = function CameraScreen() {
             
             {/* Gradient layers - positioned to avoid viewfinder area */}
             {/* JSX order is inverse: renders from bottom up, layering on top of each other */}
-            <View style={$gradientLayer8} />
-            <View style={$gradientLayer7} />
-            <View style={$gradientLayer6} />
-            <View style={$gradientLayer5} />
-            <View style={$gradientLayer4} />
-            <View style={$gradientLayer3} />
-            <View style={$gradientLayer2} />
-            <View style={$gradientLayer1} />
+            <View style={styles.$gradientLayer8} />
+            <View style={styles.$gradientLayer7} />
+            <View style={styles.$gradientLayer6} />
+            <View style={styles.$gradientLayer5} />
+            <View style={styles.$gradientLayer4} />
+            <View style={styles.$gradientLayer3} />
+            <View style={styles.$gradientLayer2} />
+            <View style={styles.$gradientLayer1} />
             
             {/* Flash overlay for photo capture feedback */}
-            <Reanimated.View style={[$flashOverlay, animatedFlashStyle]} />
+            <Reanimated.View style={[styles.$flashOverlay, animatedFlashStyle]} />
 
             {/* Preview overlay - shows captured photo for 2 seconds */}
             {isPreviewVisible && capturedPhoto && (
               <TouchableOpacity 
-                style={$previewOverlay}
+                style={styles.$previewOverlay}
                 onPress={() => {
                   // Navigate to full preview screen
                   navigation.navigate("Preview", { photoPath: capturedPhoto })
                 }}
                 activeOpacity={0.9}
               >
-                <Reanimated.View style={[$previewContainer, animatedPreviewStyle]}>
+                <Reanimated.View style={[styles.$previewContainer, animatedPreviewStyle]}>
                   <Image 
                     source={{ uri: capturedPhoto }} 
-                    style={$previewImage}
+                    style={styles.$previewImage}
                     resizeMode="contain"
                   />
                 </Reanimated.View>
@@ -820,22 +821,22 @@ export const CameraScreen: FC = function CameraScreen() {
             )}
 
             {/* Focus Ring - Only show when focusing */}
-            {showFocusRing && <Reanimated.View style={[$focusRing, animatedFocusRingStyle]} />}
+            {showFocusRing && <Reanimated.View style={[styles.$focusRing, animatedFocusRingStyle]} />}
 
             {/* Popup Indicator - Shows zoom level or flash status */}
             {popupState.visible && (
-              <Reanimated.View style={[$popupIndicator, animatedPopupStyle]}>
-                <View style={$popupBlurBackground}>
+              <Reanimated.View style={[styles.$popupIndicator, animatedPopupStyle]}>
+                <View style={styles.$popupBlurBackground}>
                   <BlurView
-                    style={$popupBlurView}
+                    style={styles.$popupBlurView}
                     blurType="light"
                     blurAmount={7}
                     reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
                   />
-                  <View style={$popupTextContent}>
-                    <View style={$popupTextContainer}>
+                  <View style={styles.$popupTextContent}>
+                    <View style={styles.$popupTextContainer}>
                       <Reanimated.View style={popupTextStyle}>
-                        <Text style={$popupText}>
+                        <Text style={styles.$popupText}>
                           {popupState.value || 'No Value'}
                         </Text>
                       </Reanimated.View>
@@ -849,22 +850,22 @@ export const CameraScreen: FC = function CameraScreen() {
 
             {/* Exposure Controls - Gluestack Slider */}
             {isExposureControlsVisible && (
-              <Reanimated.View style={[$exposureControlsVertical, animatedExposureControlsStyle]}>
+              <Reanimated.View style={[styles.$exposureControlsVertical, animatedExposureControlsStyle]}>
                 <BlurButton
                   onPress={() => {}} // No press action needed for container
-                  style={$exposureControlsBlur}
+                  style={styles.$exposureControlsBlur}
                   blurType="light"
                   blurAmount={7}
                   reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
                   disabled={true}
                 >
-                  <View style={$exposureSliderContainer}>
+                  <View style={styles.$exposureSliderContainer}>
                     <Reanimated.View style={exposureLabelStyle}>
-                      <Text style={$exposureLabel}>+2</Text>
+                      <Text style={styles.$exposureLabel}>+2</Text>
                     </Reanimated.View>
-                    <View style={$sliderWrapper}>
+                    <View style={styles.$sliderWrapper}>
                       {/* Neutral position indicator line */}
-                      <View style={$neutralPositionLine} />
+                      <View style={styles.$neutralPositionLine} />
                       <Slider
                         value={sliderValue}
                         onChange={handleExposureSliderChange}
@@ -872,16 +873,16 @@ export const CameraScreen: FC = function CameraScreen() {
                         maxValue={1}
                         step={0.01}
                         orientation="vertical"
-                        style={$gluestackSlider}
+                        style={styles.$gluestackSlider}
                       >
-                        <SliderTrack style={$sliderTrack}>
-                          <SliderFilledTrack style={$sliderFilledTrack} />
+                        <SliderTrack style={styles.$sliderTrack}>
+                          <SliderFilledTrack style={styles.$sliderFilledTrack} />
                         </SliderTrack>
-                        <SliderThumb style={$sliderThumb} />
+                        <SliderThumb style={styles.$sliderThumb} />
                       </Slider>
                     </View>
                     <Reanimated.View style={exposureLabelStyle}>
-                      <Text style={$exposureLabel}>-2</Text>
+                      <Text style={styles.$exposureLabel}>-2</Text>
                     </Reanimated.View>
                   </View>
                 </BlurButton>
@@ -892,16 +893,16 @@ export const CameraScreen: FC = function CameraScreen() {
           {/* Unified click away overlay for menus (not preview) */}
           {(isCameraModeExpanded || showExposureControls) && !showPreview && (
             <TouchableOpacity 
-              style={$unifiedOverlay}
+              style={styles.$unifiedOverlay}
               onPress={closeAllControls}
               activeOpacity={1}
             />
           )}
 
           {/* Bottom Controls - iPhone-style layout */}
-          <View style={$bottomControls}>
+          <View style={styles.$bottomControls}>
             {/* Left Container: Gallery Button */}
-            <View style={$leftControlsContainer}>
+            <View style={styles.$leftControlsContainer}>
               <BlurButton
                 onPress={navigateToGallery}
                 icon={Ionicons}
@@ -910,7 +911,7 @@ export const CameraScreen: FC = function CameraScreen() {
                   size: 24,
                   color: "#fff"
                 }}
-                style={$galleryButton}
+                style={styles.$galleryButton}
                 blurType="light"
                 blurAmount={7}
                 reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
@@ -926,33 +927,33 @@ export const CameraScreen: FC = function CameraScreen() {
             </View>
 
             {/* Center Container: Shutter Button */}
-            <View style={$centerControlsContainer}>
+            <View style={styles.$centerControlsContainer}>
               <GestureDetector gesture={shutterButtonGesture}>
                 <View style={[
-                  $shutterButton,
+                  styles.$shutterButton,
                   (shutterPressed || isCapturing) && { opacity: 0.6 }
                 ]}>
-                  <View style={$shutterButtonInner} />
+                  <View style={styles.$shutterButtonInner} />
                 </View>
               </GestureDetector>
             </View>
 
             {/* Right Container: Camera Mode Button */}
-            <View style={$rightControlsContainer}>
-              <Reanimated.View style={[animatedCameraModeStyle, $cameraModeContainer]}>
+            <View style={styles.$rightControlsContainer}>
+              <Reanimated.View style={[animatedCameraModeStyle, styles.$cameraModeContainer]}>
                 {/* Main expanding background with blur */}
                 <BlurView
-                  style={$cameraModeBlurBackground}
+                  style={styles.$cameraModeBlurBackground}
                   blurType="light"
                   blurAmount={7}
                   reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
                 />
                 
                 {/* Camera control buttons - only visible when expanded */}
-                <Reanimated.View style={[$controlsContainer, animatedCameraControlsOpacity]}>
+                <Reanimated.View style={[styles.$controlsContainer, animatedCameraControlsOpacity]}>
                   <BlurButton
                     onPress={handleFlashToggle}
-                    style={$controlButton}
+                    style={styles.$controlButton}
                     blurType="light"
                     blurAmount={5}
                     reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.1)"
@@ -972,7 +973,7 @@ export const CameraScreen: FC = function CameraScreen() {
                   
                   <BlurButton
                     onPress={toggleExposureControls}
-                    style={$controlButton}
+                    style={styles.$controlButton}
                     blurType="light"
                     blurAmount={5}
                     reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.1)"
@@ -988,7 +989,7 @@ export const CameraScreen: FC = function CameraScreen() {
                   
                   <BlurButton
                     onPress={() => {}} // TODO: Add crop functionality
-                    style={$controlButton}
+                    style={styles.$controlButton}
                     blurType="light"
                     blurAmount={5}
                     reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.1)"
@@ -1006,7 +1007,7 @@ export const CameraScreen: FC = function CameraScreen() {
                 {/* Main chevron button - always visible at bottom */}
                 <TouchableOpacity
                   onPress={toggleCameraModeExpansion}
-                  style={$chevronButtonContainer}
+                  style={styles.$chevronButtonContainer}
                   activeOpacity={0.6}
                 >
                   <Reanimated.View style={animatedChevronStyle}>
@@ -1030,487 +1031,3 @@ export const CameraScreen: FC = function CameraScreen() {
       </Screen>
     )
   }
-
-const $container: ViewStyle = {
-  flex: 1,
-  backgroundColor: "#0b0b0b", // Background - slightly lighter than layer 8
-}
-
-// Gradient layers - Layer 1 is innermost (darkest), Layer 8 is outermost (lightest)
-const $gradientLayer1: ViewStyle = {
-  position: "absolute",
-  top: "3.0%",    // 3.0% gap from top edge (happy medium)
-  bottom: "3.0%", // 3.0% gap from bottom edge
-  left: 0,
-  right: 0,
-  backgroundColor: "black", // Pure black - darkest (innermost)
-  opacity: 0.6,
-  borderRadius: 20, // Even more pronounced curved edges
-  zIndex: -1, // Behind everything
-}
-
-const $gradientLayer2: ViewStyle = {
-  position: "absolute",
-  top: "2.6%",    // 2.6% gap from top edge (happy medium)
-  bottom: "2.6%", // 2.6% gap from bottom edge
-  left: 0,
-  right: 0,
-  backgroundColor: "#040404", // Almost black
-  opacity: 0.6,
-  borderRadius: 20, // Even more pronounced curved edges
-  zIndex: -1, // Behind everything
-}
-
-const $gradientLayer3: ViewStyle = {
-  position: "absolute",
-  top: "2.2%",    // 2.2% gap from top edge (happy medium)
-  bottom: "2.2%", // 2.2% gap from bottom edge
-  left: 0,
-  right: 0,
-  backgroundColor: "#060606", // Very dark
-  opacity: 0.6,
-  borderRadius: 20, // Even more pronounced curved edges
-  zIndex: -1, // Behind everything
-}
-
-const $gradientLayer4: ViewStyle = {
-  position: "absolute",
-  top: "1.8%",    // 1.8% gap from top edge (happy medium)
-  bottom: "1.8%", // 1.8% gap from bottom edge
-  left: 0,
-  right: 0,
-  backgroundColor: "#080808", // slightly lighter than layer 3
-  opacity: 0.6,
-  borderRadius: 20, // Even more pronounced curved edges
-  zIndex: -1, // Behind everything
-}
-
-const $gradientLayer5: ViewStyle = {
-  position: "absolute",
-  top: "1.4%",    // 1.4% gap from top edge (happy medium)
-  bottom: "1.4%", // 1.4% gap from bottom edge
-  left: 0,
-  right: 0,
-  backgroundColor: "#0a0a0a", // slightly lighter than layer 4
-  opacity: 0.6,
-  borderRadius: 20, // Even more pronounced curved edges
-  zIndex: -1, // Behind everything
-}
-
-const $gradientLayer6: ViewStyle = {
-  position: "absolute",
-  top: "1.0%",    // 1.0% gap from top edge (happy medium)
-  bottom: "1.0%", // 1.0% gap from bottom edge
-  left: 0,
-  right: 0,
-  backgroundColor: "#0c0c0c", // Slightly lighter than layer 5
-  opacity: 0.7,
-  borderRadius: 20, // Even more pronounced curved edges
-  zIndex: -1, // Behind everything
-}
-
-const $gradientLayer7: ViewStyle = {
-  position: "absolute",
-  top: "0.6%",    // 0.6% gap from top edge (happy medium)
-  bottom: "0.6%", // 0.6% gap from bottom edge
-  left: 0,
-  right: 0,
-  backgroundColor: "#0e0e0e", // Very subtle difference
-  opacity: 0.8,
-  borderRadius: 20, // Even more pronounced curved edges
-  zIndex: -1, // Behind everything
-}
-
-const $gradientLayer8: ViewStyle = {
-  position: "absolute",
-  top: "0.2%",    // 0.2% gap from top edge (happy medium)
-  bottom: "0.2%", // 0.2% gap from bottom edge
-  left: 0,
-  right: 0,
-  backgroundColor: "#0d0d0d", // Slight darker than background (outermost)
-  opacity: 0.8,
-  borderRadius: 20, // Even more pronounced curved edges
-  zIndex: -1, // Behind everything
-}
-
-const $content: ViewStyle = {
-  flex: 1,
-  justifyContent: "center",
-  alignItems: "center",
-  paddingHorizontal: 20,
-}
-
-const $cameraContainer: ViewStyle = {
-  flex: 1,
-}
-
-const $bottomControls: ViewStyle = {
-  position: "absolute",
-  bottom: 85, // Moved up 5px from 80 to give more breathing room from viewfinder edge
-  left: 0,
-  right: 0,
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "space-between",
-  paddingHorizontal: 40,
-  zIndex: 100, // Ensure controls are above camera gestures
-}
-
-// Landscape-specific bottom controls (moved to right side)
-const $bottomControlsLandscape: ViewStyle = {
-  position: "absolute",
-  right: 40,
-  top: "50%",
-  transform: [{ translateY: -120 }], // Center vertically
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "space-between",
-  height: 240, // Space for all controls
-  paddingVertical: 0,
-}
-
-const $leftControlsContainer: ViewStyle = {
-  alignItems: "center",
-  justifyContent: "center",
-  width: 60, // Fixed width to match gallery button
-}
-
-const $centerControlsContainer: ViewStyle = {
-  alignItems: "center",
-  justifyContent: "center",
-  flex: 1, // Take up remaining space to center the shutter button
-}
-
-const $rightControlsContainer: ViewStyle = {
-  alignItems: "center",
-  justifyContent: "flex-end", // Align button to bottom of container
-  height: 80, // Fixed height to match button height
-  width: 60, // Fixed width to match camera mode button
-  paddingBottom: 10, // Push button up to align with gallery button
-}
-
-const $shutterButton: ViewStyle = {
-  width: 80,
-  height: 80,
-  borderRadius: 40,
-  backgroundColor: "rgba(255, 255, 255, 0.3)",
-  borderWidth: 1,
-  borderColor: "#fff",
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-const $shutterButtonInner: ViewStyle = {
-  width: 70,
-  height: 70,
-  borderRadius: 45,
-  backgroundColor: "#fff",
-}
-
-const $flashOverlay: ViewStyle = {
-  position: "absolute",
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  backgroundColor: "#ffffff",
-  pointerEvents: "none",
-}
-
-const $previewOverlay: ViewStyle = {
-  position: "absolute",
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  backgroundColor: "rgba(0, 0, 0, 0.8)",
-  justifyContent: "center",
-  alignItems: "center",
-  zIndex: 10,
-}
-
-const $previewContainer: ViewStyle = {
-  width: "80%",
-  height: "80%",
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-const $previewImage: ImageStyle = {
-  width: "100%",
-  height: "100%",
-}
-
-const $galleryButton: ViewStyle = {
-  width: 60,
-  height: 60,
-  borderRadius: 30,
-  borderWidth: 0,
-  borderColor: "rgba(255, 255, 255, 0.5)",
-}
-
-
-const $cameraModeButton: ViewStyle = {
-  width: 60,
-  height: 60,
-  borderRadius: 30,
-  borderWidth: 0,
-  borderColor: "rgba(255, 255, 255, 0.5)",
-  justifyContent: "center", // Center content when collapsed
-  alignItems: "center",
-  overflow: "hidden",
-  zIndex: 2, // Higher than overlay to remain clickable
-}
-
-const $cameraModeContainer: ViewStyle = {
-  width: 60,
-  borderRadius: 30,
-  overflow: "hidden",
-  position: "relative",
-}
-
-const $cameraModeBlurBackground: ViewStyle = {
-  position: "absolute",
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  borderRadius: 30,
-}
-
-const $chevronButtonContainer: ViewStyle = {
-  position: "absolute",
-  bottom: 0,
-  left: 0,
-  right: 0,
-  height: 44, // Fixed height for chevron area
-  alignItems: "center",
-  justifyContent: "center",
-  zIndex: 1, // Above the blur background
-}
-
-const $chevronButton: ViewStyle = {
-  width: 60,
-  height: 44,
-  borderRadius: 22,
-}
-
-const $chevronContainer: ViewStyle = {
-  flex: 1,
-  alignItems: "center",
-  justifyContent: "center",
-}
-
-const $controlsContainer: ViewStyle = {
-  position: "absolute",
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 44, // Leave space for chevron at bottom
-  justifyContent: "space-around",
-  alignItems: "center",
-  paddingVertical: 12,
-}
-
-const $controlButton: ViewStyle = {
-  width: 40,
-  height: 40,
-  borderRadius: 20,
-  alignItems: "center",
-  justifyContent: "center",
-  marginVertical: 4,
-}
-
-// Vertical Exposure Controls Styles
-const $exposureControlsVertical: ViewStyle = {
-  position: "absolute",
-  bottom: 300, // Position well above the camera mode button to avoid overlap
-  right: 40, // Same right position as camera mode button
-  width: 60,
-  height: 200, // Same height as expanded camera mode button
-  justifyContent: "center",
-  alignItems: "center",
-  overflow: "hidden",
-  zIndex: 2, // Higher than overlay to remain clickable
-}
-
-const $exposureControlsBlur: ViewStyle = {
-  width: 60,
-  height: 200,
-  borderRadius: 30,
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-// Landscape-specific exposure controls (positioned above camera mode button)
-const $exposureControlsVerticalLandscape: ViewStyle = {
-  position: "absolute",
-  right: 40,
-  top: "50%",
-  transform: [{ translateY: -200 }], // Position above camera mode button
-  width: 60,
-  height: 200,
-  backgroundColor: "rgba(255, 255, 255, 0.2)",
-  borderRadius: 30,
-  justifyContent: "center",
-  alignItems: "center",
-  overflow: "hidden",
-  zIndex: 2,
-}
-
-const $exposureSliderContainer: ViewStyle = {
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "space-between",
-  height: 160,
-}
-
-const $gluestackSlider: ViewStyle = {
-  height: 100,
-  width: 4,
-}
-
-const $sliderTrack: ViewStyle = {
-  height: 100,
-  width: 4,
-  backgroundColor: "rgba(255, 255, 255, 0.3)",
-  borderRadius: 2,
-}
-
-const $sliderFilledTrack: ViewStyle = {
-  backgroundColor: "rgba(255, 255, 255, 0.6)",
-}
-
-const $sliderThumb: ViewStyle = {
-  backgroundColor: "#fff",
-  width: 20,
-  height: 20,
-  borderRadius: 10,
-}
-
-const $exposureLabel: TextStyle = {
-  color: "#fff",
-  fontSize: 10,
-  fontWeight: "bold",
-}
-
-const $unifiedOverlay: ViewStyle = {
-  position: "absolute",
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  backgroundColor: "transparent",
-  zIndex: 1,
-}
-
-
-
-
-
-const $focusRing: ViewStyle = {
-  position: "absolute",
-  width: 100,
-  height: 100,
-  borderWidth: 2,
-  borderColor: "#FFD700", // Gold color like iPhone
-  borderRadius: 50,
-  backgroundColor: "transparent",
-}
-
-// Popup Indicator Styles
-const $popupIndicator: ViewStyle = {
-  position: "absolute",
-  bottom: 180, // Position above the shutter button area
-  left: "50%",
-  marginLeft: -30, // Center horizontally (adjust based on content width)
-  zIndex: 10, // Above other elements
-}
-
-const $popupBlurBackground: ViewStyle = {
-  position: "relative",
-  paddingHorizontal: 12,
-  paddingVertical: 6,
-  borderRadius: 18,
-  minWidth: 60,
-  overflow: "hidden",
-}
-
-const $popupBlurView: ViewStyle = {
-  position: "absolute",
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  borderRadius: 16,
-}
-
-const $popupTextContent: ViewStyle = {
-  flex: 1,
-  justifyContent: "center",
-  alignItems: "center",
-  zIndex: 1,
-}
-
-const $popupTextContainer: ViewStyle = {
-  alignItems: "center",
-  justifyContent: "center",
-}
-
-const $popupText: TextStyle = {
-  color: "#fff",
-  fontSize: 14,
-  fontWeight: "600",
-  textAlign: "center",
-}
-
-// Slider wrapper for positioning the neutral line
-const $sliderWrapper: ViewStyle = {
-  position: "relative",
-  height: 100,
-  width: 4,
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-// Neutral position indicator line
-const $neutralPositionLine: ViewStyle = {
-  position: "absolute",
-  top: "50%",
-  left: -8, // Extend 8px to the left of the slider
-  right: -8, // Extend 8px to the right of the slider
-  height: 1,
-  backgroundColor: "rgba(255, 255, 255, 0.6)",
-  zIndex: 0, // Behind the slider
-}
-
-// No Camera Overlay Styles
-const $noCameraOverlay: ViewStyle = {
-  position: "absolute",
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  justifyContent: "center",
-  alignItems: "center",
-  backgroundColor: "rgba(0, 0, 0, 0.7)",
-  zIndex: 5,
-}
-
-const $noCameraTitle: TextStyle = {
-  color: "#ff6b6b",
-  fontSize: 24,
-  fontWeight: "bold",
-  marginTop: 16,
-  textAlign: "center",
-}
-
-const $noCameraSubtitle: TextStyle = {
-  color: "#ff6b6b",
-  fontSize: 16,
-  marginTop: 8,
-  textAlign: "center",
-  opacity: 0.8,
-}
-
-

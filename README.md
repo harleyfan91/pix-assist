@@ -241,6 +241,8 @@ ThemeProvider (Custom)
 - **Style Objects**: Consistent `$` prefix for style objects (e.g., `$container`)
 - **TypeScript Integration**: Fully typed styling with `ViewStyle`, `TextStyle`, etc.
 - **Platform Consistency**: Unified styling across iOS and Android
+- **Style Organization**: Extract styles to separate `.styles.ts` files for components with 5+ style definitions
+- **Import Pattern**: Use `import * as styles from "./ComponentName.styles"` for clean style references
 
 ### Key Styling Files
 - `app/theme/context.tsx` - Theme provider and context

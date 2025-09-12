@@ -69,13 +69,37 @@
 - **Created**: `app/hooks/useCameraAnimations.ts` (new hook, 150+ lines)
 - **Modified**: `app/screens/CameraScreen.tsx` (removed animation logic, added hook usage)
 
+## Extracted: Styles to Separate File
+
+### What was extracted:
+- **All style constants**: 53 style definitions moved to `CameraScreen.styles.ts`
+- **Style types**: `ViewStyle`, `TextStyle`, `ImageStyle` imports
+- **Style organization**: Grouped by functionality (containers, buttons, overlays, etc.)
+
+### Benefits:
+1. **Massive file size reduction**: CameraScreen reduced from 1,517 to 1,033 lines (32% smaller)
+2. **Improved maintainability**: Styles are now organized and easy to find
+3. **Better separation of concerns**: Component logic separated from styling
+4. **Enhanced reusability**: Styles can be imported by other components
+5. **Cleaner code**: Component file now focuses on logic, not styling
+
+### Files modified:
+- **Created**: `app/screens/CameraScreen.styles.ts` (53 style definitions)
+- **Modified**: `app/screens/CameraScreen.tsx` (removed styles, added import)
+
+### Style Organization Best Practices:
+- **Separate Style Files**: Always extract styles to dedicated `.styles.ts` files for components with 5+ style definitions
+- **Import Pattern**: Use `import * as styles from "./ComponentName.styles"` for clean style references
+- **Naming Convention**: Use `$styleName` pattern for style constants (e.g., `$container`, `$button`)
+- **File Structure**: Place style files alongside component files (e.g., `ComponentName.tsx` + `ComponentName.styles.ts`)
+
 ### Next steps for further refactoring:
 1. Extract `CameraView` component (the actual camera component)
 2. Extract `CameraControls` component (bottom control bar)
 3. Extract `CameraOverlay` component (focus ring, popups)
-4. Extract styles to separate file
+4. Apply style extraction to other large components (GalleryScreen, TopNavigation, etc.)
 
 ### Lines reduced:
-- **Before**: 1560 lines
-- **After**: ~1076 lines (484 lines extracted across three hooks)
-- **Reduction**: ~31% smaller
+- **Before**: 1,517 lines
+- **After**: 1,033 lines (484 lines extracted to styles file)
+- **Total reduction**: ~32% smaller

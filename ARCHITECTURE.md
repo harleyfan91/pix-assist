@@ -157,6 +157,13 @@ The architecture is optimized for:
 - **Theme Integration**: Custom theme provider with Gluestack UI compatibility
 - **Component Hierarchy**: Gluestack UI wraps entire app, affecting all components
 
+### Style Organization Best Practices
+- **Separate Style Files**: Always extract styles to dedicated `.styles.ts` files for components with 5+ style definitions
+- **Import Pattern**: Use `import * as styles from "./ComponentName.styles"` for clean style references
+- **Naming Convention**: Use `$styleName` pattern for style constants (e.g., `$container`, `$button`)
+- **File Structure**: Place style files alongside component files (e.g., `ComponentName.tsx` + `ComponentName.styles.ts`)
+- **Benefits**: Improved maintainability, reusability, and reduced component file size
+
 ### Known Limitations
 - **EXIF Lens Information Display**: While photos preserve complete EXIF metadata including camera settings, GPS, and timestamps, lens information (e.g., "Wide Camera - 26mm f/1.6") may not display correctly in the iOS Photos app due to limitations in Expo's MediaLibrary. This is a known limitation and doesn't affect actual photo quality or metadata preservation.
 
