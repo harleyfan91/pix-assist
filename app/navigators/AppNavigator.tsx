@@ -67,11 +67,7 @@ const AppStack = () => {
   }
 
   return (
-    <>
-      {/* Global Top Navigation - Fixed at top, appears on all screens except when template drawer is open */}
-      {!isTemplateDrawerOpen && <TopNavigation />}
-      
-      <Stack.Navigator
+    <Stack.Navigator
         initialRouteName="Camera"
         screenOptions={{
           headerShown: false,
@@ -142,8 +138,7 @@ const AppStack = () => {
           animation: "slide_from_bottom",
         }}
       />
-    </Stack.Navigator>
-    </>
+      </Stack.Navigator>
   )
 }
 
