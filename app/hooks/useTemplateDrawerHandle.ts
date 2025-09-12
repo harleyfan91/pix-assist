@@ -68,43 +68,61 @@ export const useTemplateDrawerHandle = ({
   // PanResponder for template drawer handle
   const templateDrawerHandlePanResponder = PanResponder.create({
     onStartShouldSetPanResponder: (evt, gestureState) => {
-      const { locationX, locationY } = evt.nativeEvent
-      // Since the component is positioned off-screen, detect touches at the screen edge
-      const isInRightEdge = locationX >= SCREEN_WIDTH - EDGE_DETECTION_WIDTH
-      const isInVerticalRange = locationY >= EDGE_DETECTION_TOP && locationY <= EDGE_DETECTION_TOP + EDGE_DETECTION_HEIGHT
+      const { pageX, pageY } = evt.nativeEvent
+      // Use absolute screen coordinates to detect touches at the screen edge
+      const isInRightEdge = pageX >= SCREEN_WIDTH - EDGE_DETECTION_WIDTH
+      const isInVerticalRange = pageY >= EDGE_DETECTION_TOP && pageY <= EDGE_DETECTION_TOP + EDGE_DETECTION_HEIGHT
       const isDrawerClosed = !isTemplateDrawerVisible
       
+      console.log('Template handle touch detected:', { pageX, pageY, isInRightEdge, isInVerticalRange, isDrawerClosed, screenWidth: SCREEN_WIDTH, edgeDetectionTop: EDGE_DETECTION_TOP })
+      
+      // Always capture touches in the edge area - we'll handle taps and drags in onPanResponderRelease
       return isInRightEdge && isInVerticalRange && isDrawerClosed
     },
     onMoveShouldSetPanResponder: (evt, gestureState) => {
-      const isDraggingLeft = gestureState.dx < -10
-      return isDraggingLeft
+      // Always return false - we'll handle movement in onPanResponderMove if we've been granted
+      return false
     },
     onPanResponderGrant: () => {
-      // Template drawer handle drag gesture started
-      isDraggingHandle.value = true
+      console.log('PanResponder granted')
+      // Reset drag state
+      isDraggingHandle.value = false
       handleDragOffset.value = 0
     },
     onPanResponderMove: (evt, gestureState) => {
-      // Template drawer handle drag gesture in progress - synchronize with drawer
-      handleDragOffset.value = gestureState.dx
-      
-      // Update drawer's translateX to keep them in sync
-      if (drawerTranslateXRef.current) {
-        const newTranslateX = DRAWER_WIDTH + gestureState.dx
-        drawerTranslateXRef.current.value = Math.max(0, Math.min(DRAWER_WIDTH, newTranslateX))
+      // Only handle drag if there's significant movement
+      if (Math.abs(gestureState.dx) > 10) {
+        console.log('Drag detected:', { dx: gestureState.dx })
+        // Template drawer handle drag gesture in progress - synchronize with drawer
+        isDraggingHandle.value = true
+        handleDragOffset.value = gestureState.dx
+        
+        // Update drawer's translateX to keep them in sync
+        if (drawerTranslateXRef.current) {
+          const newTranslateX = DRAWER_WIDTH + gestureState.dx
+          drawerTranslateXRef.current.value = Math.max(0, Math.min(DRAWER_WIDTH, newTranslateX))
+        }
       }
     },
     onPanResponderRelease: (evt, gestureState) => {
+      console.log('PanResponder release:', { dx: gestureState.dx, dy: gestureState.dy })
+      const isTap = Math.abs(gestureState.dx) < 10 && Math.abs(gestureState.dy) < 10
       const shouldOpen = gestureState.dx < -DRAWER_WIDTH * 0.3 || gestureState.vx < -500
       
       // Stop dragging
       isDraggingHandle.value = false
       handleDragOffset.value = 0
       
-      if (shouldOpen) {
+      if (isTap) {
+        console.log('Tap detected - opening drawer')
+        // Handle tap - open drawer
+        onTemplateDrawerOpen()
+      } else if (shouldOpen) {
+        console.log('Drag detected - opening drawer')
+        // Handle drag - open drawer if dragged far enough
         onTemplateDrawerOpen()
       } else {
+        console.log('Gesture cancelled - snapping back')
         // Snap back to closed position
         if (drawerTranslateXRef.current) {
           drawerTranslateXRef.current.value = DRAWER_WIDTH
