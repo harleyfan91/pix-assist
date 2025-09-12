@@ -73,6 +73,8 @@ export const CameraScreen: FC = function CameraScreen() {
   
   // Template system state
   const [isTemplateDrawerVisible, setIsTemplateDrawerVisible] = useState(false)
+  
+  
   const [currentTemplateId, setCurrentTemplateId] = useState<string | null>(null)
   const cameraViewRef = useRef<View | null>(null)
   
@@ -725,8 +727,8 @@ export const CameraScreen: FC = function CameraScreen() {
           </Reanimated.View>
         </GestureDetector>
         
-        {/* Template Drawer Handle */}
-        <Reanimated.View
+        {/* Template Drawer Handle #1 - COMMENTED OUT FOR TESTING */}
+        {/* <Reanimated.View
           style={[
             {
               position: 'absolute',
@@ -755,7 +757,7 @@ export const CameraScreen: FC = function CameraScreen() {
             blurAmount={7}
             reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
           />
-        </Reanimated.View>
+        </Reanimated.View> */}
         
         <Reanimated.View
           style={[
@@ -785,7 +787,7 @@ export const CameraScreen: FC = function CameraScreen() {
         </Reanimated.View>
         
         
-        {/* Template Drawer */}
+        {/* Template Drawer #1 */}
         <TemplateDrawer
           isVisible={isTemplateDrawerVisible}
           onClose={handleTemplateDrawerClose}
@@ -1083,7 +1085,7 @@ export const CameraScreen: FC = function CameraScreen() {
           </Reanimated.View>
         </GestureDetector>
         
-        {/* Edge Detection Area and Vertical Line */}
+        {/* Template Drawer Handle #2 */}
         <Reanimated.View
           style={[
             {
@@ -1115,7 +1117,8 @@ export const CameraScreen: FC = function CameraScreen() {
           />
         </Reanimated.View>
         
-        <Reanimated.View
+        {/* BLOCKING ELEMENT - COMMENTED OUT FOR TESTING */}
+        {/* <Reanimated.View
           style={[
             {
               position: 'absolute',
@@ -1140,16 +1143,16 @@ export const CameraScreen: FC = function CameraScreen() {
             blurAmount={7}
             reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
           />
-        </Reanimated.View>
+        </Reanimated.View> */}
         
-        {/* Template Drawer */}
-        <TemplateDrawer
+        {/* Template Drawer #2 - COMMENTED OUT FOR TESTING */}
+        {/* <TemplateDrawer
           isVisible={isTemplateDrawerVisible}
           onClose={handleTemplateDrawerClose}
           onOpen={handleTemplateDrawerOpen}
           onTemplateSelect={handleTemplateSelect}
           onTranslateXChange={handleTranslateXChange}
-        />
+        /> */}
       </Screen>
     )
   }

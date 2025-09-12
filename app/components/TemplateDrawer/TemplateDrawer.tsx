@@ -38,6 +38,7 @@ export const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
   cameraViewRef,
   onTranslateXChange
 }) => {
+  
   const translateX = useSharedValue(DRAWER_WIDTH)
   const backdropOpacity = useSharedValue(0)
   const [selectedCategory, setSelectedCategory] = useState<'core' | 'pro'>('core')
