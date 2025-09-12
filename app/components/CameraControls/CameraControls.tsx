@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { GestureDetector } from "react-native-gesture-handler"
 import Reanimated from "react-native-reanimated"
 import { BlurButton } from "@/components/BlurButton"
-import * as styles from "./CameraControls.styles"
+import * as styles from "../../screens/CameraScreen.styles"
 
 interface CameraControlsProps {
   // Navigation
