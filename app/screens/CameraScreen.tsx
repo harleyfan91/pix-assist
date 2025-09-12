@@ -1,37 +1,32 @@
 import React, { FC } from "react"
-import { View, StyleSheet } from "react-native"
-import { useSafeAreaInsets } from "react-native-safe-area-context"
-import { Text } from "@/components/Text"
-import { TopNavigation } from "@/components/TopNavigation"
+import { View, StyleSheet, StatusBar, Text as RNText } from "react-native"
 import { AppStackScreenProps } from "@/navigators/AppNavigator"
 
 export const CameraScreen: FC<AppStackScreenProps<"Camera">> = function CameraScreen({ route }) {
-  const insets = useSafeAreaInsets()
   const { onTemplateDrawerToggle } = route.params || {}
   
-  // WORKING FOUNDATION: Basic View + custom Text + TopNavigation integrated properly
+  // TEST: Using native Text to see if custom Text component is the problem
   return (
     <View style={styles.container}>
-      {/* TopNavigation TEMPORARILY DISABLED - it's covering the text */}
-      {/* <TopNavigation onNavigationStateChange={onTemplateDrawerToggle} /> */}
+      <StatusBar hidden={true} />
       
-      {/* Main camera content area with safe area handling */}
-      <View style={[styles.content, { paddingBottom: insets.bottom }]}>
-        <Text style={styles.title}>
-          ✅ CAMERA SCREEN WORKING!
-        </Text>
-        <Text style={styles.subtitle}>
-          • TopNavigation: DISABLED (was covering text)
-        </Text>
-        <Text style={styles.subtitle}>
-          • Screen component: Bypassed (broken)
-        </Text>
-        <Text style={styles.subtitle}>
-          • Root cause: TopNav overlay covers full screen
-        </Text>
-        <Text style={styles.subtitle}>
-          • Text should be fully visible now
-        </Text>
+      {/* Content positioned manually with NATIVE Text */}
+      <View style={styles.content}>
+        <RNText style={styles.title}>
+          📱 NATIVE TEXT TEST
+        </RNText>
+        <RNText style={styles.subtitle}>
+          • Using React Native Text directly
+        </RNText>
+        <RNText style={styles.subtitle}>
+          • No custom Text component
+        </RNText>
+        <RNText style={styles.subtitle}>
+          • No theme/useAppTheme dependency
+        </RNText>
+        <RNText style={styles.subtitle}>
+          • Should not be cut off
+        </RNText>
       </View>
     </View>
   )
@@ -40,13 +35,14 @@ export const CameraScreen: FC<AppStackScreenProps<"Camera">> = function CameraSc
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000', // Black background for camera
+    backgroundColor: '#000000', // Full screen black
   },
   content: {
-    flex: 1,
-    justifyContent: 'center',
+    position: 'absolute',
+    top: 100, // Fixed position - no safe area math
+    left: 20,
+    right: 20,
     alignItems: 'center',
-    paddingHorizontal: 20,
   },
   title: {
     color: '#FFFFFF',
@@ -59,6 +55,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
 })
