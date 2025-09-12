@@ -34,6 +34,8 @@ import { ThemeProvider } from "./theme/context"
 import { customFontsToLoad } from "./theme/typography"
 import { loadDateFnsLocale } from "./utils/formatDate"
 import * as storage from "./utils/storage"
+import { ErrorProvider } from "./contexts/ErrorContext"
+import { GlobalErrorDisplay } from "./components/Error/GlobalErrorDisplay"
 
 export const NAVIGATION_PERSISTENCE_KEY = "NAVIGATION_STATE"
 
@@ -97,11 +99,14 @@ export function App() {
       <GluestackUIProvider config={gluestackConfig}>
         <SafeAreaProvider initialMetrics={initialWindowMetrics}>
           <ThemeProvider>
-            <AppNavigator
-              linking={linking}
-              initialState={initialNavigationState}
-              onStateChange={onNavigationStateChange}
-            />
+            <ErrorProvider>
+              <AppNavigator
+                linking={linking}
+                initialState={initialNavigationState}
+                onStateChange={onNavigationStateChange}
+              />
+              <GlobalErrorDisplay />
+            </ErrorProvider>
           </ThemeProvider>
         </SafeAreaProvider>
       </GluestackUIProvider>
