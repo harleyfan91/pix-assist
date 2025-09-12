@@ -13,21 +13,21 @@ const EDGE_DETECTION_WIDTH = 25
 const EDGE_DETECTION_HEIGHT = 50
 const EDGE_DETECTION_TOP = (SCREEN_HEIGHT - EDGE_DETECTION_HEIGHT) / 3
 
-interface UseEdgeDetectionProps {
+interface UseTemplateDrawerHandleProps {
   isTemplateDrawerVisible: boolean
   onTemplateDrawerOpen: () => void
 }
 
-export const useEdgeDetection = ({ 
+export const useTemplateDrawerHandle = ({ 
   isTemplateDrawerVisible, 
   onTemplateDrawerOpen 
-}: UseEdgeDetectionProps) => {
-  // Edge detection area animation
+}: UseTemplateDrawerHandleProps) => {
+  // Template drawer handle animation
   const [drawerTranslateX, setDrawerTranslateX] = useState<SharedValue<number> | null>(null)
   
-  // Edge detection drag state
-  const isDraggingEdge = useSharedValue(false)
-  const edgeDragOffset = useSharedValue(0)
+  // Template drawer handle drag state
+  const isDraggingHandle = useSharedValue(false)
+  const handleDragOffset = useSharedValue(0)
   
   // Reference to drawer's translateX for synchronization
   const drawerTranslateXRef = useRef<SharedValue<number> | null>(null)
@@ -38,12 +38,12 @@ export const useEdgeDetection = ({
     drawerTranslateXRef.current = translateX
   }, [])
   
-  // Animated style for edge detection area that moves with drawer
-  const edgeDetectionStyle = useAnimatedStyle(() => {
-    // If we're dragging the edge, follow the finger directly
-    if (isDraggingEdge.value) {
+  // Animated style for template drawer handle that moves with drawer
+  const templateDrawerHandleStyle = useAnimatedStyle(() => {
+    // If we're dragging the handle, follow the finger directly
+    if (isDraggingHandle.value) {
       return {
-        transform: [{ translateX: edgeDragOffset.value }],
+        transform: [{ translateX: handleDragOffset.value }],
       }
     }
     
@@ -54,16 +54,19 @@ export const useEdgeDetection = ({
       }
     }
     
-    // Map drawer translateX to edge detection movement
-    // When drawer is closed (translateX = SCREEN_WIDTH), edge detection translateX = 0 (at starting position)
-    // When drawer is open (translateX = 0), edge detection translateX = -SCREEN_WIDTH (moves left off-screen)
+    // Map drawer translateX to template drawer handle movement
+    // When drawer is closed (translateX = SCREEN_WIDTH), handle translateX = 0 (at starting position)
+    // When drawer is open (translateX = 0), handle translateX = -SCREEN_WIDTH (moves left off-screen)
+    const baseTransform = drawerTranslateX.value - DRAWER_WIDTH
+    // Add extra offset when drawer is open to ensure components are completely hidden
+    const extraOffset = drawerTranslateX.value < DRAWER_WIDTH * 0.1 ? -20 : 0
     return {
-      transform: [{ translateX: drawerTranslateX.value - DRAWER_WIDTH }],
+      transform: [{ translateX: baseTransform + extraOffset }],
     }
-  }, [drawerTranslateX, isDraggingEdge, edgeDragOffset])
+  }, [drawerTranslateX, isDraggingHandle, handleDragOffset])
 
-  // PanResponder for edge detection area
-  const edgeDetectionPanResponder = PanResponder.create({
+  // PanResponder for template drawer handle
+  const templateDrawerHandlePanResponder = PanResponder.create({
     onStartShouldSetPanResponder: (evt, gestureState) => {
       const { locationX, locationY } = evt.nativeEvent
       // Since the component is positioned off-screen, detect touches at the screen edge
@@ -78,13 +81,13 @@ export const useEdgeDetection = ({
       return isDraggingLeft
     },
     onPanResponderGrant: () => {
-      // Edge drag gesture started
-      isDraggingEdge.value = true
-      edgeDragOffset.value = 0
+      // Template drawer handle drag gesture started
+      isDraggingHandle.value = true
+      handleDragOffset.value = 0
     },
     onPanResponderMove: (evt, gestureState) => {
-      // Edge drag gesture in progress - synchronize with drawer
-      edgeDragOffset.value = gestureState.dx
+      // Template drawer handle drag gesture in progress - synchronize with drawer
+      handleDragOffset.value = gestureState.dx
       
       // Update drawer's translateX to keep them in sync
       if (drawerTranslateXRef.current) {
@@ -96,8 +99,8 @@ export const useEdgeDetection = ({
       const shouldOpen = gestureState.dx < -DRAWER_WIDTH * 0.3 || gestureState.vx < -500
       
       // Stop dragging
-      isDraggingEdge.value = false
-      edgeDragOffset.value = 0
+      isDraggingHandle.value = false
+      handleDragOffset.value = 0
       
       if (shouldOpen) {
         onTemplateDrawerOpen()
@@ -111,8 +114,8 @@ export const useEdgeDetection = ({
   })
 
   return {
-    edgeDetectionStyle,
-    edgeDetectionPanResponder,
+    templateDrawerHandleStyle,
+    templateDrawerHandlePanResponder,
     handleTranslateXChange,
   }
 }

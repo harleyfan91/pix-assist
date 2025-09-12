@@ -36,7 +36,7 @@ import { useCameraControls } from '@/hooks/useCameraControls'
 import { useCameraGestures } from '@/hooks/useCameraGestures'
 import { useCameraAnimations } from '@/hooks/useCameraAnimations'
 import { useTemplates } from '@/templates/hooks/useTemplates'
-import { useEdgeDetection } from '@/hooks/useEdgeDetection'
+import { useTemplateDrawerHandle } from '@/hooks/useTemplateDrawerHandle'
 import { TemplateDrawer, TemplateOverlay } from '@/components/TemplateDrawer'
 import { Dimensions } from 'react-native'
 
@@ -82,8 +82,8 @@ export const CameraScreen: FC = function CameraScreen() {
     route.params?.onTemplateDrawerToggle?.(true)
   }
   
-  // Edge detection hook
-  const { edgeDetectionStyle, edgeDetectionPanResponder, handleTranslateXChange } = useEdgeDetection({
+  // Template drawer handle hook
+  const { templateDrawerHandleStyle, templateDrawerHandlePanResponder, handleTranslateXChange } = useTemplateDrawerHandle({
     isTemplateDrawerVisible,
     onTemplateDrawerOpen: handleTemplateDrawerOpen
   })
@@ -715,7 +715,7 @@ export const CameraScreen: FC = function CameraScreen() {
           </Reanimated.View>
         </GestureDetector>
         
-        {/* Edge Detection Area and Vertical Line */}
+        {/* Template Drawer Handle */}
         <Reanimated.View
           style={[
             {
@@ -729,9 +729,9 @@ export const CameraScreen: FC = function CameraScreen() {
               overflow: 'hidden',
               zIndex: isTemplateDrawerVisible ? 998 : 9999, // Lower z-index when drawer is open
             },
-            edgeDetectionStyle
+            templateDrawerHandleStyle
           ]}
-          {...edgeDetectionPanResponder.panHandlers}
+          {...templateDrawerHandlePanResponder.panHandlers}
         >
           <BlurView
             style={{
@@ -755,9 +755,9 @@ export const CameraScreen: FC = function CameraScreen() {
               left: SCREEN_WIDTH + 1, // Start 2px off-screen to the right
               width: 1,
               height: SCREEN_HEIGHT,
-              zIndex: 9998, // Just below edge detection area
+              zIndex: 9998, // Just below template drawer handle
             },
-            edgeDetectionStyle // Same transform as edge detection area
+            templateDrawerHandleStyle // Same transform as template drawer handle
           ]}
         >
           <BlurView
@@ -977,23 +977,8 @@ export const CameraScreen: FC = function CameraScreen() {
               </GestureDetector>
             </View>
 
-            {/* Right Container: Template Button and Camera Mode Button */}
+            {/* Right Container: Camera Mode Button */}
             <View style={$rightControlsContainer}>
-              {/* Template Button */}
-              <BlurButton
-                onPress={handleTemplateDrawerOpen}
-                style={$templateButton}
-                blurType="light"
-                blurAmount={7}
-                reducedTransparencyFallbackColor="rgba(255, 255, 255, 0.2)"
-              >
-                <Ionicons 
-                  name="grid-outline" 
-                  size={24} 
-                  color="#fff" 
-                />
-              </BlurButton>
-              
               <Reanimated.View style={[animatedCameraModeStyle, $cameraModeContainer]}>
                 {/* Main expanding background with blur */}
                 <BlurView
@@ -1080,17 +1065,17 @@ export const CameraScreen: FC = function CameraScreen() {
             {
               position: 'absolute',
               top: (SCREEN_HEIGHT - 50) / 3, // EDGE_DETECTION_TOP
-              left: SCREEN_WIDTH - 23, // Start 20px from right edge (partially visible)
-              width: 25, // EDGE_DETECTION_WIDTH
+              left: SCREEN_WIDTH - 38, // Start 20px from right edge (partially visible)
+              width: 40, // EDGE_DETECTION_WIDTH
               height: 50, // EDGE_DETECTION_HEIGHT
               borderTopLeftRadius: 12,
               borderBottomLeftRadius: 12,
               overflow: 'hidden',
               zIndex: isTemplateDrawerVisible ? 998 : 9999, // Lower z-index when drawer is open
             },
-            edgeDetectionStyle
+            templateDrawerHandleStyle
           ]}
-          {...edgeDetectionPanResponder.panHandlers}
+          {...templateDrawerHandlePanResponder.panHandlers}
         >
           <BlurView
             style={{
@@ -1116,7 +1101,7 @@ export const CameraScreen: FC = function CameraScreen() {
               height: SCREEN_HEIGHT,
               zIndex: 9998, // Just below edge detection area
             },
-            edgeDetectionStyle // Same transform as edge detection area
+            templateDrawerHandleStyle // Same transform as template drawer handle
           ]}
         >
           <BlurView
@@ -1363,14 +1348,6 @@ const $galleryButton: ViewStyle = {
   borderColor: "rgba(255, 255, 255, 0.5)",
 }
 
-const $templateButton: ViewStyle = {
-  width: 50,
-  height: 50,
-  borderRadius: 25,
-  alignItems: "center",
-  justifyContent: "center",
-  marginBottom: 10, // Add some spacing from the camera mode button
-}
 
 const $cameraModeButton: ViewStyle = {
   width: 60,
