@@ -1,4 +1,4 @@
-import { FC, useCallback, useEffect, useState, useRef } from "react"
+import { FC, useCallback, useEffect, useState, useRef, useMemo } from "react"
 import {
   TouchableOpacity,
   View,
@@ -364,10 +364,49 @@ export const CameraScreen: FC = function CameraScreen() {
     navigation.navigate("Gallery")
   }, [navigation])
 
+  // Memoize camera error handler
+  const handleCameraError = useCallback((error: any) => {
+    // Use centralized error handling for camera errors
+    handleAsync(
+      async () => {
+        throw error
+      },
+      {
+        category: ErrorCategory.CAMERA,
+        userMessage: 'Camera encountered an error. Attempting to recover...',
+        severity: ErrorSeverity.HIGH,
+        context: { 
+          operation: 'camera_init', 
+          errorType: 'device_unavailable' // Proper error type for device issues
+        },
+        onError: (appError: any) => {
+          const errorMessage = appError.originalError?.message || ''
+          if (errorMessage.includes('AVFoundationErrorDomain') || 
+              errorMessage.includes('Cannot Complete Action')) {
+            recoverFromCameraError()
+          }
+        }
+      }
+    )
+  }, [handleAsync, recoverFromCameraError])
+
 
 
   // Update camera zoom when zoom value changes
   const [cameraZoom, setCameraZoom] = useState(device?.neutralZoom ?? 1)
+
+  // Memoize screen dimensions to prevent recalculation
+  const screenDimensions = useMemo(() => ({
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT
+  }), [])
+
+  // Memoize popup state to prevent unnecessary re-renders
+  const memoizedPopupState = useMemo(() => ({
+    visible: popupState.visible,
+    value: popupState.value,
+    type: popupState.type
+  }), [popupState.visible, popupState.value, popupState.type])
 
   // Use camera animations hook
   const {
@@ -472,30 +511,7 @@ export const CameraScreen: FC = function CameraScreen() {
                 enableExposure={true} // Enable exposure control
                 flash={flashMode} // Set flash mode on camera component
                 animatedProps={animatedCameraProps}
-                onError={(error) => {
-                  // Use centralized error handling for camera errors
-                  handleAsync(
-                    async () => {
-                      throw error
-                    },
-                    {
-                      category: ErrorCategory.CAMERA,
-                      userMessage: 'Camera encountered an error. Attempting to recover...',
-                      severity: ErrorSeverity.HIGH,
-                      context: { 
-                        operation: 'camera_init', 
-                        errorType: 'device_unavailable' // Proper error type for device issues
-                      },
-                      onError: (appError: any) => {
-                        const errorMessage = appError.originalError?.message || ''
-                        if (errorMessage.includes('AVFoundationErrorDomain') || 
-                            errorMessage.includes('Cannot Complete Action')) {
-                          recoverFromCameraError()
-                        }
-                      }
-                    }
-                  )
-                }}
+                onError={handleCameraError}
                 resizeMode="contain"
               />
             ) : (
@@ -527,7 +543,7 @@ export const CameraScreen: FC = function CameraScreen() {
               animatedFlashStyle={animatedFlashStyle}
               showFocusRing={showFocusRing}
               animatedFocusRingStyle={animatedFocusRingStyle}
-              popupState={popupState}
+              popupState={memoizedPopupState}
               animatedPopupStyle={animatedPopupStyle}
               popupTextStyle={popupTextStyle}
               isExposureControlsVisible={isExposureControlsVisible}
@@ -561,7 +577,7 @@ export const CameraScreen: FC = function CameraScreen() {
             {currentTemplateId && (
               <TemplateOverlay
                 templateId={currentTemplateId}
-                screenDimensions={{ width: SCREEN_WIDTH, height: SCREEN_HEIGHT }}
+                screenDimensions={screenDimensions}
               />
             )}
           </View>
