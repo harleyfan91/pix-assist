@@ -654,6 +654,14 @@ export const CameraScreen: FC = function CameraScreen() {
           />
           </Reanimated.View>
         </GestureDetector>
+        
+        {/* Template Drawer */}
+        <TemplateDrawer
+          isVisible={isTemplateDrawerVisible}
+          onClose={handleTemplateDrawerClose}
+          onOpen={handleTemplateDrawerOpen}
+          onTemplateSelect={handleTemplateSelect}
+        />
       </Screen>
     )
   }
