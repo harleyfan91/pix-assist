@@ -38,7 +38,7 @@ interface CameraControlsProps {
   galleryIconStyle: any
 }
 
-export const CameraControls: React.FC<CameraControlsProps> = ({
+export const CameraControls: React.FC<CameraControlsProps> = React.memo(({
   onNavigateToGallery,
   shutterButtonGesture,
   shutterPressed,
@@ -174,4 +174,18 @@ export const CameraControls: React.FC<CameraControlsProps> = ({
       </View>
     </View>
   )
-}
+}, (prevProps, nextProps) => {
+  // Custom comparison for performance optimization
+  // Only re-render if primitive values change, skip animated styles
+  return (
+    prevProps.shutterPressed === nextProps.shutterPressed &&
+    prevProps.isCapturing === nextProps.isCapturing &&
+    prevProps.flashMode === nextProps.flashMode &&
+    // Skip animated styles as they change frequently but don't affect functionality
+    // The animated styles are handled by Reanimated and don't need re-renders
+    prevProps.onNavigateToGallery === nextProps.onNavigateToGallery &&
+    prevProps.onToggleCameraModeExpansion === nextProps.onToggleCameraModeExpansion &&
+    prevProps.onFlashToggle === nextProps.onFlashToggle &&
+    prevProps.onToggleExposureControls === nextProps.onToggleExposureControls
+  )
+})

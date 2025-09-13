@@ -32,7 +32,7 @@ interface CameraOverlaysProps {
   handleExposureSliderChange: (value: number) => void
 }
 
-export const CameraOverlays: React.FC<CameraOverlaysProps> = ({
+export const CameraOverlays: React.FC<CameraOverlaysProps> = React.memo(({
   animatedFlashStyle,
   showFocusRing,
   animatedFocusRingStyle,
@@ -118,4 +118,17 @@ export const CameraOverlays: React.FC<CameraOverlaysProps> = ({
       )}
     </>
   )
-}
+}, (prevProps, nextProps) => {
+  // Custom comparison for performance optimization
+  // Only re-render if primitive values change, skip animated styles
+  return (
+    prevProps.showFocusRing === nextProps.showFocusRing &&
+    prevProps.popupState.visible === nextProps.popupState.visible &&
+    prevProps.popupState.value === nextProps.popupState.value &&
+    prevProps.isExposureControlsVisible === nextProps.isExposureControlsVisible &&
+    prevProps.sliderValue === nextProps.sliderValue &&
+    // Skip animated styles as they change frequently but don't affect functionality
+    // The animated styles are handled by Reanimated and don't need re-renders
+    prevProps.handleExposureSliderChange === nextProps.handleExposureSliderChange
+  )
+})

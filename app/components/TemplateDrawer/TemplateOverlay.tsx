@@ -10,7 +10,7 @@ interface TemplateOverlayProps {
   style?: ViewStyle
 }
 
-export const TemplateOverlay: React.FC<TemplateOverlayProps> = ({
+export const TemplateOverlay: React.FC<TemplateOverlayProps> = React.memo(({
   templateId,
   screenDimensions,
   style
@@ -79,4 +79,13 @@ export const TemplateOverlay: React.FC<TemplateOverlayProps> = ({
       {renderTemplate()}
     </View>
   )
-}
+}, (prevProps, nextProps) => {
+  // Custom comparison for performance optimization
+  // Only re-render if template ID or screen dimensions change
+  return (
+    prevProps.templateId === nextProps.templateId &&
+    prevProps.screenDimensions.width === nextProps.screenDimensions.width &&
+    prevProps.screenDimensions.height === nextProps.screenDimensions.height &&
+    prevProps.style === nextProps.style
+  )
+})

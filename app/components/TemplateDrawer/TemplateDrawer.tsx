@@ -34,7 +34,7 @@ interface TemplateDrawerProps {
   onTranslateXChange?: (translateX: SharedValue<number>) => void
 }
 
-export const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
+export const TemplateDrawer: React.FC<TemplateDrawerProps> = React.memo(({
   isVisible,
   onClose,
   onOpen,
@@ -441,4 +441,15 @@ export const TemplateDrawer: React.FC<TemplateDrawerProps> = ({
       </PanGestureHandler>
     </>
   )
-}
+}, (prevProps, nextProps) => {
+  // Custom comparison for performance optimization
+  // Only re-render if visibility or callback functions change
+  return (
+    prevProps.isVisible === nextProps.isVisible &&
+    prevProps.onClose === nextProps.onClose &&
+    prevProps.onOpen === nextProps.onOpen &&
+    prevProps.onTemplateSelect === nextProps.onTemplateSelect &&
+    prevProps.cameraViewRef === nextProps.cameraViewRef &&
+    prevProps.onTranslateXChange === nextProps.onTranslateXChange
+  )
+})
