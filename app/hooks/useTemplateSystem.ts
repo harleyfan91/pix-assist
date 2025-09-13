@@ -81,14 +81,14 @@ export const useTemplateSystem = (callbacks?: TemplateSystemCallbacks): UseTempl
   
   // Open drawer
   const openDrawer = useCallback(() => {
-    log.template.info('Opening template drawer')
+    log.template('Opening template drawer')
     setIsDrawerVisible(true)
     callbacks?.onDrawerStateChange?.(true)
   }, [callbacks])
   
   // Close drawer
   const closeDrawer = useCallback(() => {
-    log.template.info('Closing template drawer')
+    log.template('Closing template drawer')
     setIsDrawerVisible(false)
     callbacks?.onDrawerStateChange?.(false)
   }, [callbacks])
@@ -104,7 +104,7 @@ export const useTemplateSystem = (callbacks?: TemplateSystemCallbacks): UseTempl
   
   // Select template (activate and close drawer)
   const selectTemplate = useCallback(async (templateId: string): Promise<boolean> => {
-    log.template.info('Selecting template', { templateId })
+    log.template('Selecting template', { templateId })
     
     const result = await handleAsync(
       async () => {
@@ -118,7 +118,7 @@ export const useTemplateSystem = (callbacks?: TemplateSystemCallbacks): UseTempl
         // Notify callback
         callbacks?.onTemplateSelected?.(templateId)
         
-        log.template.info('Template selected successfully', { templateId })
+        log.template('Template selected successfully', { templateId })
         return true
       },
       {
@@ -140,17 +140,17 @@ export const useTemplateSystem = (callbacks?: TemplateSystemCallbacks): UseTempl
   // Deactivate current template
   const deactivateCurrentTemplate = useCallback(async (): Promise<void> => {
     if (!currentTemplateId) {
-      log.template.warn('No active template to deactivate')
+      log.template('No active template to deactivate')
       return
     }
     
-    log.template.info('Deactivating current template', { templateId: currentTemplateId })
+    log.template('Deactivating current template', { templateId: currentTemplateId })
     
     await handleAsync(
       async () => {
         await deactivateTemplate(currentTemplateId)
         callbacks?.onTemplateDeactivated?.(currentTemplateId)
-        log.template.info('Template deactivated successfully', { templateId: currentTemplateId })
+        log.template('Template deactivated successfully', { templateId: currentTemplateId })
       },
       {
         category: ErrorCategory.TEMPLATE,
@@ -166,7 +166,7 @@ export const useTemplateSystem = (callbacks?: TemplateSystemCallbacks): UseTempl
   
   // Refresh templates
   const refreshTemplates = useCallback(async (): Promise<void> => {
-    log.template.info('Refreshing templates')
+    log.template('Refreshing templates')
     await refreshTemplatesFromHook()
   }, [refreshTemplatesFromHook])
   
