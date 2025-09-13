@@ -451,124 +451,65 @@ export const CameraScreen: FC = function CameraScreen() {
     )
   }
 
-  if (!device) {
-    return (
-      <Screen preset="fixed" style={[styles.$container, { overflow: 'visible' }]} cameraMode={true} systemBarStyle="light">
-        {/* Camera Content - Show black viewfinder with controls */}
-        <GestureDetector gesture={cameraGestures}>
-          <Reanimated.View style={styles.$cameraContainer}>
-            <View style={StyleSheet.absoluteFill}>
-              {/* Black viewfinder when no camera available */}
-              <View style={[StyleSheet.absoluteFill, { backgroundColor: '#000000' }]} />
-              
-              {/* Error message overlay */}
-              <View style={styles.$noCameraOverlay}>
-                <Ionicons name="camera-outline" size={48} color="#ff6b6b" />
-                <Text style={styles.$noCameraTitle}>No Camera Found</Text>
-                <Text style={styles.$noCameraSubtitle}>No camera device available on this device.</Text>
-              </View>
-
-              {/* Camera Overlays - Flash, Focus Ring, Popup, Exposure */}
-              <CameraOverlays
-                animatedFlashStyle={animatedFlashStyle}
-                showFocusRing={showFocusRing}
-                animatedFocusRingStyle={animatedFocusRingStyle}
-                popupState={popupState}
-                animatedPopupStyle={animatedPopupStyle}
-                popupTextStyle={popupTextStyle}
-                isExposureControlsVisible={isExposureControlsVisible}
-                animatedExposureControlsStyle={animatedExposureControlsStyle}
-                exposureLabelStyle={exposureLabelStyle}
-                sliderValue={sliderValue}
-                handleExposureSliderChange={handleExposureSliderChange}
-              />
-            </View>
-
-            {/* Unified click away overlay for menus */}
-            {(isCameraModeExpanded || showExposureControls) && (
-              <TouchableOpacity 
-                style={styles.$unifiedOverlay}
-                onPress={closeAllControls}
-                activeOpacity={1}
-              />
-            )}
-
-            {/* Bottom Controls - iPhone-style layout */}
-            <CameraControls
-              onNavigateToGallery={navigateToGallery}
-              shutterButtonGesture={shutterButtonGesture}
-              shutterPressed={shutterPressed}
-              isCapturing={isCapturing}
-              animatedCameraModeStyle={animatedCameraModeStyle}
-              animatedCameraControlsOpacity={animatedCameraControlsOpacity}
-              animatedChevronStyle={animatedChevronStyle}
-              onToggleCameraModeExpansion={toggleCameraModeExpansion}
-              onFlashToggle={handleFlashToggle}
-              flashMode={flashMode}
-              flashIconStyle={flashIconStyle}
-              onToggleExposureControls={toggleExposureControls}
-              exposureIconStyle={exposureIconStyle}
-              cropIconStyle={cropIconStyle}
-              galleryIconStyle={galleryIconStyle}
-            />
-          </Reanimated.View>
-        </GestureDetector>
-        
-        
-        
-        
-        {/* Template Drawer */}
-        <TemplateDrawer
-          isVisible={isTemplateDrawerVisible}
-          onClose={handleTemplateDrawerClose}
-          onOpen={handleTemplateDrawerOpen}
-          onTemplateSelect={handleTemplateSelect}
-        />
-      </Screen>
-    )
-  }
 
   return (
     <Screen preset="fixed" style={styles.$container} cameraMode={true} systemBarStyle="light">
-      {/* Camera Content - Static positioning (animation disabled for testing) */}
+      {/* Unified Camera Content */}
       <GestureDetector gesture={cameraGestures}>
         <Reanimated.View style={styles.$cameraContainer}>
           <View style={StyleSheet.absoluteFill}>
-            <ReanimatedCamera
-              {...({ ref: _cameraRef } as any)}
-              isActive={isActive}
-              device={device}
-              style={StyleSheet.absoluteFill}
-              photo
-              video
-              zoom={cameraZoom}
-              enableZoomGesture={false} // We're using custom gesture
-              enableExposure={true} // Enable exposure control
-              flash={flashMode} // Set flash mode on camera component
-              animatedProps={animatedCameraProps}
-              onError={(error) => {
-                // Use centralized error handling for camera errors
-                handleAsync(
-                  async () => {
-                    throw error
-                  },
-                  {
-                    category: ErrorCategory.CAMERA,
-                    userMessage: 'Camera encountered an error. Attempting to recover...',
-                    severity: ErrorSeverity.HIGH,
-                    context: { operation: 'camera_init', errorType: 'camera_error' },
-                    onError: (appError: any) => {
-                      const errorMessage = appError.originalError?.message || ''
-                      if (errorMessage.includes('AVFoundationErrorDomain') || 
-                          errorMessage.includes('Cannot Complete Action')) {
-                        recoverFromCameraError()
+            {/* Conditional Camera Component */}
+            {device ? (
+              <ReanimatedCamera
+                {...({ ref: _cameraRef } as any)}
+                isActive={isActive}
+                device={device}
+                style={StyleSheet.absoluteFill}
+                photo
+                video
+                zoom={cameraZoom}
+                enableZoomGesture={false} // We're using custom gesture
+                enableExposure={true} // Enable exposure control
+                flash={flashMode} // Set flash mode on camera component
+                animatedProps={animatedCameraProps}
+                onError={(error) => {
+                  // Use centralized error handling for camera errors
+                  handleAsync(
+                    async () => {
+                      throw error
+                    },
+                    {
+                      category: ErrorCategory.CAMERA,
+                      userMessage: 'Camera encountered an error. Attempting to recover...',
+                      severity: ErrorSeverity.HIGH,
+                      context: { 
+                        operation: 'camera_init', 
+                        errorType: 'device_unavailable' // Proper error type for device issues
+                      },
+                      onError: (appError: any) => {
+                        const errorMessage = appError.originalError?.message || ''
+                        if (errorMessage.includes('AVFoundationErrorDomain') || 
+                            errorMessage.includes('Cannot Complete Action')) {
+                          recoverFromCameraError()
+                        }
                       }
                     }
-                  }
-                )
-              }}
-              resizeMode="contain" // Change from "cover" to "contain"
-            />
+                  )
+                }}
+                resizeMode="contain"
+              />
+            ) : (
+              // Fallback view when no camera device available
+              <>
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: '#000000' }]} />
+                {/* Error message overlay */}
+                <View style={styles.$noCameraOverlay}>
+                  <Ionicons name="camera-outline" size={48} color="#ff6b6b" />
+                  <Text style={styles.$noCameraTitle}>No Camera Found</Text>
+                  <Text style={styles.$noCameraSubtitle}>No camera device available on this device.</Text>
+                </View>
+              </>
+            )}
             
             {/* Gradient layers - positioned to avoid viewfinder area */}
             {/* JSX order is inverse: renders from bottom up, layering on top of each other */}
