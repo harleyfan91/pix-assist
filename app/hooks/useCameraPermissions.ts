@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Alert, Linking } from 'react-native'
 import { useCameraPermission } from 'react-native-vision-camera'
+import { useErrorHandler } from '@/hooks/useErrorHandling'
+import { ErrorCategory, ErrorSeverity } from '@/services/error/types'
 import { log } from '@/services/logging'
 
 export interface CameraPermissionState {
@@ -38,6 +40,7 @@ export interface UseCameraPermissionsReturn extends CameraPermissionState, Camer
  */
 export const useCameraPermissions = (): UseCameraPermissionsReturn => {
   const { hasPermission, requestPermission: visionCameraRequestPermission } = useCameraPermission()
+  const { handleAsync } = useErrorHandler()
   
   const [isLoading, setIsLoading] = useState(true)
   const [isDenied, setIsDenied] = useState(false)
@@ -53,44 +56,59 @@ export const useCameraPermissions = (): UseCameraPermissionsReturn => {
   }, [hasPermission])
 
   const requestPermission = useCallback(async (): Promise<boolean> => {
-    try {
-      setIsLoading(true)
-      setError(null)
-      
-      log.camera.info('Requesting camera permission...')
-      
-      const permission = await visionCameraRequestPermission()
-      
-      if (permission) {
-        log.camera.info('Camera permission granted')
-        setIsDenied(false)
-      } else {
-        log.camera.warn('Camera permission denied by user')
-        setIsDenied(true)
+    setIsLoading(true)
+    setError(null)
+    
+    log.camera.info('Requesting camera permission...')
+    
+    const result = await handleAsync(
+      async () => {
+        const permission = await visionCameraRequestPermission()
+        
+        if (permission) {
+          log.camera.info('Camera permission granted')
+          setIsDenied(false)
+        } else {
+          log.camera.warn('Camera permission denied by user')
+          setIsDenied(true)
+        }
+        
+        return permission
+      },
+      {
+        category: ErrorCategory.PERMISSION,
+        userMessage: 'Failed to request camera permission. Please try again.',
+        severity: ErrorSeverity.MEDIUM,
+        context: { permissionType: 'camera' },
+        onError: (error) => {
+          setError(error.message)
+          setIsDenied(true)
+        }
       }
-      
-      return permission
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
-      log.camera.error('Failed to request camera permission', { error: errorMessage })
-      setError(errorMessage)
-      setIsDenied(true)
-      return false
-    } finally {
-      setIsLoading(false)
-    }
-  }, [visionCameraRequestPermission])
+    )
+    
+    setIsLoading(false)
+    return result ?? false
+  }, [visionCameraRequestPermission, handleAsync])
 
   const openSettings = useCallback(async (): Promise<void> => {
-    try {
-      log.camera.info('Opening device settings for camera permission')
-      await Linking.openSettings()
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to open settings'
-      log.camera.error('Failed to open device settings', { error: errorMessage })
-      setError(errorMessage)
-    }
-  }, [])
+    log.camera.info('Opening device settings for camera permission')
+    
+    await handleAsync(
+      async () => {
+        await Linking.openSettings()
+      },
+      {
+        category: ErrorCategory.PERMISSION,
+        userMessage: 'Failed to open device settings. Please manually go to Settings > Privacy & Security > Camera.',
+        severity: ErrorSeverity.LOW,
+        context: { action: 'openSettings' },
+        onError: (error) => {
+          setError(error.message)
+        }
+      }
+    )
+  }, [handleAsync])
 
   const reset = useCallback(() => {
     log.camera.info('Resetting camera permission state')
