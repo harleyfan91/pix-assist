@@ -52,7 +52,7 @@ class TemplateManager {
       errorService.handleError(appError)
       
       // Use defaults
-      this.activeTemplates = ['rule_of_thirds']
+      this.activeTemplates = [] // No templates active by default
       this.currentCategory = 'grid'
       this.currentTemplateIndex = 0
     }

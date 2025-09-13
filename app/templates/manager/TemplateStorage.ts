@@ -12,7 +12,7 @@ interface StorageData {
 class TemplateStorage {
   private storageKey = 'template_preferences'
   private defaultData: StorageData = {
-    activeTemplates: ['rule_of_thirds'],
+    activeTemplates: [], // No templates active by default
     currentCategory: 'grid',
     currentTemplateIndex: 0
   }
