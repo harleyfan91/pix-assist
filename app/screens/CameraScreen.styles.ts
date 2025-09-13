@@ -319,17 +319,17 @@ export const $focusRing: ViewStyle = {
 export const $popupIndicator: ViewStyle = {
   position: "absolute",
   bottom: 180, // Position above the shutter button area
-  left: "50%",
-  marginLeft: -30, // Center horizontally (adjust based on content width)
+  alignSelf: "center", // Centers horizontally automatically
   zIndex: 10, // Above other elements
 }
 
 export const $popupBlurBackground: ViewStyle = {
   position: "relative",
-  paddingHorizontal: 12,
-  paddingVertical: 6,
-  borderRadius: 18,
-  minWidth: 60,
+  width: 44, // Fixed width
+  height: 44, // Fixed height - same as width for perfect circle
+  borderRadius: 22, // Half of width/height for perfect circle
+  justifyContent: "center", // Center content vertically
+  alignItems: "center", // Center content horizontally
   overflow: "hidden",
 }
 
@@ -339,7 +339,7 @@ export const $popupBlurView: ViewStyle = {
   left: 0,
   right: 0,
   bottom: 0,
-  borderRadius: 16,
+  borderRadius: 30, // Match the outer radius for perfect circle
 }
 
 export const $popupTextContent: ViewStyle = {
