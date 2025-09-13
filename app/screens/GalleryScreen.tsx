@@ -83,7 +83,6 @@ export const GalleryScreen: FC = function GalleryScreen() {
         style={styles.$photoImage}
         resizeMode="cover"
         // Performance optimizations
-        loadingIndicatorSource={require('@/assets/images/logo.png')}
         fadeDuration={0}
         progressiveRenderingEnabled={true}
         cache="force-cache"
