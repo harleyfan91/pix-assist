@@ -181,6 +181,16 @@ The architecture is optimized for:
 - **TypeScript Interfaces**: Define clear interfaces for all component props
 - **Performance**: Use `React.memo` and `useMemo` for expensive operations
 
+### Performance Optimization Best Practices
+- **Component Memoization**: Use `React.memo` with custom comparison functions for all extracted components
+- **Callback Optimization**: Memoize all event handlers and render functions with `useCallback`
+- **Calculation Memoization**: Use `useMemo` for expensive calculations and return objects
+- **Hook Optimization**: Memoize custom hook return objects to prevent unnecessary re-renders
+- **FlatList Performance**: Use performance props (`getItemLayout`, `removeClippedSubviews`, `maxToRenderPerBatch`)
+- **Image Optimization**: Enable caching, progressive rendering, and optimize fade durations
+- **Template Rendering**: Memoize template components to prevent unnecessary re-renders
+- **Performance Monitoring**: Use performance measurement utilities to validate optimizations
+
 ### Known Limitations
 - **EXIF Lens Information Display**: While photos preserve complete EXIF metadata including camera settings, GPS, and timestamps, lens information (e.g., "Wide Camera - 26mm f/1.6") may not display correctly in the iOS Photos app due to limitations in Expo's MediaLibrary. This is a known limitation and doesn't affect actual photo quality or metadata preservation.
 

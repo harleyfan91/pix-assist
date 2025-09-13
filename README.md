@@ -261,6 +261,16 @@ ThemeProvider (Custom)
 - **TypeScript Interfaces**: Define clear interfaces for all component props
 - **Performance**: Use `React.memo` and `useMemo` for expensive operations
 
+## Performance Optimization Approach
+- **Component Memoization**: Use `React.memo` with custom comparison functions for all extracted components
+- **Callback Optimization**: Memoize all event handlers and render functions with `useCallback`
+- **Calculation Memoization**: Use `useMemo` for expensive calculations and return objects
+- **Hook Optimization**: Memoize custom hook return objects to prevent unnecessary re-renders
+- **FlatList Performance**: Use performance props (`getItemLayout`, `removeClippedSubviews`, `maxToRenderPerBatch`)
+- **Image Optimization**: Enable caching, progressive rendering, and optimize fade durations
+- **Template Rendering**: Memoize template components to prevent unnecessary re-renders
+- **Performance Monitoring**: Use performance measurement utilities to validate optimizations
+
 ### Key Styling Files
 - `app/theme/context.tsx` - Theme provider and context
 - `app/theme/theme.ts` - Light/dark theme definitions
