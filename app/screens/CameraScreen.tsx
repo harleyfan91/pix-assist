@@ -1,7 +1,5 @@
 import { FC, useCallback, useEffect, useState, useRef } from "react"
 import {
-  Alert,
-  Linking,
   TouchableOpacity,
   View,
   ViewStyle,
@@ -28,13 +26,14 @@ import Reanimated, {
   SharedValue,
 } from "react-native-reanimated"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
-import { Camera, useCameraDevice, useCameraPermission } from "react-native-vision-camera"
+import { Camera, useCameraDevice } from "react-native-vision-camera"
 import * as Haptics from 'expo-haptics'
 import { writeAsync } from '@lodev09/react-native-exify'
 import { useIconRotation } from '@/hooks/useIconRotation'
 import { useCameraControls } from '@/hooks/useCameraControls'
 import { useCameraGestures } from '@/hooks/useCameraGestures'
 import { useCameraAnimations } from '@/hooks/useCameraAnimations'
+import { useCameraPermissionPrompt } from '@/hooks/useCameraPermissions'
 import { useTemplates } from '@/templates/hooks/useTemplates'
 import { TemplateDrawer, TemplateOverlay } from '@/components/TemplateDrawer'
 import { CameraControls } from '@/components/CameraControls'
@@ -67,7 +66,6 @@ Reanimated.addWhitelistedNativeProps({
 })
 
 export const CameraScreen: FC = function CameraScreen() {
-  const [cameraPermission, setCameraPermission] = useState<boolean | null>(null)
   const [isActive, setIsActive] = useState(true) // Camera active state
   const [cameraError, setCameraError] = useState<string | null>(null)
   const navigation = useNavigation<AppStackScreenProps<"Camera">["navigation"]>()
@@ -119,7 +117,14 @@ export const CameraScreen: FC = function CameraScreen() {
 
 
 
-  const { hasPermission, requestPermission } = useCameraPermission()
+  // Camera permission management
+  const { 
+    isLoading: isPermissionLoading, 
+    hasPermission, 
+    isDenied: isPermissionDenied,
+    error: permissionError,
+    promptForPermission 
+  } = useCameraPermissionPrompt()
   // Use camera device with ultra-wide support for zoom out below 1x
   const device = useCameraDevice("back", {
     physicalDevices: ["ultra-wide-angle-camera", "wide-angle-camera", "telephoto-camera"],
@@ -256,9 +261,6 @@ export const CameraScreen: FC = function CameraScreen() {
   const [showPreview, setShowPreview] = useState(false)
   const [isPreviewVisible, setIsPreviewVisible] = useState(false) // Controls actual rendering
 
-  useEffect(() => {
-    setCameraPermission(hasPermission)
-  }, [hasPermission])
 
   // Initialize zoom with device's neutral zoom when device changes
   useEffect(() => {
@@ -270,22 +272,6 @@ export const CameraScreen: FC = function CameraScreen() {
 
 
   
-  const promptForCameraPermissions = useCallback(async () => {
-    if (hasPermission) return
-    const permission = await requestPermission()
-    setCameraPermission(permission)
-
-    if (!permission) {
-      Alert.alert(
-        "Camera Permission Required",
-        "This app needs camera access to take photos. Please enable it in settings.",
-        [
-          { text: "Cancel", style: "cancel" },
-          { text: "Open Settings", onPress: () => Linking.openSettings() },
-        ],
-      )
-    }
-  }, [hasPermission, requestPermission])
 
 
   const takePhoto = useCallback(async () => {
@@ -462,24 +448,28 @@ export const CameraScreen: FC = function CameraScreen() {
 
   const { right: _right, top: _top } = useSafeAreaInsets()
 
-  if (cameraPermission == null) {
-    // still loading
+  // Handle permission loading state
+  if (isPermissionLoading) {
     return (
       <Screen preset="fixed" contentContainerStyle={styles.$container}>
         <View style={styles.$content}>
-          <Text preset="heading" text="📷 TESTING RELOAD..." />
+          <Text preset="heading" text="📷 Loading Camera..." />
         </View>
       </Screen>
     )
   }
 
-  if (!cameraPermission) {
+  // Handle permission denied state
+  if (isPermissionDenied) {
     return (
       <Screen preset="fixed" contentContainerStyle={styles.$container}>
         <View style={styles.$content}>
           <Text preset="heading" text="📷 Camera Permission Required" />
           <Text preset="subheading" text="Please grant camera permission to use this feature." />
-          <Button onPress={promptForCameraPermissions} variant="solid" size="lg">
+          {permissionError && (
+            <Text preset="formHelper" text={`Error: ${permissionError}`} />
+          )}
+          <Button onPress={promptForPermission} variant="solid" size="lg">
             <ButtonText>Request Camera Permission</ButtonText>
           </Button>
         </View>
