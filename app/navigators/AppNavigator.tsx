@@ -31,7 +31,7 @@ import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
  *   https://reactnavigation.org/docs/typescript/#organizing-types
  */
 export type AppStackParamList = {
-  Camera: { onTemplateDrawerToggle?: (isOpen: boolean) => void }
+  Camera: undefined
   Home: undefined
   Gallery: undefined
   Preview: { photoPath: string }
@@ -76,7 +76,6 @@ const AppStack = ({ onTemplateDrawerToggle }: { onTemplateDrawerToggle: (isOpen:
         options={{
           animation: "none", // No animation for camera - it stays as the base
         }}
-        initialParams={{ onTemplateDrawerToggle }}
       />
       
       {/* Other screens presented as modals */}

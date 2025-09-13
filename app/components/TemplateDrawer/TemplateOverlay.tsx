@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { View, ViewStyle } from 'react-native'
 import { useTemplates } from '../../templates/hooks/useTemplates'
 import { useCameraViewfinder } from '../../hooks/useCameraViewfinder'
@@ -25,7 +25,8 @@ export const TemplateOverlay: React.FC<TemplateOverlayProps> = React.memo(({
 
   // REVERSIBLE ANIMATION: Template overlay renderer
   // Renders the appropriate template component based on type
-  const renderTemplate = () => {
+  // Memoized to prevent unnecessary re-renders
+  const templateComponent = useMemo(() => {
     if (template.type === 'core' && template.component) {
       const CoreComponent = template.component
       return (
@@ -60,7 +61,17 @@ export const TemplateOverlay: React.FC<TemplateOverlayProps> = React.memo(({
         screenDimensions={{ width: viewfinder.width, height: viewfinder.height }}
       />
     )
-  }
+  }, [
+    template.type,
+    template.component,
+    template.opacity,
+    template.color,
+    template.size,
+    template.svgComponent,
+    template.customization,
+    viewfinder.width,
+    viewfinder.height
+  ])
 
   return (
     <View
@@ -76,7 +87,7 @@ export const TemplateOverlay: React.FC<TemplateOverlayProps> = React.memo(({
         style,
       ]}
     >
-      {renderTemplate()}
+      {templateComponent}
     </View>
   )
 }, (prevProps, nextProps) => {

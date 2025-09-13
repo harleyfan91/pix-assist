@@ -80,7 +80,7 @@ export const CameraScreen: FC = function CameraScreen() {
     openDrawer: handleTemplateDrawerOpen,
     closeDrawer: handleTemplateDrawerClose,
     selectTemplate: handleTemplateSelect,
-  } = useTemplateSystemWithNavigation(route.params?.onTemplateDrawerToggle)
+  } = useTemplateSystemWithNavigation()
   
   // Initialize error handling
   const { handleAsync } = useErrorHandler()

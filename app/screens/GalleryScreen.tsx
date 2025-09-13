@@ -8,6 +8,7 @@ import { photoLibraryService, PhotoAsset } from "@/services/photoLibrary"
 import { useErrorHandler } from '@/hooks/useErrorHandling'
 import { ErrorCategory, ErrorSeverity } from '@/services/error/types'
 import { log } from '@/services/logging'
+import { measureAsync } from '@/utils/performanceMonitor'
 import * as styles from "./GalleryScreen.styles"
 
 export const GalleryScreen: FC = function GalleryScreen() {
@@ -26,21 +27,29 @@ export const GalleryScreen: FC = function GalleryScreen() {
     setLoading(true)
     setError(null)
     
-    await handleAsync(
+    await measureAsync(
+      'gallery-load-photos',
+      'GalleryScreen',
+      'loadPhotos',
       async () => {
-        const photoAssets = await photoLibraryService.getPhotos(50)
-        setPhotos(photoAssets)
+        await handleAsync(
+          async () => {
+            const photoAssets = await photoLibraryService.getPhotos(50)
+            setPhotos(photoAssets)
+          },
+          {
+            category: ErrorCategory.GALLERY,
+            userMessage: 'Failed to load photos. Please check your permissions and try again.',
+            severity: ErrorSeverity.MEDIUM,
+            context: { operation: 'load_photos', count: 50 },
+            onError: (appError) => {
+              const errorMessage = appError.originalError?.message || 'Failed to load photos. Please check your permissions.'
+              setError(errorMessage)
+            }
+          }
+        )
       },
-      {
-        category: ErrorCategory.GALLERY,
-        userMessage: 'Failed to load photos. Please check your permissions and try again.',
-        severity: ErrorSeverity.MEDIUM,
-        context: { operation: 'load_photos', count: 50 },
-        onError: (appError) => {
-          const errorMessage = appError.originalError?.message || 'Failed to load photos. Please check your permissions.'
-          setError(errorMessage)
-        }
-      }
+      { photoCount: 50 }
     ).finally(() => {
       setLoading(false)
     })
@@ -73,6 +82,11 @@ export const GalleryScreen: FC = function GalleryScreen() {
         source={{ uri: item.uri }}
         style={styles.$photoImage}
         resizeMode="cover"
+        // Performance optimizations
+        loadingIndicatorSource={require('@/assets/images/logo.png')}
+        fadeDuration={0}
+        progressiveRenderingEnabled={true}
+        cache="force-cache"
       />
     </TouchableOpacity>
   ), [handlePhotoPress])
