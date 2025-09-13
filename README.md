@@ -244,6 +244,23 @@ ThemeProvider (Custom)
 - **Style Organization**: Extract styles to separate `.styles.ts` files for components with 5+ style definitions
 - **Import Pattern**: Use `import * as styles from "./ComponentName.styles"` for clean style references
 
+### Error Handling Approach
+- **Centralized System**: Use `useErrorHandler` hook for all async operations
+- **Error Categories**: Use `ErrorCategory` enum (CAMERA, TEMPLATE, PERMISSION, etc.)
+- **Error Severity**: Use `ErrorSeverity` enum (LOW, MEDIUM, HIGH, CRITICAL)
+- **Error Types**: Use specific error types (e.g., `'device_unavailable'` for camera errors)
+- **Recovery Actions**: Leverage `ErrorRecoveryAction` for automatic error recovery
+- **Context Information**: Always provide meaningful context in error objects
+- **User Messages**: Include user-friendly error messages for all error scenarios
+
+### Component Architecture Approach
+- **Single Responsibility**: Each component should have one clear purpose
+- **Custom Hooks**: Extract complex logic into reusable custom hooks
+- **Unified Views**: Avoid duplicate code blocks - use conditional rendering instead
+- **Error Boundaries**: Wrap components in error boundaries for graceful failure handling
+- **TypeScript Interfaces**: Define clear interfaces for all component props
+- **Performance**: Use `React.memo` and `useMemo` for expensive operations
+
 ### Key Styling Files
 - `app/theme/context.tsx` - Theme provider and context
 - `app/theme/theme.ts` - Light/dark theme definitions

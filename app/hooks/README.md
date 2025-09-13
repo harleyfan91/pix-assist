@@ -12,6 +12,8 @@ This directory contains all custom React hooks used throughout the PixAssist app
 | `useCameraGestures` | Camera gesture handling | `useCameraGestures.ts` | [See Implementation](./useCameraGestures.ts) |
 | `useDeviceOrientation` | Device orientation tracking | `useDeviceOrientation.ts` | [See Implementation](./useDeviceOrientation.ts) |
 | `useIconRotation` | Icon rotation animations | `useIconRotation.ts` | [See Implementation](./useIconRotation.ts) |
+| `useCameraPermissions` | Camera permission management | `useCameraPermissions.ts` | [See Implementation](./useCameraPermissions.ts) |
+| `useTemplateSystem` | Template system state management | `useTemplateSystem.ts` | [See Implementation](./useTemplateSystem.ts) |
 
 ## 🎯 Key Hooks
 
@@ -138,6 +140,54 @@ const {
 - **State management**: Rotation state tracking
 - **Reset functionality**: Return to original position
 - **Performance optimized**: Efficient animation handling
+
+### `useCameraPermissions()`
+Manages camera permission state and actions
+
+```typescript
+import { useCameraPermissions } from '@/hooks/useCameraPermissions'
+
+const {
+  isLoading,
+  hasPermission,
+  isDenied,
+  error,
+  requestPermission,
+  openSettings,
+  reset
+} = useCameraPermissions()
+```
+
+**Features**:
+- **Permission state**: Complete permission status tracking
+- **Error handling**: Integrated with centralized error system
+- **Recovery actions**: Automatic permission recovery
+- **User-friendly messages**: Clear permission state communication
+
+### `useTemplateSystem()`
+Manages template system state and operations
+
+```typescript
+import { useTemplateSystem } from '@/hooks/useTemplateSystem'
+
+const {
+  isDrawerVisible,
+  currentTemplateId,
+  isLoading,
+  error,
+  openDrawer,
+  closeDrawer,
+  selectTemplate,
+  refreshTemplates
+} = useTemplateSystem()
+```
+
+**Features**:
+- **Template state**: Complete template system state management
+- **Drawer control**: Template drawer visibility and interactions
+- **Template selection**: Template activation and deactivation
+- **Error handling**: Integrated with centralized error system
+- **Navigation integration**: Coordinates with navigation system
 
 ## 🔧 Development Guidelines
 

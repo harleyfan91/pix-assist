@@ -164,6 +164,23 @@ The architecture is optimized for:
 - **File Structure**: Place style files alongside component files (e.g., `ComponentName.tsx` + `ComponentName.styles.ts`)
 - **Benefits**: Improved maintainability, reusability, and reduced component file size
 
+### Error Handling Best Practices
+- **Centralized Error System**: Use `useErrorHandler` hook for all async operations
+- **Error Categories**: Use `ErrorCategory` enum (CAMERA, TEMPLATE, PERMISSION, etc.)
+- **Error Severity**: Use `ErrorSeverity` enum (LOW, MEDIUM, HIGH, CRITICAL)
+- **Error Types**: Use specific error types (e.g., `'device_unavailable'` for camera errors)
+- **Recovery Actions**: Leverage `ErrorRecoveryAction` for automatic error recovery
+- **Context Information**: Always provide meaningful context in error objects
+- **User Messages**: Include user-friendly error messages for all error scenarios
+
+### Component Architecture Best Practices
+- **Single Responsibility**: Each component should have one clear purpose
+- **Custom Hooks**: Extract complex logic into reusable custom hooks
+- **Unified Views**: Avoid duplicate code blocks - use conditional rendering instead
+- **Error Boundaries**: Wrap components in error boundaries for graceful failure handling
+- **TypeScript Interfaces**: Define clear interfaces for all component props
+- **Performance**: Use `React.memo` and `useMemo` for expensive operations
+
 ### Known Limitations
 - **EXIF Lens Information Display**: While photos preserve complete EXIF metadata including camera settings, GPS, and timestamps, lens information (e.g., "Wide Camera - 26mm f/1.6") may not display correctly in the iOS Photos app due to limitations in Expo's MediaLibrary. This is a known limitation and doesn't affect actual photo quality or metadata preservation.
 

@@ -93,13 +93,134 @@
 - **Naming Convention**: Use `$styleName` pattern for style constants (e.g., `$container`, `$button`)
 - **File Structure**: Place style files alongside component files (e.g., `ComponentName.tsx` + `ComponentName.styles.ts`)
 
-### Next steps for further refactoring:
-1. Extract `CameraView` component (the actual camera component)
-2. Extract `CameraControls` component (bottom control bar)
-3. Extract `CameraOverlay` component (focus ring, popups)
-4. Apply style extraction to other large components (GalleryScreen, TopNavigation, etc.)
+## Extracted: Camera Controls Component
 
-### Lines reduced:
-- **Before**: 1,517 lines
-- **After**: 1,033 lines (484 lines extracted to styles file)
-- **Total reduction**: ~32% smaller
+### What was extracted:
+- **Bottom Controls**: Gallery button, shutter button, camera mode button with expansion
+- **Flash Controls**: Flash toggle with icon animations
+- **Exposure Controls**: Exposure toggle with vertical scrubber
+- **Crop Controls**: Crop functionality integration
+- **Reusable Component**: `CameraControls` component with proper props interface
+
+### Benefits:
+1. **Eliminated Duplication**: Removed duplicate bottom controls code blocks
+2. **Improved Reusability**: Component can be used in other camera contexts
+3. **Better Maintainability**: Single source of truth for camera controls
+4. **Cleaner Architecture**: Separated UI composition from control logic
+
+### Files modified:
+- **Created**: `app/components/CameraControls/CameraControls.tsx` (reusable component)
+- **Created**: `app/components/CameraControls/index.ts` (export file)
+- **Modified**: `app/screens/CameraScreen.tsx` (replaced duplicate code with component)
+
+## Extracted: Camera Overlays Component
+
+### What was extracted:
+- **Flash Overlay**: Flash effect animations and positioning
+- **Focus Ring**: Tap-to-focus ring with animations
+- **Popup Indicator**: Status popup with blur background
+- **Exposure Controls**: Exposure slider overlay
+- **Reusable Component**: `CameraOverlays` component with comprehensive props
+
+### Benefits:
+1. **Eliminated Duplication**: Removed duplicate overlay code blocks
+2. **Centralized Overlay Logic**: All overlays managed in one component
+3. **Improved Performance**: Reduced duplicate rendering
+4. **Better Organization**: Clear separation of overlay concerns
+
+### Files modified:
+- **Created**: `app/components/CameraOverlays/CameraOverlays.tsx` (overlay component)
+- **Created**: `app/components/CameraOverlays/index.ts` (export file)
+- **Modified**: `app/screens/CameraScreen.tsx` (replaced duplicate overlays with component)
+
+## Extracted: Camera Permissions Hook
+
+### What was extracted:
+- **Permission State**: `isLoading`, `hasPermission`, `isDenied`, `error` states
+- **Permission Actions**: `requestPermission`, `openSettings`, `reset` functions
+- **Error Handling**: Integrated with `useErrorHandler` for consistent error management
+- **Recovery Actions**: Automatic permission recovery with user-friendly messages
+
+### Benefits:
+1. **Centralized Permission Logic**: All camera permission handling in one hook
+2. **Consistent Error Handling**: Follows established error handling patterns
+3. **Improved Reusability**: Hook can be used in other camera-related components
+4. **Better User Experience**: Clear permission states and recovery actions
+
+### Files modified:
+- **Created**: `app/hooks/useCameraPermissions.ts` (permission hook)
+- **Modified**: `app/screens/CameraScreen.tsx` (replaced permission logic with hook)
+
+## Extracted: Template System Hook
+
+### What was extracted:
+- **Template State**: `isDrawerVisible`, `currentTemplateId`, `isLoading`, `error` states
+- **Template Actions**: `openDrawer`, `closeDrawer`, `toggleDrawer`, `selectTemplate` functions
+- **Template Management**: `deactivateCurrentTemplate`, `getTemplateById`, `refreshTemplates` functions
+- **Navigation Integration**: `useTemplateSystemWithNavigation` for route coordination
+- **Error Handling**: Integrated with `useErrorHandler` and proper error categories
+
+### Benefits:
+1. **Consolidated Template Logic**: All template-related state and actions in one hook
+2. **Eliminated Duplication**: Removed duplicate template state management
+3. **Improved Error Handling**: Consistent error handling with proper categories
+4. **Better Navigation**: Integrated template state with navigation system
+
+### Files modified:
+- **Created**: `app/hooks/useTemplateSystem.ts` (template system hook)
+- **Modified**: `app/screens/CameraScreen.tsx` (replaced template logic with hook)
+- **Modified**: `app/templates/manager/TemplateStorage.ts` (fixed default active templates)
+- **Modified**: `app/templates/manager/TemplateManager.ts` (fixed default active templates)
+
+## Unified: Camera View Architecture
+
+### What was unified:
+- **Eliminated Duplicate Code Blocks**: Removed separate "no device" and "with device" return statements
+- **Conditional Rendering**: Single unified view with conditional camera component
+- **Consistent Error Handling**: Unified error handling with proper `ErrorCategory.CAMERA` usage
+- **Error Message Overlay**: Maintained error message display for no device scenario
+
+### Benefits:
+1. **Single Source of Truth**: All UI components rendered once
+2. **Consistent Error Handling**: Unified error handling across all scenarios
+3. **Easier Maintenance**: Single code path for all camera states
+4. **Better Performance**: Reduced duplicate rendering and component instances
+5. **Cleaner Logic Flow**: Conditional rendering instead of duplicate blocks
+
+### Files modified:
+- **Modified**: `app/screens/CameraScreen.tsx` (unified camera view architecture)
+
+## Applied: Style Extraction to Other Components
+
+### GalleryScreen Refactoring:
+- **Extracted**: 18 style definitions to `GalleryScreen.styles.ts`
+- **Reduced**: File size from 237 to 129 lines (46% reduction)
+- **Benefits**: Improved maintainability and code organization
+
+### TopNavigation Refactoring:
+- **Extracted**: 7 style definitions to `TopNavigation.styles.ts`
+- **Reduced**: File size from 241 to 181 lines (25% reduction)
+- **Benefits**: Consistent styling approach across components
+
+### Files modified:
+- **Created**: `app/screens/GalleryScreen.styles.ts` (gallery styles)
+- **Created**: `app/components/TopNavigation.styles.ts` (navigation styles)
+- **Modified**: `app/screens/GalleryScreen.tsx` (removed styles, added import)
+- **Modified**: `app/components/TopNavigation.tsx` (removed styles, added import)
+
+## Final Results
+
+### CameraScreen Transformation:
+- **Started at**: 1,517 lines
+- **After all refactoring**: ~560 lines (63% reduction!)
+- **Major systems extracted**: Styles, Controls, Overlays, Permissions, Templates
+- **Code unified**: Single camera view with conditional rendering
+- **Error handling**: Consistent and follows best practices
+
+### Overall Benefits:
+1. **Massive Code Reduction**: 63% reduction in main component size
+2. **Improved Maintainability**: Clear separation of concerns
+3. **Better Reusability**: Extracted components and hooks can be reused
+4. **Consistent Architecture**: Unified patterns across all components
+5. **Enhanced Error Handling**: Centralized and consistent error management
+6. **Better Performance**: Reduced duplicate rendering and optimized components
