@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useMemo } from 'react'
 import { useTemplates } from '@/templates/hooks/useTemplates'
 import { useErrorHandler } from '@/hooks/useErrorHandling'
 import { ErrorCategory, ErrorSeverity } from '@/services/error/types'
@@ -170,7 +170,8 @@ export const useTemplateSystem = (callbacks?: TemplateSystemCallbacks): UseTempl
     await refreshTemplatesFromHook()
   }, [refreshTemplatesFromHook])
   
-  return {
+  // Memoize return object to prevent unnecessary re-renders
+  return useMemo(() => ({
     // State
     isDrawerVisible,
     currentTemplateId,
@@ -185,7 +186,22 @@ export const useTemplateSystem = (callbacks?: TemplateSystemCallbacks): UseTempl
     deactivateCurrentTemplate,
     getTemplateById,
     refreshTemplates,
-  }
+  }), [
+    // State
+    isDrawerVisible,
+    currentTemplateId,
+    templatesLoading,
+    templatesError,
+    
+    // Actions
+    openDrawer,
+    closeDrawer,
+    toggleDrawer,
+    selectTemplate,
+    deactivateCurrentTemplate,
+    getTemplateById,
+    refreshTemplates,
+  ])
 }
 
 /**

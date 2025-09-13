@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Alert, Linking } from 'react-native'
 import { useCameraPermission } from 'react-native-vision-camera'
 import { useErrorHandler } from '@/hooks/useErrorHandling'
@@ -117,7 +117,8 @@ export const useCameraPermissions = (): UseCameraPermissionsReturn => {
     setError(null)
   }, [])
 
-  return {
+  // Memoize return object to prevent unnecessary re-renders
+  return useMemo(() => ({
     // State
     isLoading,
     hasPermission: hasPermission ?? false,
@@ -128,7 +129,18 @@ export const useCameraPermissions = (): UseCameraPermissionsReturn => {
     requestPermission,
     openSettings,
     reset,
-  }
+  }), [
+    // State
+    isLoading,
+    hasPermission,
+    isDenied,
+    error,
+    
+    // Actions
+    requestPermission,
+    openSettings,
+    reset,
+  ])
 }
 
 /**
@@ -163,8 +175,9 @@ export const useCameraPermissionPrompt = () => {
     return granted
   }, [permissions])
 
-  return {
+  // Memoize return object to prevent unnecessary re-renders
+  return useMemo(() => ({
     ...permissions,
     promptForPermission,
-  }
+  }), [permissions, promptForPermission])
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useRef } from "react"
+import { useCallback, useEffect, useState, useRef, useMemo } from "react"
 import { useSharedValue, withSpring, runOnJS } from "react-native-reanimated"
 import * as Haptics from 'expo-haptics'
 import { Camera } from "react-native-vision-camera"
@@ -228,7 +228,8 @@ export const useCameraControls = ({
     }
   }, [showExposureControls, exposureControlsAnimation])
 
-  return {
+  // Memoize return object to prevent unnecessary re-renders
+  return useMemo(() => ({
     // Flash controls
     flashMode,
     flashModeRef,
@@ -263,5 +264,40 @@ export const useCameraControls = ({
     // Utilities
     triggerHaptic,
     closeAllControls,
-  }
+  }), [
+    // Flash controls
+    flashMode,
+    flashModeRef,
+    handleFlashToggle,
+    flashAnimation,
+    captureFlash,
+    setCaptureFlash,
+    
+    // Camera mode expansion
+    isCameraModeExpanded,
+    cameraModeExpansion,
+    toggleCameraModeExpansion,
+    
+    // Exposure controls
+    showExposureControls,
+    isExposureControlsVisible,
+    exposureControlsAnimation,
+    exposureSlider,
+    sliderValue,
+    toggleExposureControls,
+    handleExposureSliderChange,
+    resetExposure,
+    
+    // Photo capture
+    isCapturing,
+    setIsCapturing,
+    
+    // Button states
+    shutterPressed,
+    setShutterPressed,
+    
+    // Utilities
+    triggerHaptic,
+    closeAllControls,
+  ])
 }
