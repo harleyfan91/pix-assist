@@ -34,7 +34,7 @@ import { useCameraControls } from '@/hooks/useCameraControls'
 import { useCameraGestures } from '@/hooks/useCameraGestures'
 import { useCameraAnimations } from '@/hooks/useCameraAnimations'
 import { useCameraPermissionPrompt } from '@/hooks/useCameraPermissions'
-import { useTemplates } from '@/templates/hooks/useTemplates'
+import { useTemplateSystemWithNavigation } from '@/hooks/useTemplateSystem'
 import { TemplateDrawer, TemplateOverlay } from '@/components/TemplateDrawer'
 import { CameraControls } from '@/components/CameraControls'
 import { CameraOverlays } from '@/components/CameraOverlays'
@@ -71,45 +71,19 @@ export const CameraScreen: FC = function CameraScreen() {
   const navigation = useNavigation<AppStackScreenProps<"Camera">["navigation"]>()
   const route = useRoute<AppStackScreenProps<"Camera">["route"]>()
   
-  // Template system state
-  const [isTemplateDrawerVisible, setIsTemplateDrawerVisible] = useState(false)
-  const [currentTemplateId, setCurrentTemplateId] = useState<string | null>(null)
   const cameraViewRef = useRef<View | null>(null)
   
   // Initialize template system
-  const { templates, activateTemplate, deactivateTemplate } = useTemplates()
+  const {
+    isDrawerVisible: isTemplateDrawerVisible,
+    currentTemplateId,
+    openDrawer: handleTemplateDrawerOpen,
+    closeDrawer: handleTemplateDrawerClose,
+    selectTemplate: handleTemplateSelect,
+  } = useTemplateSystemWithNavigation(route.params?.onTemplateDrawerToggle)
   
   // Initialize error handling
   const { handleAsync } = useErrorHandler()
-  
-  // Template drawer handlers
-  const handleTemplateDrawerOpen = () => {
-    setIsTemplateDrawerVisible(true)
-    route.params?.onTemplateDrawerToggle?.(true)
-  }
-  
-  
-  // Template selection handler
-  const handleTemplateSelect = useCallback(async (templateId: string) => {
-    await handleAsync(
-      async () => {
-        setCurrentTemplateId(templateId)
-        await activateTemplate(templateId)
-        setIsTemplateDrawerVisible(false)
-      },
-      {
-        category: ErrorCategory.TEMPLATE,
-        userMessage: 'Failed to select template. Please try again.',
-        severity: ErrorSeverity.MEDIUM,
-        context: { operation: 'select', templateId },
-      }
-    )
-  }, [handleAsync, activateTemplate])
-
-  const handleTemplateDrawerClose = () => {
-    setIsTemplateDrawerVisible(false)
-    route.params?.onTemplateDrawerToggle?.(false)
-  }
   
   
 
@@ -336,7 +310,7 @@ export const CameraScreen: FC = function CameraScreen() {
         userMessage: 'Unable to take photo. Please try again.',
         severity: ErrorSeverity.HIGH,
         context: { operation: 'capture', flashMode: flashModeRef.current },
-        onError: (error) => {
+        onError: (error: any) => {
           // Handle specific AVFoundation errors with camera recovery
           const errorMessage = error.originalError?.message || ''
           if (errorMessage.includes('AVFoundationErrorDomain') || 
@@ -583,7 +557,7 @@ export const CameraScreen: FC = function CameraScreen() {
                     userMessage: 'Camera encountered an error. Attempting to recover...',
                     severity: ErrorSeverity.HIGH,
                     context: { operation: 'camera_init', errorType: 'camera_error' },
-                    onError: (appError) => {
+                    onError: (appError: any) => {
                       const errorMessage = appError.originalError?.message || ''
                       if (errorMessage.includes('AVFoundationErrorDomain') || 
                           errorMessage.includes('Cannot Complete Action')) {
@@ -680,15 +654,6 @@ export const CameraScreen: FC = function CameraScreen() {
           />
           </Reanimated.View>
         </GestureDetector>
-        
-        
-        {/* Template Drawer */}
-        <TemplateDrawer
-          isVisible={isTemplateDrawerVisible}
-          onClose={handleTemplateDrawerClose}
-          onOpen={handleTemplateDrawerOpen}
-          onTemplateSelect={handleTemplateSelect}
-        />
       </Screen>
     )
   }
